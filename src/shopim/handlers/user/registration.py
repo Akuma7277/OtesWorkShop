@@ -10,7 +10,7 @@ from src.shopim.keyboards.reply.main_menu import get_user_main_keyboard
 router = Router(name="registration-router")
 
 
-@router.message(CommandStart())
+@router.message(CommandStart(), StateFilter("*"))
 async def start_handler(
     message: types.Message, state: FSMContext, user: User | None
 ):

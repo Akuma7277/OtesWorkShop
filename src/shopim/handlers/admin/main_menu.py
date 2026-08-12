@@ -1,6 +1,8 @@
 from typing import Optional
+
 from aiogram import F, Router
-from aiogram.filters import Command
+from aiogram.filters import Command, StateFilter
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,11 +13,15 @@ from src.shopim.keyboards.reply.admin import get_admin_main_keyboard
 router = Router(name="admin-main-menu-router")
 
 
-@router.message(Command("admin"))
-@router.message(F.text.in_({"⚙️ Sozlamalar", "Admin Panel", "Панель администратора"}))
+@router.message(Command("admin"), StateFilter("*"))
+@router.message(
+    F.text.in_({"⚙️ Sozlamalar", "Admin Panel", "Панель администратора"}),
+    StateFilter("*"),
+)
 async def show_admin_menu(
-    message: Message, session: AsyncSession, admin: Optional[Admin] = None
+    message: Message, session: AsyncSession, state: FSMContext, admin: Optional[Admin] = None
 ):
+    await state.clear()
     if not admin:
         admin_repo = AdminRepository(session)
         admin = await admin_repo.get_by_telegram_id(message.from_user.id)
