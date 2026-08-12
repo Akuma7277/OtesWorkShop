@@ -233,6 +233,7 @@ function OrdersTab({ orders, reload }) {
 function TopupsTab({ topups, reload }) {
   const { showToast } = useApp()
   const [processing, setProcessing] = useState({})
+  const [zoomedImage, setZoomedImage] = useState(null)
 
   const action = async (fn, id, label) => {
     haptic.medium()
@@ -258,12 +259,25 @@ function TopupsTab({ topups, reload }) {
       {topups.map(t => (
         <div key={t.id} className="card mb-3">
           <div className="flex justify-between items-center mb-2">
-            <div style={{ fontWeight: 700 }}>{Number(t.amount).toLocaleString()} so'm</div>
+            <div style={{ fontWeight: 700, fontSize: 16 }}>{Number(t.amount).toLocaleString()} so'm</div>
             <span className="status-badge status-pending">⏳ Kutilmoqda</span>
           </div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>
-            👤 Foydalanuvchi ID: {t.user_id} · {t.payment_method}
+            👤 {t.user_name || 'Foydalanuvchi'} (ID: {t.user_id}) · {t.payment_method}
           </div>
+
+          {/* Receipt image preview */}
+          {t.receipt_file_id && t.receipt_file_id.startsWith('data:image/') && (
+            <div className="mb-3" style={{ cursor: 'pointer', borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)', background: '#000', maxHeight: 150 }}>
+              <img
+                src={t.receipt_file_id}
+                alt="Receipt screenshot"
+                style={{ width: '100%', height: 150, objectFit: 'contain' }}
+                onClick={() => { haptic.light(); setZoomedImage(t.receipt_file_id) }}
+              />
+            </div>
+          )}
+
           <div className="flex gap-2">
             <button
               className="btn btn-success btn-sm"
@@ -280,9 +294,25 @@ function TopupsTab({ topups, reload }) {
           </div>
         </div>
       ))}
+
+      {/* Lightbox / Zoomed image modal */}
+      {zoomedImage && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9999, padding: 16
+          }}
+          onClick={() => setZoomedImage(null)}
+        >
+          <img src={zoomedImage} alt="Zoomed check" style={{ maxWidth: '100%', maxHeight: '90%', objectFit: 'contain', borderRadius: 8 }} />
+          <div style={{ position: 'absolute', top: 20, right: 20, color: '#fff', fontSize: 24, fontWeight: 700, cursor: 'pointer' }}>✕</div>
+        </div>
+      )}
     </div>
   )
 }
+
 
 function UsersTab({ users, reload }) {
   const { showToast } = useApp()

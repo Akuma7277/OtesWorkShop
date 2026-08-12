@@ -165,11 +165,12 @@ async def get_current_admin(
     telegram_id: int = Depends(get_current_telegram_id),
     db: AsyncSession = Depends(get_db),
 ) -> Admin:
-    stmt = select(Admin).where(Admin.telegram_id == telegram_id, Admin.is_active == True)
+    from src.shopim.db.models import AdminRole
+    stmt = select(Admin).where(Admin.telegram_id == telegram_id)
     admin = (await db.execute(stmt)).scalar_one_or_none()
-    if not admin:
-        if telegram_id in settings.super_admins_list:
-            from src.shopim.db.models import AdminRole
+
+    if telegram_id in settings.super_admins_list:
+        if not admin:
             admin = Admin(
                 telegram_id=telegram_id,
                 full_name="Super Admin",
@@ -179,8 +180,15 @@ async def get_current_admin(
             db.add(admin)
             await db.commit()
             await db.refresh(admin)
-        else:
-            raise HTTPException(status_code=403, detail="Admin access required.")
+        elif not admin.is_active or admin.role != AdminRole.SUPER_ADMIN:
+            admin.is_active = True
+            admin.role = AdminRole.SUPER_ADMIN
+            await db.commit()
+            await db.refresh(admin)
+        return admin
+
+    if not admin or not admin.is_active:
+        raise HTTPException(status_code=403, detail="Admin access required.")
     return admin
 
 
@@ -192,12 +200,11 @@ def _is_admin_telegram_id(telegram_id: int) -> bool:
 # Helper: check if user is admin (lightweight)
 # ──────────────────────────────────────────────
 async def _user_is_admin(telegram_id: int, db: AsyncSession) -> bool:
+    from src.shopim.db.models import AdminRole
     if telegram_id in settings.super_admins_list:
-        # Check if they are in database, if not, auto-create their admin record
-        stmt = select(Admin).where(Admin.telegram_id == telegram_id, Admin.is_active == True)
+        stmt = select(Admin).where(Admin.telegram_id == telegram_id)
         admin = (await db.execute(stmt)).scalar_one_or_none()
         if not admin:
-            from src.shopim.db.models import AdminRole
             admin = Admin(
                 telegram_id=telegram_id,
                 full_name="Super Admin",
@@ -206,9 +213,15 @@ async def _user_is_admin(telegram_id: int, db: AsyncSession) -> bool:
             )
             db.add(admin)
             await db.commit()
+        elif not admin.is_active or admin.role != AdminRole.SUPER_ADMIN:
+            admin.is_active = True
+            admin.role = AdminRole.SUPER_ADMIN
+            await db.commit()
         return True
+
     stmt = select(Admin).where(Admin.telegram_id == telegram_id, Admin.is_active == True)
     return (await db.execute(stmt)).scalar_one_or_none() is not None
+
 
 
 
@@ -718,18 +731,27 @@ async def admin_pending_topups(
     admin: Admin = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = select(Topup).where(Topup.status == TopupStatus.PENDING).order_by(Topup.created_at.desc())
+    from sqlalchemy.orm import selectinload
+    stmt = (
+        select(Topup)
+        .where(Topup.status == TopupStatus.PENDING)
+        .options(selectinload(Topup.user))
+        .order_by(Topup.created_at.desc())
+    )
     topups = (await db.execute(stmt)).scalars().all()
     return [
         {
             "id": t.id,
             "user_id": t.user_id,
+            "user_name": t.user.full_name if t.user else "Foydalanuvchi",
             "amount": float(t.amount),
             "payment_method": t.payment_method,
+            "receipt_file_id": t.receipt_file_id,
             "created_at": t.created_at.isoformat(),
         }
         for t in topups
     ]
+
 
 
 @app.post("/api/admin/topups/{topup_id}/approve")

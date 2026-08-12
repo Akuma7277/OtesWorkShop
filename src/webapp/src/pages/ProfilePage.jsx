@@ -9,7 +9,7 @@ export default function ProfilePage() {
   const { user, setUser, balance, showToast, loadBalance, tgUser, lang } = useApp()
   const [tab, setTab] = useState('info')
   const [topupAmount, setTopupAmount] = useState('')
-  const [topupMethod, setTopupMethod] = useState('click')
+  const [receiptImage, setReceiptImage] = useState('')
   const [submittingTopup, setSubmittingTopup] = useState(false)
   const [reviewText, setReviewText] = useState('')
   const [reviewRating, setReviewRating] = useState(5)
@@ -20,18 +20,42 @@ export default function ProfilePage() {
   const displayName = user.full_name || tgUser?.first_name || 'Foydalanuvchi'
   const initials = displayName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (file.size > 8 * 1024 * 1024) {
+      showToast(lang === 'ru' ? '❌ Максимальный размер файла: 8MB' : '❌ Maksimal fayl hajmi: 8MB')
+      return
+    }
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setReceiptImage(reader.result)
+      showToast(lang === 'ru' ? '✅ Чек успешно загружен!' : '✅ Chek muvaffaqiyatli yuklandi!')
+    }
+    reader.readAsDataURL(file)
+  }
+
   const handleTopup = async () => {
     if (!topupAmount || Number(topupAmount) < 10000) {
       showToast(lang === 'ru' ? '❌ Минимальная сумма: 10,000 сум' : '❌ Minimal miqdor: 10,000 so\'m')
       return
     }
+    if (!receiptImage) {
+      showToast(lang === 'ru' ? '❌ Загрузка чека обязательна!' : '❌ To\'lov chekini yuklash majburiy!')
+      return
+    }
     haptic.medium()
     setSubmittingTopup(true)
     try {
-      await createTopup({ amount: Number(topupAmount), payment_method: topupMethod, receipt_file_id: 'webapp' })
+      await createTopup({
+        amount: Number(topupAmount),
+        payment_method: 'Litecoin (LTC)',
+        receipt_file_id: receiptImage
+      })
       haptic.success()
       showToast(lang === 'ru' ? '✅ Запрос отправлен! Ожидайте подтверждения админа.' : '✅ To\'ldirish so\'rovi yuborildi! Admin tasdiqlaydi.')
       setTopupAmount('')
+      setReceiptImage('')
       await loadBalance()
     } catch (e) {
       haptic.error()
@@ -66,11 +90,16 @@ export default function ProfilePage() {
     haptic.light()
     setLanguage(newLang)
     try {
-      // Sync with backend database
       await updateMe({ language_code: newLang })
       setUser({ ...user, language_code: newLang })
       showToast(newLang === 'ru' ? '🇷🇺 Язык изменен на Русский' : '🇺🇿 Til O\'zbekchaga o\'zgartirildi')
     } catch {}
+  }
+
+  const handleCopyAddress = () => {
+    haptic.light()
+    navigator.clipboard.writeText('LLzgbAscn4Dgfcxf8F7xUynN5wMSuTanSw')
+    showToast(lang === 'ru' ? '📋 Адрес скопирован!' : '📋 Manzil nusxalandi!')
   }
 
   return (
@@ -148,6 +177,27 @@ export default function ProfilePage() {
 
       {tab === 'topup' && (
         <div className="stagger">
+          {/* LTC Wallet Box */}
+          <div className="card mb-4" style={{ background: 'rgba(255, 179, 0, 0.08)', borderColor: 'rgba(255, 179, 0, 0.2)' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>
+              🪙 Litecoin (LTC) to'lov manzili:
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: 'rgba(0,0,0,0.3)', padding: 8, borderRadius: 8 }}>
+              <code style={{ fontSize: 12, wordBreak: 'break-all', flex: 1, color: '#ffb300' }}>
+                LLzgbAscn4Dgfcxf8F7xUynN5wMSuTanSw
+              </code>
+              <button className="btn btn-sm" style={{ padding: '4px 8px', fontSize: 12 }} onClick={handleCopyAddress}>
+                📋 Copy
+              </button>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
+              {lang === 'ru'
+                ? '⚠️ Внимание: после оплаты обязательно загрузите скриншот чека ниже!'
+                : '⚠️ Diqqat: to\'lov qilgach, chek (skrinshot) rasmini pastda yuklash MAJBURIY!'
+              }
+            </div>
+          </div>
+
           <div className="input-group">
             <label className="input-label">{t('amount')} (so'm)</label>
             <input
@@ -173,36 +223,31 @@ export default function ProfilePage() {
             ))}
           </div>
 
+          {/* File uploader */}
           <div className="input-group">
-            <label className="input-label">{t('payment_method')}</label>
-            <div className="flex gap-2">
-              {['click', 'payme', 'transfer'].map(m => (
-                <button
-                  key={m}
-                  className="btn btn-sm"
-                  style={{ flex: 1, ...(topupMethod === m ? {} : { background: 'var(--bg-glass)', color: 'var(--text-secondary)' }) }}
-                  onClick={() => { haptic.light(); setTopupMethod(m) }}
-                >
-                  {m === 'click' ? '💙 Click' : m === 'payme' ? '💚 Payme' : '🏦 O\'tkazma'}
-                </button>
-              ))}
-            </div>
+            <label className="input-label">
+              {lang === 'ru' ? '📸 Загрузить чек (Обязательно)' : '📸 To\'lov chekini yuklash (Majburiy)'}
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              className="input"
+              onChange={handleFileChange}
+              style={{ padding: '8px 12px' }}
+            />
           </div>
 
-          <div className="card mb-4" style={{ background: 'rgba(91,141,238,0.08)', borderColor: 'rgba(91,141,238,0.2)' }}>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-              {lang === 'ru'
-                ? `ℹ️ Отправьте чек об оплате в бот или свяжитесь с админом. После запроса админ подтвердит транзакцию.`
-                : `ℹ️ To'lov chekini botga yuboring yoki admin bilan bog'laning. So'rov yuborilgandan so'ng admin tasdiqlashi kutiladi.`
-              }
-
+          {/* Image preview */}
+          {receiptImage && (
+            <div className="card mb-4" style={{ textAlign: 'center' }}>
+              <img src={receiptImage} alt="Receipt preview" style={{ maxWidth: '100%', maxHeight: 150, borderRadius: 8, objectFit: 'contain' }} />
             </div>
-          </div>
+          )}
 
           <button
             className="btn btn-gold btn-full btn-lg"
             onClick={handleTopup}
-            disabled={submittingTopup}
+            disabled={submittingTopup || !receiptImage}
           >
             {submittingTopup ? '⏳ ...' : t('topup_balance')}
           </button>
