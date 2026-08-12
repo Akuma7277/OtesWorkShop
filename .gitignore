@@ -80,7 +80,6 @@ env.bak
 venv.bak
 
 # Docker
-.dockerignore
 docker-compose.override.yml
 
 # Personal files
