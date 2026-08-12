@@ -5,6 +5,9 @@ from src.shopim.handlers.admin.delivery_management import (
     router as admin_delivery_management_router,
 )
 from src.shopim.handlers.admin.main_menu import router as admin_main_menu_router
+from src.shopim.handlers.admin.order_browsing import (
+    router as admin_order_browsing_router,
+)
 from src.shopim.handlers.admin.order_management import (
     router as admin_order_management_router,
 )
@@ -45,17 +48,18 @@ def setup_routers(dp: Dispatcher):
     Admin routers are included first so they take precedence.
     """
     # Admin Routers
-    dp.include_router(admin_main_menu_router)
     dp.include_router(admin_dashboard_router)
+    dp.include_router(admin_settings_management_router)
     dp.include_router(admin_user_management_router)
     dp.include_router(admin_product_management_router)
     dp.include_router(admin_product_editing_router)
+    dp.include_router(admin_order_browsing_router)
     dp.include_router(admin_order_management_router)
     dp.include_router(admin_delivery_management_router)
     dp.include_router(admin_topup_management_router)
     dp.include_router(admin_warehouse_router)
     dp.include_router(admin_review_moderation_router)
-    dp.include_router(admin_settings_management_router)
+    dp.include_router(admin_main_menu_router)
 
     # User Routers
     dp.include_router(user_registration_router)

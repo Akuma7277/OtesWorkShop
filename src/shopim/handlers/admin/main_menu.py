@@ -15,7 +15,7 @@ router = Router(name="admin-main-menu-router")
 
 @router.message(Command("admin"), StateFilter("*"))
 @router.message(
-    F.text.in_({"⚙️ Sozlamalar", "⚙️ Настройки", "Admin Panel", "Панель администратора"}),
+    F.text.in_({"Admin Panel", "Панель администратора", "⚙️ Admin Panel"}),
     StateFilter("*"),
 )
 async def show_admin_menu(
