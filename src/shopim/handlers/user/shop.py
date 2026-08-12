@@ -56,7 +56,7 @@ async def start_buy_flow_handler(message: types.Message, session: AsyncSession):
         builder.button(text=cat.name, callback_data=CategorySelectCallback(category_id=cat.id).pack())
     builder.adjust(1)
 
-    await message.answer("Выберите категорию:", reply_markup=builder.as_markup())
+    await message.answer("Выберите район / Joylash joyini tanlang:", reply_markup=builder.as_markup())
 
 
 @router.callback_query(CategorySelectCallback.filter())
@@ -75,7 +75,7 @@ async def select_category_handler(
     products = result.scalars().all()
 
     if not products:
-        await callback.answer("В этой категории пока нет товаров в наличии.", show_alert=True)
+        await callback.answer("В этом районе пока нет товаров в наличии.", show_alert=True)
         return
 
     builder = InlineKeyboardBuilder()
@@ -86,7 +86,7 @@ async def select_category_handler(
     builder.button(text="⬅️ Назад", callback_data="back_to_categories")
     builder.adjust(1)
 
-    await callback.message.edit_text("Выберите подкатегорию / район:", reply_markup=builder.as_markup())
+    await callback.message.edit_text("Выберите товар в этом районе:", reply_markup=builder.as_markup())
     await callback.answer()
 
 
@@ -101,7 +101,7 @@ async def back_to_categories_handler(callback: types.CallbackQuery, session: Asy
         builder.button(text=cat.name, callback_data=CategorySelectCallback(category_id=cat.id).pack())
     builder.adjust(1)
 
-    await callback.message.edit_text("Выберите категорию:", reply_markup=builder.as_markup())
+    await callback.message.edit_text("Выберите район / Joylash joyini tanlang:", reply_markup=builder.as_markup())
     await callback.answer()
 
 

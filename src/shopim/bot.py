@@ -85,6 +85,37 @@ async def main():
 
     session_pool = create_session_pool(async_engine)
 
+    # Seed Tashkent districts as default locations
+    async with session_pool() as session:
+        from sqlalchemy import select
+        from src.shopim.db.models import Category
+        stmt = select(Category)
+        existing = (await session.execute(stmt)).scalars().all()
+        existing_names = {c.name for c in existing}
+
+        tashkent_districts = [
+            "Yunusobod",
+            "Chilonzor",
+            "Mirobod",
+            "Mirzo Ulug'bek",
+            "Yashnobod",
+            "Shayxontohur",
+            "Olmazor",
+            "Uchtepa",
+            "Yakkasaroy",
+            "Sergeli",
+            "Yangihayot",
+            "Bektemir",
+        ]
+
+        added = False
+        for district in tashkent_districts:
+            if district not in existing_names:
+                session.add(Category(name=district, is_active=True))
+                added = True
+        if added:
+            await session.commit()
+
     dp.update.middleware(
         DbSessionMiddleware(session_pool=session_pool)
     )

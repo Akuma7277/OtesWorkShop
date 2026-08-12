@@ -73,7 +73,7 @@ async def get_name_handler(message: types.Message, state: FSMContext, session: A
     cats = await repo.get_all_active_paginated(offset=0, limit=CATEGORIES_PER_PAGE)
 
     await message.answer(  # type: ignore
-        _("Endi mahsulot kategoriyasini tanlang:"),
+        _("Endi joylash joyini (Toshkent tumanini) tanlang:"),
         reply_markup=get_category_selection_keyboard(
             categories=cats, total_pages=total_pages, current_page=1
         ),
