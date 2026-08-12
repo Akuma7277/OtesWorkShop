@@ -29,6 +29,7 @@ class UserAuthMiddleware(BaseMiddleware):
         user = await user_repo.get_by_telegram_id(telegram_user.id)
 
         if not user:
+            from sqlalchemy.exc import IntegrityError
             # Auto-create and auto-approve user
             user = User(
                 telegram_id=telegram_user.id,
@@ -40,14 +41,23 @@ class UserAuthMiddleware(BaseMiddleware):
                 language_code=telegram_user.language_code or "uz",
             )
             session.add(user)
-            await session.commit()
-            await session.refresh(user)
+            try:
+                await session.commit()
+                await session.refresh(user)
+            except IntegrityError:
+                await session.rollback()
+                # Fetch the user created by the parallel thread
+                user = await user_repo.get_by_telegram_id(telegram_user.id)
         else:
             status_str = str(user.status.value) if hasattr(user.status, "value") else str(user.status)
             if status_str.upper() not in ["APPROVED", "BLOCKED"]:
                 user.status = UserStatus.APPROVED
-                await session.commit()
-                await session.refresh(user)
+                try:
+                    await session.commit()
+                    await session.refresh(user)
+                except IntegrityError:
+                    await session.rollback()
 
         data["user"] = user
         return await handler(event, data)
+
