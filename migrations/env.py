@@ -58,6 +58,10 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
+    if connection.dialect.name == "sqlite":
+        print("SQLite dialect detected. Skipping Postgres-specific alembic migrations (handled by create_all in bot).")
+        return
+
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
