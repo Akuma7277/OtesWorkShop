@@ -62,11 +62,12 @@ async def get_name_handler(message: types.Message, state: FSMContext, session: A
     repo = CategoryRepository(session)
     total_cats = await repo.count_all_active()
     if total_cats == 0:
-        await state.clear()  # type: ignore
-        await message.answer(  # type: ignore
-            _("Xatolik: Tizimda faol kategoriyalar mavjud emas. Avval kategoriya qo'shing.")
-        )
-        return
+        from src.shopim.db.models import Category
+        default_cat = Category(name="Бишкек", is_active=True)
+        session.add(default_cat)
+        await session.commit()
+        await session.refresh(default_cat)
+        total_cats = 1
 
     total_pages = math.ceil(total_cats / CATEGORIES_PER_PAGE)
     cats = await repo.get_all_active_paginated(offset=0, limit=CATEGORIES_PER_PAGE)

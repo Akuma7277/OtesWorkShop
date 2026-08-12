@@ -34,19 +34,32 @@ class ProductManagementService:
                 slug = f"{base_slug}-{counter}"
                 counter += 1
 
+            category_id = product_data.get("category_id")
+            if not category_id:
+                from src.shopim.db.models import Category
+                cat_stmt = select(Category).limit(1)
+                cat_res = (await self.session.execute(cat_stmt)).scalar()
+                if not cat_res:
+                    cat_res = Category(name="Бишкек", is_active=True)
+                    self.session.add(cat_res)
+                    await self.session.flush()
+                category_id = cat_res.id
+
             initial_stock = Decimal(product_data.get("initial_stock", "0"))
+            cost_price = Decimal(product_data.get("cost_price", product_data.get("sale_price", "0")))
 
             new_product = Product(
                 name=product_data["name"],
                 slug=slug,
-                category_id=product_data["category_id"],
+                category_id=category_id,
                 description=product_data.get("description"),
+                pickup_address=product_data.get("pickup_address"),
                 image_file_id=product_data.get("image_file_id"),
-                cost_price_per_gram=Decimal(product_data["cost_price"]),
+                cost_price_per_gram=cost_price,
                 sale_price_per_gram=Decimal(product_data["sale_price"]),
                 stock_grams=initial_stock,
                 low_stock_threshold_grams=Decimal(
-                    product_data["low_stock_threshold"]
+                    product_data.get("low_stock_threshold", "10")
                 ),
                 created_by=admin_id,
                 is_active=True,
