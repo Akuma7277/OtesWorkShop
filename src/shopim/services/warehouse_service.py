@@ -67,36 +67,36 @@ class WarehouseService:
         if grams == 0:
             return None
 
-        async with self.session.begin():
-            product = await self.product_repo.get_by_id_for_update(product_id)
-            if not product:
-                return None
+        product = await self.product_repo.get_by_id_for_update(product_id)
+        if not product:
+            return None
 
-            stock_before = product.stock_grams
-            new_stock = stock_before + grams
+        stock_before = product.stock_grams
+        new_stock = stock_before + grams
 
-            if new_stock < 0:
-                return None  # Or raise an error
+        if new_stock < 0:
+            return None
 
-            product.stock_grams = new_stock
+        product.stock_grams = new_stock
 
-            movement_type = (
-                StockMovementType.ADJUSTMENT_IN
-                if grams > 0
-                else StockMovementType.ADJUSTMENT_OUT
-            )
+        movement_type = (
+            StockMovementType.ADJUSTMENT_IN
+            if grams > 0
+            else StockMovementType.ADJUSTMENT_OUT
+        )
 
-            stock_movement = StockMovement(
-                product_id=product.id,
-                type=movement_type,
-                grams=abs(grams),
-                stock_before=stock_before,
-                stock_after=new_stock,
-                reason=reason,
-                created_by_admin_id=admin_id,
-            )
-            self.session.add(stock_movement)
-            self.session.add(product)
+        stock_movement = StockMovement(
+            product_id=product.id,
+            type=movement_type,
+            grams=abs(grams),
+            stock_before=stock_before,
+            stock_after=new_stock,
+            reason=reason,
+            created_by_admin_id=admin_id,
+        )
+        self.session.add(stock_movement)
+        self.session.add(product)
 
-            await self.session.flush()
-            return product
+        await self.session.commit()
+        await self.session.refresh(product)
+        return product

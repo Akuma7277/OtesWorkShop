@@ -86,30 +86,30 @@ class UserManagementService:
     ) -> Optional[BalanceTransaction]:
         from src.shopim.db.repositories.balance_repository import BalanceRepository
 
-        async with self.session.begin():
-            user = await self.user_repo.get(user_id)
-            if not user:
-                return None
+        user = await self.user_repo.get_by_id(user_id)
+        if not user:
+            return None
 
-            balance_repo = BalanceRepository(self.session)
-            balance_before = await balance_repo.get_user_balance(user_id)
-            balance_after = balance_before + amount
+        balance_repo = BalanceRepository(self.session)
+        balance_before = await balance_repo.get_user_balance(user_id)
+        balance_after = balance_before + amount
 
-            tx_type = (
-                BalanceTxType.MANUAL_CREDIT
-                if amount > 0
-                else BalanceTxType.MANUAL_DEBIT
-            )
+        tx_type = (
+            BalanceTxType.MANUAL_CREDIT
+            if amount > 0
+            else BalanceTxType.MANUAL_DEBIT
+        )
 
-            balance_tx = BalanceTransaction(
-                user_id=user_id,
-                type=tx_type,
-                amount=amount,
-                balance_before=balance_before,
-                balance_after=balance_after,
-                note=reason,
-                created_by_admin_id=admin.id,
-            )
-            self.session.add(balance_tx)
-            await self.session.flush()
-            return balance_tx
+        balance_tx = BalanceTransaction(
+            user_id=user_id,
+            type=tx_type,
+            amount=amount,
+            balance_before=balance_before,
+            balance_after=balance_after,
+            note=reason,
+            created_by_admin_id=admin.id,
+        )
+        self.session.add(balance_tx)
+        await self.session.commit()
+        await self.session.refresh(balance_tx)
+        return balance_tx

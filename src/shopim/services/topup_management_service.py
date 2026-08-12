@@ -36,35 +36,34 @@ class TopupManagementService:
         return PaginatedTopups(topups, total_pages, page)
 
     async def approve_topup(self, topup_id: int, admin: Admin) -> Topup | None:
-        async with self.session.begin():
-            topup = await self.topup_repo.get(topup_id)
-            if not topup or topup.status != TopupStatus.PENDING:
-                return None
+        topup = await self.topup_repo.get_by_id(topup_id)
+        if not topup or topup.status != TopupStatus.PENDING:
+            return None
 
-            balance_repo = BalanceRepository(self.session)
-            current_balance = await balance_repo.get_user_balance(topup.user_id)
-            amount = Decimal(str(topup.amount))
-            balance_after = current_balance + amount
+        balance_repo = BalanceRepository(self.session)
+        current_balance = await balance_repo.get_user_balance(topup.user_id)
+        amount = Decimal(str(topup.amount))
+        balance_after = current_balance + amount
 
-            balance_tx = BalanceTransaction(
-                user_id=topup.user_id,
-                type=BalanceTxType.TOPUP,
-                amount=amount,
-                balance_before=current_balance,
-                balance_after=balance_after,
-                reference_type="Topup",
-                reference_id=topup.id,
-                created_by_admin_id=admin.id,
-            )
-            self.session.add(balance_tx)
+        balance_tx = BalanceTransaction(
+            user_id=topup.user_id,
+            type=BalanceTxType.TOPUP,
+            amount=amount,
+            balance_before=current_balance,
+            balance_after=balance_after,
+            reference_type="Topup",
+            reference_id=topup.id,
+            created_by_admin_id=admin.id,
+        )
+        self.session.add(balance_tx)
 
-            topup.status = TopupStatus.APPROVED
-            topup.admin_id = admin.id
-            topup.reviewed_at = datetime.now(timezone.utc)
+        topup.status = TopupStatus.APPROVED
+        topup.admin_id = admin.id
+        topup.reviewed_at = datetime.now(timezone.utc)
 
-            await self.session.flush()
-            await self.session.refresh(topup)
-            return topup
+        await self.session.commit()
+        await self.session.refresh(topup)
+        return topup
 
     async def reject_topup(self, topup_id: int, admin: Admin, reason: str) -> Topup | None:
         topup = await self.topup_repo.get(topup_id)
