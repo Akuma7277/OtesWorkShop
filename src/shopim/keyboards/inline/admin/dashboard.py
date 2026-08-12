@@ -7,28 +7,28 @@ class DashboardCallback(CallbackData, prefix="dashboard"):
     action: str  # 'refresh', 'buyers', 'main_stats'
 
 
-def get_dashboard_keyboard() -> InlineKeyboardMarkup:
+def get_dashboard_keyboard(lang: str = "uz") -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="👥 Xaridorlar ro'yxati",
+        text="👥 Xaridorlar ro'yxati" if lang == "uz" else "👥 Список покупателей",
         callback_data=DashboardCallback(action="buyers").pack(),
     )
     builder.button(
-        text="🔄 Yangilash",
+        text="🔄 Yangilash" if lang == "uz" else "🔄 Обновить",
         callback_data=DashboardCallback(action="refresh").pack(),
     )
     builder.adjust(1, 1)
     return builder.as_markup()
 
 
-def get_buyers_keyboard() -> InlineKeyboardMarkup:
+def get_buyers_keyboard(lang: str = "uz") -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="📊 Dashboard ga qaytish",
+        text="📊 Dashboard ga qaytish" if lang == "uz" else "📊 Вернуться в Dashboard",
         callback_data=DashboardCallback(action="main_stats").pack(),
     )
     builder.button(
-        text="🔄 Yangilash",
+        text="🔄 Yangilash" if lang == "uz" else "🔄 Обновить",
         callback_data=DashboardCallback(action="buyers").pack(),
     )
     builder.adjust(1, 1)

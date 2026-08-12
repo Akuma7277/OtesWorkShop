@@ -60,12 +60,13 @@ async def _show_product_edit_menu(
 
 
 async def _show_products_for_editing(
-    target: types.Message | types.CallbackQuery, page: int, session: AsyncSession
+    target: types.Message | types.CallbackQuery, page: int, session: AsyncSession, admin: Admin
 ):
     service = WarehouseService(session, items_per_page=ITEMS_PER_PAGE)
     result = await service.get_products_stock(page=page)
+    lang = admin.language_code or "uz"
 
-    text = _("Tahrirlash uchun mahsulot tanlang:")
+    text = "Tahrirlash uchun mahsulot tanlang:" if lang == "uz" else "Выберите товар для редактирования:"
     keyboard = get_product_list_for_editing_keyboard(
         products=result.products,
         total_pages=result.total_pages,
@@ -81,8 +82,8 @@ async def _show_products_for_editing(
 from aiogram.filters import StateFilter
 
 @router.message(F.text.in_({"✏️ Tovarlarni boshqarish", "✏️ Управление товарами"}), StateFilter("*"))
-async def start_editing_handler(message: types.Message, session: AsyncSession):
-    await _show_products_for_editing(message, 1, session)
+async def start_editing_handler(message: types.Message, session: AsyncSession, admin: Admin):
+    await _show_products_for_editing(message, 1, session, admin)
 
 
 @router.callback_query(ProductEditCallback.filter(F.action == "page"))

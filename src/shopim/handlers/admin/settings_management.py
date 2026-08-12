@@ -27,10 +27,12 @@ router.callback_query.filter(IsAdminFilter())
 async def _show_settings_menu(
     target: types.Message | types.CallbackQuery,
     session: AsyncSession,
+    admin: Admin,
     success_message: str | None = None,
 ):
     service = SettingsService(session)
     settings = await service.get_bot_settings()
+    lang = admin.language_code or "uz"
 
     settings_text = "\n".join(
         [
@@ -39,7 +41,11 @@ async def _show_settings_menu(
         ]
     )
 
-    text = f"<b>⚙️ Tizim va Baza Sozlamalari</b>\n\n{settings_text}\n\n<i>O'zgartirmoqchi bo'lgan parametrni tanlang:</i>"
+    if lang == "ru":
+        text = f"<b>⚙️ Настройки системы и базы данных</b>\n\n{settings_text}\n\n<i>Выберите параметр для изменения:</i>"
+    else:
+        text = f"<b>⚙️ Tizim va Baza Sozlamalari</b>\n\n{settings_text}\n\n<i>O'zgartirmoqchi bo'lgan parametrni tanlang:</i>"
+
     if success_message:
         text = f"✅ <b>{success_message}</b>\n\n{text}"
 
@@ -52,9 +58,9 @@ async def _show_settings_menu(
 
 
 @router.message(F.text.in_({"⚙️ Sozlamalar", "⚙️ Настройки", "Sozlamalar", "Настройки"}), StateFilter("*"))
-async def settings_menu_handler(message: types.Message, state: FSMContext, session: AsyncSession):
+async def settings_menu_handler(message: types.Message, state: FSMContext, session: AsyncSession, admin: Admin):
     await state.set_state(SettingsManagementState.choosing_setting)
-    await _show_settings_menu(message, session)
+    await _show_settings_menu(message, session, admin)
 
 
 @router.callback_query(SettingsCallback.filter(F.action == "toggle_admin_lang"))
@@ -76,15 +82,15 @@ async def toggle_admin_lang_handler(
         "Admin Paneli:" if new_lang == "uz" else "Панель администратора:",
         reply_markup=get_admin_main_keyboard(new_lang),
     )
-    await _show_settings_menu(callback, session)
+    await _show_settings_menu(callback, session, admin)
 
 
 @router.callback_query(SettingsCallback.filter(F.action == "back_to_menu"), StateFilter("*"))
 async def back_to_settings_menu_handler(
-    callback: types.CallbackQuery, state: FSMContext, session: AsyncSession
+    callback: types.CallbackQuery, state: FSMContext, session: AsyncSession, admin: Admin
 ):
     await state.set_state(SettingsManagementState.choosing_setting)
-    await _show_settings_menu(callback, session)
+    await _show_settings_menu(callback, session, admin)
     await callback.answer()
 
 
@@ -128,7 +134,7 @@ async def get_new_setting_value_handler(
         field_info = BotSettings.model_fields[field_name]
         field_desc = field_info.description or field_name
         await _show_settings_menu(
-            message, session, success_message=f"'{field_desc}' muvaffaqiyatli yangilandi!"
+            message, session, admin, success_message=f"'{field_desc}' muvaffaqiyatli yangilandi!"
         )
     except (ValidationError, ValueError) as e:
         await message.answer(f"❌ Xato: Noto'g'ri format.\nIltimos, qiymatni to'g'ri kiriting.\n\n<i>{e}</i>", parse_mode="HTML")
