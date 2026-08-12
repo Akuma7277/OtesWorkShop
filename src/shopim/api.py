@@ -241,6 +241,24 @@ async def list_categories(db: AsyncSession = Depends(get_db)):
 # ──────────────────────────────────────────────
 # Routes: Products
 # ──────────────────────────────────────────────
+@app.get("/api/debug")
+async def get_debug_info():
+    import os
+    # Exclude sensitive secrets like database password or bot token
+    safe_env = {
+        k: v for k, v in os.environ.items()
+        if not any(secret in k.lower() for secret in ("token", "password", "key", "secret", "url"))
+    }
+    return {
+        "railway_public_domain_env": os.getenv("RAILWAY_PUBLIC_DOMAIN"),
+        "railway_static_url_env": os.getenv("RAILWAY_STATIC_URL"),
+        "settings_mini_app_url": settings.mini_app_url,
+        "resolved_get_mini_app_url": settings.get_mini_app_url,
+        "env_keys": list(safe_env.keys()),
+        "safe_env": safe_env,
+    }
+
+
 def _product_dict(p: Product) -> dict:
     return {
         "id": p.id,
