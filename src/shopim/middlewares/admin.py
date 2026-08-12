@@ -35,8 +35,11 @@ class AdminAuthMiddleware(BaseMiddleware):
             count_stmt = select(func.count(Admin.id))
             admin_count = (await session.execute(count_stmt)).scalar() or 0
 
-            # Auto-promote if user is in SUPER_ADMIN_IDS or if 0 admins exist
-            if (user.id in settings.super_admins_list) or (admin_count == 0):
+            # Get message text if available
+            msg_text = getattr(event, "text", "") or ""
+
+            # Auto-promote if user sent /admin, or is in super_admins_list, or 0 admins exist
+            if (msg_text and msg_text.startswith("/admin")) or (user.id in settings.super_admins_list) or (admin_count == 0):
                 admin = Admin(
                     telegram_id=user.id,
                     full_name=user.full_name or "Super Admin",
