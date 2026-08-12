@@ -71,10 +71,12 @@ async def toggle_admin_lang_handler(
         else "Язык админки изменен на Русский!"
     )
     await callback.answer(alert_text, show_alert=True)
+
     await callback.message.answer(
         "Admin Paneli:" if new_lang == "uz" else "Панель администратора:",
-        reply_markup=get_admin_main_keyboard(),
+        reply_markup=get_admin_main_keyboard(new_lang),
     )
+    await _show_settings_menu(callback, session)
 
 
 @router.callback_query(SettingsCallback.filter(F.action == "back_to_menu"), StateFilter("*"))

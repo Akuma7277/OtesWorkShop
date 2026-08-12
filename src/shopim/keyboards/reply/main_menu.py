@@ -1,46 +1,26 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
+from src.shopim.utils.i18n_messages import t
+
 
 def get_user_main_keyboard(lang: str = "ru") -> ReplyKeyboardMarkup:
-    if lang == "uz":
-        return ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text="🛒 Sotib olish"),
-                    KeyboardButton(text="📦 Mavjud yuklar"),
-                ],
-                [
-                    KeyboardButton(text="👤 Profil"),
-                    KeyboardButton(text="📜 Xaridlar tarixi"),
-                ],
-                [
-                    KeyboardButton(text="💼 Ish! YUQORI MAOSH!"),
-                    KeyboardButton(text="🌐 Tilni o'zgartirish"),
-                ],
-                [
-                    KeyboardButton(text="💬 Sharhlar"),
-                ],
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(text=t("user_keyboard_buy", lang)),
+                KeyboardButton(text=t("user_keyboard_stock", lang)),
             ],
-            resize_keyboard=True,
-        )
-    else:
-        return ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text="Купить"),
-                    KeyboardButton(text="Наличие"),
-                ],
-                [
-                    KeyboardButton(text="Профиль"),
-                    KeyboardButton(text="История покупок"),
-                ],
-                [
-                    KeyboardButton(text="Работа! ПЛАТИМ ДОХУЯ!"),
-                    KeyboardButton(text="🌐 Сменить язык"),
-                ],
-                [
-                    KeyboardButton(text="Отзывы"),
-                ],
+            [
+                KeyboardButton(text=t("user_keyboard_profile", lang)),
+                KeyboardButton(text=t("user_keyboard_history", lang)),
             ],
-            resize_keyboard=True,
-        )
+            [
+                KeyboardButton(text=t("user_keyboard_jobs", lang)),
+                KeyboardButton(text=t("user_keyboard_lang", lang)),
+            ],
+            [
+                KeyboardButton(text=t("user_keyboard_reviews", lang)),
+            ],
+        ],
+        resize_keyboard=True,
+    )

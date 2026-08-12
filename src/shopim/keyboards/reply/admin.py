@@ -1,46 +1,26 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 
+from src.shopim.utils.i18n_messages import t
+
 
 def get_admin_main_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
-    if lang == "ru":
-        return ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text="📊 Dashboard"),
-                    KeyboardButton(text="🛒 Заказы"),
-                ],
-                [
-                    KeyboardButton(text="👥 Пользователи"),
-                    KeyboardButton(text="➕ Добавить товар"),
-                ],
-                [
-                    KeyboardButton(text="✏️ Управление товарами"),
-                    KeyboardButton(text="💳 Пополнения"),
-                ],
-                [
-                    KeyboardButton(text="⚙️ Настройки"),
-                ],
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(text=t("admin_keyboard_dashboard", lang)),
+                KeyboardButton(text=t("admin_keyboard_orders", lang)),
             ],
-            resize_keyboard=True,
-        )
-    else:
-        return ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text="📊 Dashboard"),
-                    KeyboardButton(text="🛒 Buyurtmalar"),
-                ],
-                [
-                    KeyboardButton(text="👥 Foydalanuvchilar"),
-                    KeyboardButton(text="➕ Tovar qo'shish"),
-                ],
-                [
-                    KeyboardButton(text="✏️ Tovarlarni boshqarish"),
-                    KeyboardButton(text="💳 To'lovlar"),
-                ],
-                [
-                    KeyboardButton(text="⚙️ Sozlamalar"),
-                ],
+            [
+                KeyboardButton(text=t("admin_keyboard_users", lang)),
+                KeyboardButton(text=t("admin_keyboard_add_product", lang)),
             ],
-            resize_keyboard=True,
-        )
+            [
+                KeyboardButton(text=t("admin_keyboard_edit_products", lang)),
+                KeyboardButton(text=t("admin_keyboard_topups", lang)),
+            ],
+            [
+                KeyboardButton(text=t("admin_keyboard_settings", lang)),
+            ],
+        ],
+        resize_keyboard=True,
+    )
