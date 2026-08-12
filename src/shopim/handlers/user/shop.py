@@ -105,6 +105,16 @@ async def back_to_categories_handler(callback: types.CallbackQuery, session: Asy
     await callback.answer()
 
 
+@router.callback_query(F.data == "back_to_main_menu")
+async def back_to_main_menu_handler(callback: types.CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.answer(
+        "Главное меню:",
+        reply_markup=get_user_main_keyboard(),
+    )
+    await callback.answer()
+
+
 @router.callback_query(ProductSelectCallback.filter())
 async def select_product_handler(
     callback: types.CallbackQuery,
