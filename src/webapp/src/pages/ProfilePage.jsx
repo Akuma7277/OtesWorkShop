@@ -192,9 +192,10 @@ export default function ProfilePage() {
           <div className="card mb-4" style={{ background: 'rgba(91,141,238,0.08)', borderColor: 'rgba(91,141,238,0.2)' }}>
             <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
               {lang === 'ru'
-                ? 'ℹ️ Отправьте чек об оплате в бот или свяжитесь с админом. После запроса админ подтвердит транзакцию.'
-                : 'ℹ️ To\'lov chekini botga yuboring yoki admin bilan bog\'laning. So\'rov yuborilgandan so'ng admin tasdiqlashi kutiladi.'
+                ? `ℹ️ Отправьте чек об оплате в бот или свяжитесь с админом. После запроса админ подтвердит транзакцию.`
+                : `ℹ️ To'lov chekini botga yuboring yoki admin bilan bog'laning. So'rov yuborilgandan so'ng admin tasdiqlashi kutiladi.`
               }
+
             </div>
           </div>
 
