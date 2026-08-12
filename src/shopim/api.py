@@ -184,30 +184,28 @@ async def get_current_admin(
     telegram_id: int = Depends(get_current_telegram_id),
     db: AsyncSession = Depends(get_db),
 ) -> Admin:
+    if telegram_id not in settings.super_admins_list:
+        raise HTTPException(status_code=403, detail="Admin access required.")
+
     from src.shopim.db.models import AdminRole
     stmt = select(Admin).where(Admin.telegram_id == telegram_id)
     admin = (await db.execute(stmt)).scalar_one_or_none()
 
-    if telegram_id in settings.super_admins_list:
-        if not admin:
-            admin = Admin(
-                telegram_id=telegram_id,
-                full_name="Super Admin",
-                role=AdminRole.SUPER_ADMIN,
-                is_active=True,
-            )
-            db.add(admin)
-            await db.commit()
-            await db.refresh(admin)
-        elif not admin.is_active or admin.role != AdminRole.SUPER_ADMIN:
-            admin.is_active = True
-            admin.role = AdminRole.SUPER_ADMIN
-            await db.commit()
-            await db.refresh(admin)
-        return admin
-
-    if not admin or not admin.is_active:
-        raise HTTPException(status_code=403, detail="Admin access required.")
+    if not admin:
+        admin = Admin(
+            telegram_id=telegram_id,
+            full_name="Super Admin",
+            role=AdminRole.SUPER_ADMIN,
+            is_active=True,
+        )
+        db.add(admin)
+        await db.commit()
+        await db.refresh(admin)
+    elif not admin.is_active or admin.role != AdminRole.SUPER_ADMIN:
+        admin.is_active = True
+        admin.role = AdminRole.SUPER_ADMIN
+        await db.commit()
+        await db.refresh(admin)
     return admin
 
 
@@ -219,27 +217,8 @@ def _is_admin_telegram_id(telegram_id: int) -> bool:
 # Helper: check if user is admin (lightweight)
 # ──────────────────────────────────────────────
 async def _user_is_admin(telegram_id: int, db: AsyncSession) -> bool:
-    from src.shopim.db.models import AdminRole
-    if telegram_id in settings.super_admins_list:
-        stmt = select(Admin).where(Admin.telegram_id == telegram_id)
-        admin = (await db.execute(stmt)).scalar_one_or_none()
-        if not admin:
-            admin = Admin(
-                telegram_id=telegram_id,
-                full_name="Super Admin",
-                role=AdminRole.SUPER_ADMIN,
-                is_active=True,
-            )
-            db.add(admin)
-            await db.commit()
-        elif not admin.is_active or admin.role != AdminRole.SUPER_ADMIN:
-            admin.is_active = True
-            admin.role = AdminRole.SUPER_ADMIN
-            await db.commit()
-        return True
+    return telegram_id in settings.super_admins_list
 
-    stmt = select(Admin).where(Admin.telegram_id == telegram_id, Admin.is_active == True)
-    return (await db.execute(stmt)).scalar_one_or_none() is not None
 
 
 
