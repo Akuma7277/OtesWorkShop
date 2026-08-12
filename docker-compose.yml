@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shopim_bot
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./src:/app/src
+      - ./migrations:/app/migrations
+    command: >
+      sh -c "
+        echo 'Waiting for PostgreSQL to be ready...' &&
+        while ! nc -z db 5432; do
+          sleep 1;
+        done;
+        echo 'PostgreSQL is ready.' &&
+        poetry run alembic upgrade head &&
+        echo 'Alembic migrations applied.' &&
+        poetry run python -m src.shopim.bot
+      "
+    restart: on-failure
+
+  db:
+    image: postgres:15-alpine
+    container_name: shopim_db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: shopim_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+volumes:
+  postgres_data:

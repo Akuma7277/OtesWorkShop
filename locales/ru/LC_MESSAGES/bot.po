@@ -1,0 +1,92 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Shopim Bot\n"
+"POT-Creation-Date: 2024-08-09 21:00+0000\n"
+"PO-Revision-Date: 2024-08-09 21:00+0000\n"
+"Last-Translator: Gemini <>\n"
+"Language-Team: Russian <>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Siz avval ro'yxatdan o'tgansiz. Iltimos, admin tasdig'ini kuting."
+msgstr "Вы уже зарегистрированы. Пожалуйста, дождитесь подтверждения администратора."
+
+msgid "Tilni tanlang / Выберите язык:"
+msgstr "Tilni tanlang / Выберите язык:"
+
+msgid "Assalomu alaykum! Shopim botiga xush kelibsiz.\nRo'yxatdan o'tish uchun ism-familiyangizni kiriting:"
+msgstr "Здравствуйте! Добро пожаловать в бот Shopim.\nДля регистрации введите ваше имя и фамилию:"
+
+msgid "Iltimos, to'liq ism-familiyangizni kiriting (masalan, Alisher Valiyev)."
+msgstr "Пожалуйста, введите ваше полное имя и фамилию (например, Иван Иванов)."
+
+msgid "Ajoyib! Endi telefon raqamingizni yuboring."
+msgstr "Отлично! Теперь отправьте свой номер телефона."
+
+msgid "Raqamingiz qabul qilindi. Endi yashash manzilingizni to'liq kiriting:"
+msgstr "Ваш номер принят. Теперь введите ваш полный адрес проживания:"
+
+msgid "Iltimos, manzilingizni to'liqroq kiriting."
+msgstr "Пожалуйста, введите ваш адрес более подробно."
+
+msgid "Manzilingiz qabul qilindi. Endi yoshingizni kiriting:"
+msgstr "Ваш адрес принят. Теперь введите ваш возраст:"
+
+msgid "Iltimos, yoshingizni to'g'ri kiriting (raqamda, {min_age} dan {max_age} gacha)."
+msgstr "Пожалуйста, введите ваш возраст корректно (числом, от {min_age} до {max_age})."
+
+msgid "Ro'yxatdan o'tish deyarli yakunlandi.\nIltimos, botdan foydalanish qoidalari bilan tanishib chiqing va roziligingizni bildiring."
+msgstr "Регистрация почти завершена.\nПожалуйста, ознакомьтесь с правилами использования бота и дайте свое согласие."
+
+msgid "Ro'yxatdan o'tish bekor qilindi."
+msgstr "Регистрация отменена."
+
+msgid "Tabriklaymiz, {full_name}! Siz muvaffaqiyatli ro'yxatdan o'tdingiz.\nSizning profilingiz tasdiqlash uchun adminga yuborildi. Tasdiqlangandan so'ng sizga xabar beramiz."
+msgstr "Поздравляем, {full_name}! Вы успешно зарегистрировались.\nВаш профиль отправлен на подтверждение администратору. Мы сообщим вам, когда он будет подтвержден."
+
+msgid "Xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring."
+msgstr "Произошла ошибка. Пожалуйста, попробуйте позже."
+
+msgid "Assalomu alaykum, {full_name}! Asosiy menyudasiz."
+msgstr "Здравствуйте, {full_name}! Вы в главном меню."
+
+msgid "Asosiy menyu"
+msgstr "Главное меню"
+
+msgid "🛍 Katalog"
+msgstr "🛍 Каталог"
+
+msgid "💰 Balansim"
+msgstr "💰 Мой баланс"
+
+msgid "➕ Balans to'ldirish"
+msgstr "➕ Пополнить баланс"
+
+msgid "📦 Buyurtmalarim"
+msgstr "📦 Мои заказы"
+
+msgid "👤 Profilim"
+msgstr "👤 Мой профиль"
+
+msgid "📞 Operator bilan aloqa"
+msgstr "📞 Связь с оператором"
+
+msgid "ℹ️ Qoidalar"
+msgstr "ℹ️ Правила"
+
+msgid "<b>Sizning profilingiz</b>\n\n<b>Ism:</b> {full_name}\n<b>Telefon:</b> {phone}\n<b>Manzil:</b> {address}\n<b>Til:</b> {language}"
+msgstr "<b>Ваш профиль</b>\n\n<b>Имя:</b> {full_name}\n<b>Телефон:</b> {phone}\n<b>Адрес:</b> {address}\n<b>Язык:</b> {language}"
+
+msgid "O'zbekcha"
+msgstr "Узбекский"
+
+msgid "Русский"
+msgstr "Русский"
+
+msgid "Tilni o'zgartirish"
+msgstr "Сменить язык"
+
+msgid "Til o'zgartirildi!"
+msgstr "Язык изменен!"

@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "shopim"
+version = "0.1.0"
+description = "Shopim Telegram Bot"
+authors = ["Gemini Agent <gemini@google.com>"]
+readme = "README.md"
+packages = [{include = "shopim", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+aiogram = "^3.5.0"
+sqlalchemy = {extras = ["asyncpg"], version = "^2.0.29"}
+alembic = "^1.13.1"
+pydantic = "^2.7.1"
+pydantic-settings = "^2.2.1"
+redis = "^5.0.4"
+apscheduler = "^3.10.4"
+structlog = "^24.1.0"
+python-dotenv = "^1.0.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.0"
+pytest-asyncio = "^0.23.6"
+black = "^24.4.2"
+ruff = "^0.4.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
