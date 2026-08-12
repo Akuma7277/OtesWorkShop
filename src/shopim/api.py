@@ -757,6 +757,173 @@ async def admin_reject_user(
     return {"ok": True}
 
 
+@app.post("/api/admin/users/{user_id}/block")
+async def admin_block_user(
+    user_id: int,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.status = UserStatus.BLOCKED
+    await db.commit()
+    return {"ok": True}
+
+
+@app.post("/api/admin/users/{user_id}/unblock")
+async def admin_unblock_user(
+    user_id: int,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.status = UserStatus.APPROVED
+    await db.commit()
+    return {"ok": True}
+
+
+# ──────────────────────────────────────────────
+# Admin Product Management Routes
+# ──────────────────────────────────────────────
+@app.post("/api/admin/products", status_code=201)
+async def admin_create_product(
+    request: Request,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from src.shopim.services.product_management_service import ProductManagementService
+    data = await request.json()
+    service = ProductManagementService(db)
+    product = await service.create_product(data, admin.id)
+    return _product_dict(product)
+
+
+@app.patch("/api/admin/products/{product_id}")
+async def admin_update_product(
+    product_id: int,
+    request: Request,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from src.shopim.services.product_management_service import ProductManagementService
+    data = await request.json()
+    service = ProductManagementService(db)
+    product = await service.update_product(product_id, data)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return _product_dict(product)
+
+
+@app.delete("/api/admin/products/{product_id}")
+async def admin_delete_product(
+    product_id: int,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from src.shopim.services.product_management_service import ProductManagementService
+    service = ProductManagementService(db)
+    success = await service.delete_product(product_id)
+    if not success:
+        # If product cannot be hard deleted, deactivate it instead
+        product = await db.get(Product, product_id)
+        if product:
+            product.is_active = False
+            await db.commit()
+            return {"ok": True, "message": "Product deactivated"}
+        raise HTTPException(status_code=400, detail="Cannot delete or deactivate product")
+    return {"ok": True, "message": "Product deleted"}
+
+
+# ──────────────────────────────────────────────
+# Admin Reviews Moderation
+# ──────────────────────────────────────────────
+@app.get("/api/admin/reviews/pending")
+async def admin_list_pending_reviews(
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy.orm import selectinload
+    stmt = (
+        select(Review)
+        .where(Review.status == ReviewStatus.PENDING)
+        .options(selectinload(Review.user))
+        .order_by(Review.created_at.desc())
+    )
+    reviews = (await db.execute(stmt)).scalars().all()
+    return [
+        {
+            "id": r.id,
+            "rating": r.rating,
+            "text": r.text,
+            "created_at": r.created_at.isoformat(),
+            "user": {
+                "full_name": r.user.full_name if r.user else "—",
+                "telegram_id": r.user.telegram_id if r.user else None,
+            }
+        }
+        for r in reviews
+    ]
+
+
+@app.post("/api/admin/reviews/{review_id}/approve")
+async def admin_approve_review(
+    review_id: int,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    review = await db.get(Review, review_id)
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found")
+    review.status = ReviewStatus.APPROVED
+    await db.commit()
+    return {"ok": True}
+
+
+@app.post("/api/admin/reviews/{review_id}/reject")
+async def admin_reject_review(
+    review_id: int,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    review = await db.get(Review, review_id)
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found")
+    review.status = ReviewStatus.REJECTED
+    await db.commit()
+    return {"ok": True}
+
+
+# ──────────────────────────────────────────────
+# Admin Settings Management
+# ──────────────────────────────────────────────
+@app.get("/api/admin/settings")
+async def admin_get_settings(
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from src.shopim.services.settings_service import SettingsService
+    service = SettingsService(db)
+    settings_model = await service.get_bot_settings()
+    return settings_model.model_dump(mode="json")
+
+
+@app.patch("/api/admin/settings")
+async def admin_update_settings(
+    request: Request,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from src.shopim.services.settings_service import SettingsService
+    data = await request.json()
+    service = SettingsService(db)
+    updated = await service.update_bot_settings(data, admin.id)
+    return updated.model_dump(mode="json")
+
+
+
 # ──────────────────────────────────────────────
 # Serve built Mini App static files
 # ──────────────────────────────────────────────

@@ -62,5 +62,22 @@ export const adminRejectTopup = (id, note) => api.post(`/admin/topups/${id}/reje
 export const adminGetUsers = (params = {}) => api.get('/admin/users', { params })
 export const adminApproveUser = (id) => api.post(`/admin/users/${id}/approve`)
 export const adminRejectUser = (id, reason) => api.post(`/admin/users/${id}/reject`, { reason })
+export const adminBlockUser = (id) => api.post(`/admin/users/${id}/block`)
+export const adminUnblockUser = (id) => api.post(`/admin/users/${id}/unblock`)
+
+// ---- Admin Product Management ----
+export const adminCreateProduct = (data) => api.post('/admin/products', data)
+export const adminUpdateProduct = (id, data) => api.patch(`/admin/products/${id}`, data)
+export const adminDeleteProduct = (id) => api.delete(`/admin/products/${id}`)
+
+// ---- Admin Reviews ----
+export const adminGetPendingReviews = () => api.get('/admin/reviews/pending')
+export const adminApproveReview = (id) => api.post(`/admin/reviews/${id}/approve`)
+export const adminRejectReview = (id) => api.post(`/admin/reviews/${id}/reject`)
+
+// ---- Admin Settings ----
+export const adminGetSettings = () => api.get('/admin/settings')
+export const adminUpdateSettings = (data) => api.patch('/admin/settings', data)
 
 export default api
+
