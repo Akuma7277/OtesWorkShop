@@ -13,7 +13,7 @@ router = Router(name="miniapp-router")
 @router.message(Command("app"))
 async def open_mini_app(message: Message):
     settings = get_settings()
-    url = settings.mini_app_url
+    url = settings.get_mini_app_url  # Auto-detects Railway domain
 
     if not url:
         await message.answer(
@@ -41,3 +41,4 @@ async def open_mini_app(message: Message):
         reply_markup=keyboard,
         parse_mode="HTML",
     )
+

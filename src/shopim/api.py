@@ -760,10 +760,35 @@ async def admin_reject_user(
 # ──────────────────────────────────────────────
 # Serve built Mini App static files
 # ──────────────────────────────────────────────
-_static_dir = os.path.join(os.path.dirname(__file__), "..", "..", "webapp", "dist")
+# api.py is at src/shopim/api.py
+# webapp dist is at src/webapp/dist
+_here = os.path.dirname(os.path.abspath(__file__))            # .../src/shopim
+_static_dir = os.path.normpath(os.path.join(_here, "..", "webapp", "dist"))  # .../src/webapp/dist
+
 if os.path.isdir(_static_dir):
-    app.mount("/", StaticFiles(directory=_static_dir, html=True), name="static")
+    from fastapi.responses import FileResponse
+
+    # Mount /assets only if the subfolder exists (Vite puts JS/CSS there)
+    _assets_dir = os.path.join(_static_dir, "assets")
+    if os.path.isdir(_assets_dir):
+        app.mount("/assets", StaticFiles(directory=_assets_dir), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa(full_path: str):
+        """Serve React SPA — always return index.html for unknown routes (client-side routing)."""
+        # Try to serve a real file first (e.g., favicon.ico, manifest.json)
+        requested = os.path.join(_static_dir, full_path)
+        if full_path and os.path.isfile(requested):
+            return FileResponse(requested)
+        index = os.path.join(_static_dir, "index.html")
+        return FileResponse(index)
+
 else:
     @app.get("/")
     async def root():
-        return {"message": "Shopim Mini App API is running. Build the frontend with: cd src/webapp && npm run build"}
+        return {
+            "message": "Shopim Mini App API is running.",
+            "hint": "Build the frontend: cd src/webapp && npm install && npm run build",
+            "mini_app_url": settings.get_mini_app_url,
+        }
+

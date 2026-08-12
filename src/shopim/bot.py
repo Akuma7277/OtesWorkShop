@@ -82,7 +82,7 @@ async def main():
         default=DefaultBotProperties(parse_mode="HTML"),
     )
 
-    await setup_bot_commands(bot)
+    await setup_bot_commands(bot, settings)
 
     dp = Dispatcher(storage=storage)
 

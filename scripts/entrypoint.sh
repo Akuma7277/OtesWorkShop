@@ -15,18 +15,34 @@ fi
 echo "Compiling locales..."
 poetry run python scripts/compile_locales.py
 
-# Build the Mini App frontend if Node.js is available
+# Build the Mini App frontend if Node.js is available and not already built
+WEBAPP_DIR="/app/src/webapp"
+DIST_DIR="$WEBAPP_DIR/dist"
+
 if command -v node > /dev/null 2>&1; then
-    echo "Building Mini App frontend..."
-    cd /app/src/webapp
-    npm ci --prefer-offline 2>/dev/null || npm install
-    npm run build
-    cd /app
+    if [ ! -d "$DIST_DIR" ] || [ ! -f "$DIST_DIR/index.html" ]; then
+        echo "Building Mini App frontend..."
+        cd "$WEBAPP_DIR"
+        npm install --prefer-offline 2>/dev/null || npm install
+        npm run build
+        cd /app
+    else
+        echo "Mini App frontend already built, skipping..."
+    fi
+else
+    echo "Node.js not found, skipping frontend build."
 fi
 
-echo "Starting Shopim API Server..."
-# Start FastAPI API server in background on port 8000
-poetry run uvicorn src.shopim.api:app --host 0.0.0.0 --port 8000 --workers 1 &
+# Determine API port — Railway injects PORT automatically
+API_PORT="${PORT:-8000}"
+
+# Log the public URL if available (set automatically by Railway)
+if [ -n "$RAILWAY_PUBLIC_DOMAIN" ]; then
+    echo "Mini App will be accessible at: https://$RAILWAY_PUBLIC_DOMAIN"
+fi
+
+echo "Starting Shopim API Server on port $API_PORT..."
+poetry run uvicorn src.shopim.api:app --host 0.0.0.0 --port "$API_PORT" --workers 1 &
 API_PID=$!
 
 echo "Starting Shopim Telegram Bot..."

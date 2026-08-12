@@ -37,6 +37,32 @@ class Settings(BaseSettings):
     mini_app_url: str = Field(default="", validation_alias="MINI_APP_URL")
 
     @property
+    def get_mini_app_url(self) -> str:
+        """
+        Automatically detects the Mini App URL.
+        Priority:
+          1. Explicitly set MINI_APP_URL env variable
+          2. RAILWAY_PUBLIC_DOMAIN (set automatically by Railway)
+          3. RAILWAY_STATIC_URL
+          4. Empty string (Mini App button will be hidden)
+        """
+        if self.mini_app_url:
+            url = self.mini_app_url
+            return url if url.startswith("http") else f"https://{url}"
+
+        # Railway injects this automatically
+        railway_domain = (
+            os.getenv("RAILWAY_PUBLIC_DOMAIN")
+            or os.getenv("RAILWAY_STATIC_URL")
+        )
+        if railway_domain:
+            domain = railway_domain.removeprefix("https://").removeprefix("http://")
+            return f"https://{domain}"
+
+        return ""
+
+
+    @property
     def db_url(self) -> str:
         # Check explicit DATABASE_URL or Railway environment variables
         url = (
