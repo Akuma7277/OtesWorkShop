@@ -319,7 +319,34 @@ async def get_debug_info(request: Request):
 
 
 
+@app.get("/api/debug-auth")
+async def debug_auth(request: Request, db: AsyncSession = Depends(get_db)):
+    init_data = request.headers.get("X-Telegram-Init-Data", "")
+    if not init_data:
+        return {"error": "X-Telegram-Init-Data header is missing"}
+    import urllib.parse, json, hmac, hashlib
+    try:
+        parsed = dict(urllib.parse.parse_qsl(init_data, strict_parsing=True))
+        received_hash = parsed.pop("hash", None)
+        data_check = "\n".join(f"{k}={v}" for k, v in sorted(parsed.items()))
+        secret = hmac.new(b"WebAppData", settings.bot_token.encode(), hashlib.sha256).digest()
+        expected = hmac.new(secret, data_check.encode(), hashlib.sha256).hexdigest()
+        hash_match = hmac.compare_digest(expected, received_hash) if received_hash else False
+        return {
+            "init_data_length": len(init_data),
+            "parsed_keys": list(parsed.keys()),
+            "received_hash": received_hash,
+            "expected_hash": expected,
+            "hash_match": hash_match,
+            "bot_token_configured": bool(settings.bot_token),
+            "user": json.loads(parsed.get("user", "{}")) if parsed.get("user") else None
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
 def _product_dict(p: Product) -> dict:
+
     return {
         "id": p.id,
         "name": p.name,
