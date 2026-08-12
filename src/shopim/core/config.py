@@ -38,7 +38,15 @@ class Settings(BaseSettings):
     @property
     def db_url(self) -> str:
         # Check explicit DATABASE_URL or Railway environment variables
-        url = self.database_url or os.getenv("DATABASE_URL") or os.getenv("DATABASE_PUBLIC_URL")
+        url = (
+            self.database_url
+            or os.getenv("DATABASE_URL")
+            or os.getenv("DATABASE_PRIVATE_URL")
+            or os.getenv("DATABASE_PUBLIC_URL")
+            or os.getenv("POSTGRES_URL")
+            or os.getenv("POSTGRESQL_URL")
+            or os.getenv("PGURL")
+        )
         if url:
             if url.startswith("postgres://"):
                 return url.replace("postgres://", "postgresql+asyncpg://", 1)
@@ -46,18 +54,27 @@ class Settings(BaseSettings):
                 return url.replace("postgresql://", "postgresql+asyncpg://", 1)
             return url
 
-        # Railway PostgreSQL standard environment variable fallbacks
-        host = os.getenv("PGHOST") or self.postgres_host
-        port = os.getenv("PGPORT") or self.postgres_port
-        user = os.getenv("PGUSER") or self.postgres_user
-        password = os.getenv("PGPASSWORD") or self.postgres_password
-        db = os.getenv("PGDATABASE") or self.postgres_db
+        # Check explicit PGHOST / POSTGRES_HOST
+        host = os.getenv("PGHOST") or os.getenv("POSTGRES_HOST")
+        if host and host not in ("localhost", "127.0.0.1", "db"):
+            port = os.getenv("PGPORT") or os.getenv("POSTGRES_PORT") or self.postgres_port
+            user = os.getenv("PGUSER") or os.getenv("POSTGRES_USER") or self.postgres_user
+            password = os.getenv("PGPASSWORD") or os.getenv("POSTGRES_PASSWORD") or self.postgres_password
+            db = os.getenv("PGDATABASE") or os.getenv("POSTGRES_DB") or self.postgres_db
+            return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{db}"
 
-        return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{db}"
+        # Automatic fallback to local SQLite database if no remote PostgreSQL is configured
+        os.makedirs("./data", exist_ok=True)
+        return "sqlite+aiosqlite:///./data/shopim.db"
 
     @property
     def get_redis_url(self) -> Optional[str]:
-        return self.redis_url or os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL")
+        return (
+            self.redis_url
+            or os.getenv("REDIS_URL")
+            or os.getenv("REDIS_PRIVATE_URL")
+            or os.getenv("REDIS_PUBLIC_URL")
+        )
 
     @property
     def super_admins_list(self) -> list[int]:

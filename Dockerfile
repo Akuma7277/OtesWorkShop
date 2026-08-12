@@ -12,8 +12,8 @@ RUN apt-get update && \
     gettext && \
     rm -rf /var/lib/apt/lists/*
 
-# Install poetry
-RUN pip install poetry asyncpg
+# Install poetry and database drivers
+RUN pip install poetry asyncpg aiosqlite
 
 # Copy only the files necessary for installing dependencies
 COPY pyproject.toml poetry.lock* ./
