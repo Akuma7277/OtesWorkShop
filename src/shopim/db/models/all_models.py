@@ -7,6 +7,8 @@ from datetime import datetime
 from sqlalchemy import (
     BIGINT,
     BOOLEAN,
+    BigInteger,
+    Integer,
     JSON,
     TEXT,
     VARCHAR,
@@ -22,6 +24,9 @@ from sqlalchemy.orm import Mapped, declarative_base, mapped_column, relationship
 from sqlalchemy.sql import func
 
 Base = declarative_base()
+
+PK_TYPE = BigInteger().with_variant(Integer, "sqlite")
+
 
 
 class UserStatus(enum.Enum):
@@ -81,7 +86,7 @@ class ReviewStatus(enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
     telegram_id: Mapped[int] = mapped_column(BIGINT, unique=True, nullable=False)
     username: Mapped[str | None] = mapped_column(VARCHAR(255))
     full_name: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
@@ -113,7 +118,7 @@ class User(Base):
 class Admin(Base):
     __tablename__ = "admins"
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
     telegram_id: Mapped[int] = mapped_column(BIGINT, unique=True, nullable=False)
     full_name: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
     role: Mapped[AdminRole] = mapped_column(
@@ -135,7 +140,7 @@ class Admin(Base):
 class Category(Base):
     __tablename__ = "categories"
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(VARCHAR(120), unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(BOOLEAN, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -152,7 +157,7 @@ class Category(Base):
 class Product(Base):
     __tablename__ = "products"
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
     category_id: Mapped[int | None] = mapped_column(
         BIGINT, ForeignKey("categories.id")
     )
@@ -201,7 +206,7 @@ class Product(Base):
 class Topup(Base):
     __tablename__ = "topups"
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BIGINT, ForeignKey("users.id"), nullable=False)
     amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
     payment_method: Mapped[str] = mapped_column(VARCHAR(80), nullable=False)
@@ -235,7 +240,7 @@ class Topup(Base):
 class BalanceTransaction(Base):
     __tablename__ = "balance_transactions"
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BIGINT, ForeignKey("users.id"), nullable=False)
     type: Mapped[BalanceTxType] = mapped_column(Enum(BalanceTxType), nullable=False)
     amount: Mapped[float] = mapped_column(Numeric(18, 2), nullable=False)
@@ -261,7 +266,7 @@ class BalanceTransaction(Base):
 class Order(Base):
     __tablename__ = "orders"
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
     order_number: Mapped[str] = mapped_column(VARCHAR(40), unique=True, nullable=False)
     user_id: Mapped[int] = mapped_column(BIGINT, ForeignKey("users.id"), nullable=False)
     status: Mapped[OrderStatus] = mapped_column(
@@ -304,7 +309,7 @@ class Order(Base):
 class OrderItem(Base):
     __tablename__ = "order_items"
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
     order_id: Mapped[int] = mapped_column(
         BIGINT, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False
     )
@@ -328,7 +333,7 @@ class OrderItem(Base):
 class StockMovement(Base):
     __tablename__ = "stock_movements"
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
     product_id: Mapped[int] = mapped_column(
         BIGINT, ForeignKey("products.id"), nullable=False
     )
@@ -365,7 +370,7 @@ class StockMovement(Base):
 class DeliveryEvent(Base):
     __tablename__ = "delivery_events"
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
     order_id: Mapped[int] = mapped_column(
         BIGINT, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False
     )
@@ -390,7 +395,7 @@ class DeliveryEvent(Base):
 class Notification(Base):
     __tablename__ = "notifications"
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
     recipient_telegram_id: Mapped[int] = mapped_column(BIGINT, nullable=False)
     recipient_type: Mapped[str] = mapped_column(VARCHAR(20), nullable=False)
     event_type: Mapped[str] = mapped_column(VARCHAR(80), nullable=False)
@@ -416,7 +421,7 @@ class Notification(Base):
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
     actor_telegram_id: Mapped[int] = mapped_column(BIGINT, nullable=False)
     actor_role: Mapped[str] = mapped_column(VARCHAR(30), nullable=False)
     action: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)
@@ -450,7 +455,7 @@ class AppSettings(Base):
 class Review(Base):
     __tablename__ = "reviews"
 
-    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BIGINT, ForeignKey("users.id"), nullable=False)
     rating: Mapped[int] = mapped_column(nullable=False, default=5)
     text: Mapped[str] = mapped_column(TEXT, nullable=False)
