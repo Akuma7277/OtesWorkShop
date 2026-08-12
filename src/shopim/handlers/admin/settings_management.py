@@ -116,9 +116,22 @@ async def choose_setting_to_edit_handler(
 async def get_new_setting_value_handler(
     message: types.Message, state: FSMContext, session: AsyncSession, admin: Admin
 ):
+    if not message.text:
+        return
+
+    text = message.text.strip()
+    if text.startswith("/") or text in {
+        "📊 Dashboard", "🛒 Buyurtmalar", "👥 Foydalanuvchilar", "➕ Tovar qo'shish",
+        "✏️ Tovarlarni boshqarish", "💳 To'lovlar", "⚙️ Sozlamalar", "🏠 Foydalanuvchi bo'limi",
+        "🏠 Foydalanuvchi rejimi", "🏠 User bo'limi", "🏠 Режим пользователя", "🛒 Sotib olish",
+        "📦 Mavjud yuklar", "👤 Profil", "📜 Xaridlar tarixi", "💼 Ish! YUQORI MAOSH!",
+        "🌐 Tilni o'zgartirish", "💬 Sharhlar", "🛠 Admin Paneli", "Admin Panel", "Панель администратора"
+    }:
+        return
+
     data = await state.get_data()
     field_name = data.get("field_to_edit")
-    new_value_str = message.text
+    new_value_str = text
 
     if not field_name:
         await state.clear()

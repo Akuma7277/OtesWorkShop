@@ -4,17 +4,31 @@ import os
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
-from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage
+from aiogram.types import BotCommand, BotCommandScopeDefault
 from redis.asyncio.client import Redis
 
 from src.shopim.core.config import get_settings
-from src.shopim.handlers import setup_routers
-from src.shopim.middlewares.db import DbSessionMiddleware
-from src.shopim.middlewares.user import UserAuthMiddleware
-from src.shopim.middlewares.admin import AdminAuthMiddleware
 from src.shopim.db.models.i18n import LanguageMiddleware
 from src.shopim.db.session import create_async_engine, create_session_pool
+from src.shopim.handlers import setup_routers
+from src.shopim.middlewares.admin import AdminAuthMiddleware
+from src.shopim.middlewares.db import DbSessionMiddleware
+from src.shopim.middlewares.user import UserAuthMiddleware
+
+
+async def setup_bot_commands(bot: Bot):
+    commands = [
+        BotCommand(command="start", description="🚀 Botni boshlash / Restart bot"),
+        BotCommand(command="menu", description="📋 Asosiy menyu / Main menu"),
+        BotCommand(command="admin", description="🛠 Admin paneli / Admin panel"),
+        BotCommand(command="user", description="🏠 Foydalanuvchi rejimi / User mode"),
+        BotCommand(command="profile", description="👤 Profil / Profile"),
+        BotCommand(command="balance", description="💳 Balans to'ldirish / Top up balance"),
+        BotCommand(command="cancel", description="🚫 Bekor qilish / Cancel action"),
+    ]
+    await bot.set_my_commands(commands, scope=BotCommandScopeDefault())
 
 
 async def main():
@@ -66,7 +80,10 @@ async def main():
         default=DefaultBotProperties(parse_mode="HTML"),
     )
 
+    await setup_bot_commands(bot)
+
     dp = Dispatcher(storage=storage)
+
 
     db_url = settings.db_url
     logger.info(f"Connecting to Database using dialect: {db_url.split('://')[0]}")

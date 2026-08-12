@@ -45,8 +45,13 @@ from src.shopim.handlers.user.topup import router as user_topup_router
 def setup_routers(dp: Dispatcher):
     """Includes all application routers in the dispatcher.
 
-    Admin routers are included first so they take precedence.
+    Core navigation routers (main menu & registration) are included first
+    so commands (/start, /admin, /user, /menu, /cancel) take top priority and clear state.
     """
+    # Core Navigation Routers
+    dp.include_router(admin_main_menu_router)
+    dp.include_router(user_registration_router)
+
     # Admin Routers
     dp.include_router(admin_dashboard_router)
     dp.include_router(admin_settings_management_router)
@@ -59,13 +64,12 @@ def setup_routers(dp: Dispatcher):
     dp.include_router(admin_topup_management_router)
     dp.include_router(admin_warehouse_router)
     dp.include_router(admin_review_moderation_router)
-    dp.include_router(admin_main_menu_router)
 
     # User Routers
-    dp.include_router(user_registration_router)
     dp.include_router(user_profile_router)
     dp.include_router(user_shop_router)
     dp.include_router(user_reviews_router)
     dp.include_router(user_balance_router)
     dp.include_router(user_topup_router)
     dp.include_router(user_order_history_router)
+

@@ -10,13 +10,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.shopim.db.models import Admin, AdminRole
 from src.shopim.db.repositories.admin_repository import AdminRepository
 from src.shopim.keyboards.reply.admin import get_admin_main_keyboard
+from src.shopim.keyboards.reply.main_menu import get_user_main_keyboard
 
 router = Router(name="admin-main-menu-router")
 
 
 @router.message(Command("admin"), StateFilter("*"))
 @router.message(
-    F.text.in_({"Admin Panel", "Панель администратора", "⚙️ Admin Panel"}),
+    F.text.in_({
+        "Admin Panel", "Панель администратора", "⚙️ Admin Panel", "🛠 Admin Paneli", "Admin paneli"
+    }),
     StateFilter("*"),
 )
 async def show_admin_menu(
@@ -46,4 +49,70 @@ async def show_admin_menu(
         welcome_text,
         reply_markup=get_admin_main_keyboard(),
         parse_mode="HTML",
+    )
+
+
+@router.message(Command("user"), StateFilter("*"))
+@router.message(
+    F.text.in_({
+        "🏠 Foydalanuvchi bo'limi", "🏠 Foydalanuvchi rejimi", "🏠 User bo'limi",
+        "🏠 Режим пользователя", "Foydalanuvchi bo'limi", "User bo'limi"
+    }),
+    StateFilter("*"),
+)
+async def switch_to_user_mode(
+    message: Message, session: AsyncSession, state: FSMContext
+):
+    await state.clear()
+    admin_repo = AdminRepository(session)
+    admin = await admin_repo.get_by_telegram_id(message.from_user.id)
+    is_admin = bool(admin and admin.is_active)
+
+    welcome_text = _(
+        "🏠 <b>Foydalanuvchi bo'limiga o'tildi.</b>\n\n"
+        "Mahsulotlar va xizmatlardan foydalanish uchun pastdagi menyuni tanlang:"
+    )
+
+    await message.answer(
+        welcome_text,
+        reply_markup=get_user_main_keyboard(is_admin=is_admin),
+        parse_mode="HTML",
+    )
+
+
+@router.message(Command("menu"), StateFilter("*"))
+async def menu_command_handler(
+    message: Message, session: AsyncSession, state: FSMContext
+):
+    await state.clear()
+    admin_repo = AdminRepository(session)
+    admin = await admin_repo.get_by_telegram_id(message.from_user.id)
+    is_admin = bool(admin and admin.is_active)
+
+    if is_admin:
+        await show_admin_menu(message, session, state, admin)
+    else:
+        await message.answer(
+            _("📋 <b>Asosiy menyu:</b>"),
+            reply_markup=get_user_main_keyboard(is_admin=False),
+            parse_mode="HTML",
+        )
+
+
+@router.message(Command("cancel"), StateFilter("*"))
+@router.message(
+    F.text.in_({"🚫 Bekor qilish", "🚫 Отмена", "Bekor qilish", "Отмена"}),
+    StateFilter("*"),
+)
+async def cancel_command_handler(
+    message: Message, session: AsyncSession, state: FSMContext
+):
+    await state.clear()
+    admin_repo = AdminRepository(session)
+    admin = await admin_repo.get_by_telegram_id(message.from_user.id)
+    is_admin = bool(admin and admin.is_active)
+
+    await message.answer(
+        _("🚫 Barcha amallar bekor qilindi."),
+        reply_markup=get_admin_main_keyboard() if is_admin else get_user_main_keyboard(is_admin=False),
     )
