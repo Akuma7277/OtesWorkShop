@@ -72,6 +72,12 @@ class BalanceTxType(enum.Enum):
     MANUAL_DEBIT = "MANUAL_DEBIT"
 
 
+class ReviewStatus(enum.Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -153,6 +159,7 @@ class Product(Base):
     name: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
     slug: Mapped[str] = mapped_column(VARCHAR(300), unique=True, nullable=False)
     description: Mapped[str | None] = mapped_column(TEXT)
+    pickup_address: Mapped[str | None] = mapped_column(TEXT)
     image_file_id: Mapped[str | None] = mapped_column(TEXT)
     image_url: Mapped[str | None] = mapped_column(TEXT)
     cost_price_per_gram: Mapped[float] = mapped_column(
@@ -438,3 +445,22 @@ class AppSettings(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+
+
+class Review(Base):
+    __tablename__ = "reviews"
+
+    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    user_id: Mapped[int] = mapped_column(BIGINT, ForeignKey("users.id"), nullable=False)
+    rating: Mapped[int] = mapped_column(nullable=False, default=5)
+    text: Mapped[str] = mapped_column(TEXT, nullable=False)
+    status: Mapped[ReviewStatus] = mapped_column(
+        Enum(ReviewStatus), nullable=False, default=ReviewStatus.PENDING
+    )
+    channel_message_id: Mapped[int | None] = mapped_column(BIGINT)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    user: Mapped[User] = relationship("User")
+
