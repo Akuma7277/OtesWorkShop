@@ -41,7 +41,7 @@ class OrderActionCallback(CallbackData, prefix="ord_act"):
 
 
 # --- Start Buy Flow ---
-@router.message(F.text.in_({"Купить", "Sotib olish", "🛒 Kuput", "🛒 Купить"}))
+@router.message(F.text.in_({"Купить", "Sotib olish", "🛒 Kuput", "🛒 Купить", "🛒 Sotib olish"}))
 async def start_buy_flow_handler(message: types.Message, session: AsyncSession):
     stmt = select(Category).where(Category.is_active.is_(True)).order_by(Category.name)
     result = await session.execute(stmt)
@@ -273,7 +273,7 @@ async def check_payment_handler(
 
 
 # --- Stock Availability (Наличие) ---
-@router.message(F.text.in_({"Наличие", "Mavjud yuklar", "📦 Nalichie", "📦 Наличие"}))
+@router.message(F.text.in_({"Наличие", "Mavjud yuklar", "📦 Nalichie", "📦 Наличие", "📦 Mavjud yuklar"}))
 async def show_stock_availability_handler(message: types.Message, session: AsyncSession):
     stmt = (
         select(Product)
