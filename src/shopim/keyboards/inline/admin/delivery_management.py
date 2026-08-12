@@ -1,5 +1,6 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.i18n import gettext as _
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from src.shopim.db.models import Order, OrderStatus
@@ -17,7 +18,7 @@ def get_delivery_action_keyboard(order: Order, page: int) -> InlineKeyboardMarku
 
     if order.status == OrderStatus.APPROVED:
         builder.button(
-            text="📦 Qadoqlashni boshlash",
+            text=_("📦 Qadoqlashni boshlash"),
             callback_data=DeliveryActionCallback(
                 action="set_status",
                 order_id=order.id,
@@ -27,7 +28,7 @@ def get_delivery_action_keyboard(order: Order, page: int) -> InlineKeyboardMarku
         )
     elif order.status == OrderStatus.PACKING:
         builder.button(
-            text="🚚 Yo'lga chiqdi",
+            text=_("🚚 Yo'lga chiqdi"),
             callback_data=DeliveryActionCallback(
                 action="set_status",
                 order_id=order.id,
@@ -37,7 +38,7 @@ def get_delivery_action_keyboard(order: Order, page: int) -> InlineKeyboardMarku
         )
     elif order.status == OrderStatus.OUT_FOR_DELIVERY:
         builder.button(
-            text="🏁 Yetkazib berildi",
+            text=_("🏁 Yetkazib berildi"),
             callback_data=DeliveryActionCallback(
                 action="set_status",
                 order_id=order.id,
@@ -48,7 +49,7 @@ def get_delivery_action_keyboard(order: Order, page: int) -> InlineKeyboardMarku
 
     builder.row(
         InlineKeyboardButton(
-            text="⬅️ Qidiruv natijalariga",
+            text=_("⬅️ Qidiruv natijalariga"),
             callback_data=f"order_browse:page::{page}",
         )
     )

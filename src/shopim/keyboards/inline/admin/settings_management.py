@@ -1,5 +1,6 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.i18n import gettext as _
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from src.shopim.core.settings_models import BotSettings
@@ -14,7 +15,7 @@ def get_settings_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
     builder.button(
-        text="🌐 Admin tilini o'zgartirish / Сменить язык",
+        text=_("🌐 Admin tilini o'zgartirish"),
         callback_data=SettingsCallback(action="toggle_admin_lang").pack(),
     )
 
@@ -32,7 +33,7 @@ def get_settings_menu_keyboard() -> InlineKeyboardMarkup:
 def get_back_to_settings_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="⬅️ Orqaga / Назад",
+        text=_("⬅️ Orqaga"),
         callback_data=SettingsCallback(action="back_to_menu").pack(),
     )
     return builder.as_markup()

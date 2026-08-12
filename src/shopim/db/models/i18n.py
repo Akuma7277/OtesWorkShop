@@ -27,13 +27,25 @@ class LanguageMiddleware(I18nMiddleware):
     ) -> str:
         user: User | Admin | None = data.get("user") or data.get("admin")
 
-        if user and user.language_code:
-            return user.language_code
+        if user and getattr(user, "language_code", None):
+            lang = str(user.language_code).strip().lower()
+            if lang in ("uz", "ru"):
+                return lang
 
         state = data.get("state")
         if state:
             state_data = await state.get_data()
             if "language_code" in state_data:
-                return state_data["language_code"]
+                lang = str(state_data["language_code"]).strip().lower()
+                if lang in ("uz", "ru"):
+                    return lang
 
-        return self.i18n.default_locale
+        from_user = data.get("event_from_user") or getattr(event, "from_user", None)
+        if from_user and getattr(from_user, "language_code", None):
+            tg_lang = str(from_user.language_code).strip().lower()
+            if tg_lang.startswith("ru"):
+                return "ru"
+            elif tg_lang.startswith("uz"):
+                return "uz"
+
+        return self.i18n.default_locale or "uz"

@@ -25,11 +25,8 @@ RUN poetry config virtualenvs.create false && poetry install --without dev --no-
 # Copy the rest of the application's source code
 COPY . .
 
-# Compile Russian gettext translations if bot.po exists
-RUN mkdir -p /app/locales/ru/LC_MESSAGES && \
-    if [ -f /app/locales/ru/LC_MESSAGES/bot.po ]; then \
-        msgfmt -o /app/locales/ru/LC_MESSAGES/bot.mo /app/locales/ru/LC_MESSAGES/bot.po; \
-    fi
+# Compile gettext translations for all locales (uz, ru)
+RUN python scripts/compile_locales.py
 
 # Make entrypoint executable
 RUN chmod +x /app/scripts/entrypoint.sh

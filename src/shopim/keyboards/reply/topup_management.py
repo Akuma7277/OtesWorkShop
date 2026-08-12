@@ -2,6 +2,7 @@ from typing import Optional
 
 from aiogram import Bot, F, Router, types
 from aiogram.fsm.context import FSMContext
+from aiogram.utils.i18n import gettext as _
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.shopim.db.models import Admin, User
@@ -34,7 +35,7 @@ async def _send_topup_list(
     chat_id = target.chat.id if isinstance(target, types.Message) else target.message.chat.id
 
     if not result.topups:
-        text = "⏳ Kutilayotgan balans to'ldirish so'rovlari mavjud emas."
+        text = _("⏳ Kutilayotgan balans to'ldirish so'rovlari mavjud emas.")
         if isinstance(target, types.CallbackQuery):
             await target.message.answer(text)
             await target.answer()
@@ -44,16 +45,23 @@ async def _send_topup_list(
 
     if isinstance(target, types.Message):
         await target.answer(
-            f"Kutilayotgan so'rovlar (Sahifa {result.current_page}/{result.total_pages}):"
+            _("Kutilayotgan so'rovlar (Sahifa {current_page}/{total_pages}):").format(
+                current_page=result.current_page, total_pages=result.total_pages
+            )
         )
 
     for topup in result.topups:
-        text = (
-            f"<b>Yangi so'rov!</b>\n\n"
-            f"Foydalanuvchi: {topup.user.full_name}\n"
-            f"Telegram ID: <code>{topup.user.telegram_id}</code>\n"
-            f"Summa: <b>{topup.amount:.2f} so'm</b>\n"
-            f"Sana: {topup.created_at.strftime('%Y-%m-%d %H:%M')}"
+        text = _(
+            "<b>Yangi so'rov!</b>\n\n"
+            "Foydalanuvchi: {full_name}\n"
+            "Telegram ID: <code>{telegram_id}</code>\n"
+            "Summa: <b>{amount:.2f} so'm</b>\n"
+            "Sana: {created_at}"
+        ).format(
+            full_name=topup.user.full_name,
+            telegram_id=topup.user.telegram_id,
+            amount=topup.amount,
+            created_at=topup.created_at.strftime('%Y-%m-%d %H:%M'),
         )
         keyboard = get_topup_review_keyboard(topup_id=topup.id)
 
@@ -75,7 +83,7 @@ async def _send_topup_list(
     )
     if pagination_keyboard:
         await target.bot.send_message(
-            chat_id, "Navigatsiya:", reply_markup=pagination_keyboard
+            chat_id, _("Navigatsiya:"), reply_markup=pagination_keyboard
         )
 
 
@@ -108,26 +116,26 @@ async def approve_topup_handler(
 
     if topup:
         user = await session.get(User, topup.user_id)
-        new_caption = (
-            f"✅ <b>So'rov tasdiqlandi!</b>\n\n"
-            f"Foydalanuvchi: {user.full_name}\n"
-            f"Summa: {topup.amount:.2f} so'm\n"
-            f"Tasdiqladi: {admin.full_name}"
-        )
+        new_caption = _(
+            "✅ <b>So'rov tasdiqlandi!</b>\n\n"
+            "Foydalanuvchi: {user_full_name}\n"
+            "Summa: {amount:.2f} so'm\n"
+            "Tasdiqladi: {admin_full_name}"
+        ).format(user_full_name=user.full_name, amount=topup.amount, admin_full_name=admin.full_name)
         await callback.message.edit_caption(caption=new_caption, parse_mode="HTML")
 
         if user:
             try:
                 await bot.send_message(
                     user.telegram_id,
-                    f"🎉 Sizning {topup.amount:.2f} so'mlik to'lovingiz tasdiqlandi va balansingizga qo'shildi.",
+                    _("🎉 Sizning {amount:.2f} so'mlik to'lovingiz tasdiqlandi va balansingizga qo'shildi.").format(amount=topup.amount),
                 )
             except Exception as e:
                 print(f"Could not send topup approval notification to user {user.id}: {e}")
     else:
-        await callback.message.edit_caption(caption="❌ So'rov topilmadi yoki allaqachon ko'rib chiqilgan.")
+        await callback.message.edit_caption(caption=_("❌ So'rov topilmadi yoki allaqachon ko'rib chiqilgan."))
 
-    await callback.answer("Tasdiqlandi!")
+    await callback.answer(_("Tasdiqlandi!"))
 
 
 @router.callback_query(TopupActionCallback.filter(F.action == "reject"))
@@ -140,7 +148,7 @@ async def reject_topup_start_handler(
         chat_id=callback.message.chat.id,
         message_id_to_edit=callback.message.message_id,
     )
-    await callback.message.answer("Iltimos, ushbu to'lovni rad etish sababini yozing.")
+    await callback.message.answer(_("Iltimos, ushbu to'lovni rad etish sababini yozing."))
     await callback.answer()
 
 
@@ -162,13 +170,13 @@ async def get_topup_rejection_reason_handler(
 
     if topup:
         user = await session.get(User, topup.user_id)
-        new_caption = (
-            f"❌ <b>So'rov rad etildi!</b>\n\n"
-            f"Foydalanuvchi: {user.full_name}\n"
-            f"Summa: {topup.amount:.2f} so'm\n"
-            f"Rad etdi: {admin.full_name}\n"
-            f"Sabab: {reason}"
-        )
+        new_caption = _(
+            "❌ <b>So'rov rad etildi!</b>\n\n"
+            "Foydalanuvchi: {user_full_name}\n"
+            "Summa: {amount:.2f} so'm\n"
+            "Rad etdi: {admin_full_name}\n"
+            "Sabab: {reason}"
+        ).format(user_full_name=user.full_name, amount=topup.amount, admin_full_name=admin.full_name, reason=reason)
         try:
             await bot.edit_message_caption(
                 chat_id=chat_id, message_id=message_id, caption=new_caption, parse_mode="HTML"
@@ -180,7 +188,7 @@ async def get_topup_rejection_reason_handler(
             try:
                 await bot.send_message(
                     user.telegram_id,
-                    f"Afsuski, sizning {topup.amount:.2f} so'mlik to'lovingiz rad etildi.\nSabab: {reason}",
+                    _("Afsuski, sizning {amount:.2f} so'mlik to'lovingiz rad etildi.\nSabab: {reason}").format(amount=topup.amount, reason=reason),
                 )
             except Exception as e:
                 print(f"Could not send topup rejection notification to user {user.id}: {e}")
@@ -189,7 +197,7 @@ async def get_topup_rejection_reason_handler(
             await bot.edit_message_caption(
                 chat_id=chat_id,
                 message_id=message_id,
-                caption="❌ So'rov topilmadi yoki allaqachon ko'rib chiqilgan.",
+                caption=_("❌ So'rov topilmadi yoki allaqachon ko'rib chiqilgan."),
             )
         except Exception:
-            await bot.send_message(chat_id, "❌ So'rov topilmadi yoki allaqachon ko'rib chiqilgan.")
+            await bot.send_message(chat_id, _("❌ So'rov topilmadi yoki allaqachon ko'rib chiqilgan."))

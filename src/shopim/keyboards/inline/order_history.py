@@ -2,6 +2,7 @@ from typing import Sequence
 
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.i18n import gettext as _
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from src.shopim.db.models import Order
@@ -22,7 +23,7 @@ def get_order_history_keyboard(
     builder = InlineKeyboardBuilder()
     for order in orders:
         builder.button(
-            text=f"№{order.order_number} - {order.total_amount:.2f} so'm",
+            text=f"№{order.order_number} - {order.total_amount:.2f} {_('so\'m')}",
             callback_data=ViewOrderCallback(order_id=order.id, page=current_page).pack(),
         )
     builder.adjust(1)
@@ -31,14 +32,14 @@ def get_order_history_keyboard(
     if current_page > 1:
         nav_buttons.append(
             InlineKeyboardButton(
-                text="⬅️ Orqaga",
+                text=_("⬅️ Orqaga"),
                 callback_data=OrderHistoryPageCallback(page=current_page - 1).pack(),
             )
         )
     if current_page < total_pages:
         nav_buttons.append(
             InlineKeyboardButton(
-                text="➡️ Oldinga",
+                text=_("➡️ Oldinga"),
                 callback_data=OrderHistoryPageCallback(page=current_page + 1).pack(),
             )
         )
@@ -51,7 +52,7 @@ def get_order_history_keyboard(
 def get_order_detail_keyboard(page: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="⬅️ Buyurtmalar ro'yxatiga",
+        text=_("⬅️ Buyurtmalar ro'yxatiga"),
         callback_data=OrderHistoryPageCallback(page=page).pack(),
     )
     return builder.as_markup()

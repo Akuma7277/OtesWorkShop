@@ -1,4 +1,5 @@
 from aiogram import Bot, F, Router, types
+from aiogram.utils.i18n import gettext as _
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.shopim.db.models import ReviewStatus
@@ -21,7 +22,7 @@ async def approve_review_handler(
     review = await repo.get_by_id_with_user(review_id)
 
     if not review:
-        await callback.answer("Sharh topilmadi.", show_alert=True)
+        await callback.answer(_("Sharh topilmadi."), show_alert=True)
         return
 
     settings_service = SettingsService(session)
@@ -36,14 +37,14 @@ async def approve_review_handler(
             user_label = (
                 f"@{review.user.username}"
                 if (review.user and review.user.username)
-                else (review.user.full_name if review.user else "Klient")
+                else (review.user.full_name if review.user else _("Klient"))
             )
-            channel_text = (
-                f"💬 <b>Mijozdan yangi sharh! / Новый отзыв от клиента!</b>\n\n"
-                f"👤 Mijoz: <b>{user_label}</b>\n"
-                f"⭐️ Baho: ⭐️⭐️⭐️⭐️⭐️\n"
-                f"📝 <i>\"{review.text}\"</i>"
-            )
+            channel_text = _(
+                "💬 <b>Mijozdan yangi sharh!</b>\n\n"
+                "👤 Mijoz: <b>{user_label}</b>\n"
+                "⭐️ Baho: ⭐️⭐️⭐️⭐️⭐️\n"
+                "📝 <i>\"{text}\"</i>"
+            ).format(user_label=user_label, text=review.text)
             posted_msg = await bot.send_message(
                 chat_id=channel_id, text=channel_text, parse_mode="HTML"
             )
@@ -61,25 +62,26 @@ async def approve_review_handler(
     # Notify user that their review was approved
     if review.user:
         try:
+            user_loc = review.user.language_code or "uz"
             await bot.send_message(
                 chat_id=review.user.telegram_id,
-                text="🎉 <b>Sharhingiz muvaffaqiyatli tasdiqlandi va e'lon qilindi!</b> Ishonchingiz uchun rahmat.",
+                text=_("🎉 <b>Sharhingiz muvaffaqiyatli tasdiqlandi va e'lon qilindi!</b> Ishonchingiz uchun rahmat.", locale=user_loc),
                 parse_mode="HTML",
             )
         except Exception:
             pass
 
     status_text = (
-        f"✅ <b>Sharh №{review_id} tasdiqlandi va kanalga joylandi!</b>"
+        _("✅ <b>Sharh №{review_id} tasdiqlandi va kanalga joylandi!</b>").format(review_id=review_id)
         if posted_to_channel
-        else f"✅ <b>Sharh №{review_id} tasdiqlandi!</b>\n⚠️ <i>Otzivlar kanali sozlamalarda biriktirilmagan.</i>"
+        else _("✅ <b>Sharh №{review_id} tasdiqlandi!</b>\n⚠️ <i>Otzivlar kanali sozlamalarda biriktirilmagan.</i>").format(review_id=review_id)
     )
 
     await callback.message.edit_text(
         status_text,
         parse_mode="HTML",
     )
-    await callback.answer("Sharh tasdiqlandi!")
+    await callback.answer(_("Sharh tasdiqlandi!"))
 
 
 @router.callback_query(F.data.startswith("reject_rev:"))
@@ -92,7 +94,7 @@ async def reject_review_handler(
     await repo.update_review_status(review_id=review_id, status=ReviewStatus.REJECTED)
 
     await callback.message.edit_text(
-        f"❌ <b>Sharh №{review_id} rad etildi.</b>",
+        _("❌ <b>Sharh №{review_id} rad etildi.</b>").format(review_id=review_id),
         parse_mode="HTML",
     )
-    await callback.answer("Sharh rad etildi.")
+    await callback.answer(_("Sharh rad etildi."))

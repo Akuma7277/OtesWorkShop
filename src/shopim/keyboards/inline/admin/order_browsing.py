@@ -2,6 +2,7 @@ from typing import Sequence
 
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.i18n import gettext as _
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from src.shopim.db.models import Order
@@ -16,7 +17,7 @@ class OrderBrowseCallback(CallbackData, prefix="order_browse"):
 def get_order_browsing_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="🔍 Buyurtma qidirish",
+        text=_("🔍 Buyurtma qidirish"),
         callback_data=OrderBrowseCallback(action="search").pack(),
     )
     return builder.as_markup()
@@ -27,7 +28,7 @@ def get_order_search_results_keyboard(
 ) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for order in orders:
-        text = f"№{order.order_number} - {order.user.full_name} ({order.total_amount:.2f} so'm)"
+        text = f"№{order.order_number} - {order.user.full_name} ({order.total_amount:.2f} {_('so\'m')})"
         builder.button(
             text=text,
             callback_data=OrderBrowseCallback(
@@ -56,7 +57,7 @@ def get_order_search_results_keyboard(
 
     builder.row(
         InlineKeyboardButton(
-            text="⤴️ Yangi qidiruv",
+            text=_("⤴️ Yangi qidiruv"),
             callback_data=OrderBrowseCallback(action="search").pack(),
         )
     )

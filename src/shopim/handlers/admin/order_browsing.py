@@ -5,6 +5,7 @@ from aiogram import F, Router, types
 from aiogram.filters import StateFilter
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.i18n import gettext as _
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,7 +32,7 @@ def get_order_list_keyboard(
 ) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for order in orders:
-        user_name = order.user.full_name if order.user else "Foydalanuvchi"
+        user_name = order.user.full_name if order.user else _("Foydalanuvchi")
         text = f"№{order.order_number} - {user_name} ({order.total_amount:.2f} USD)"
         builder.button(
             text=text,
@@ -69,9 +70,8 @@ async def start_order_browsing_handler(
     count_stmt = select(func.count(Order.id))
     total_orders = (await session.execute(count_stmt)).scalar() or 0
 
-    lang = admin.language_code or "uz"
     if total_orders == 0:
-        empty_msg = "Hozircha buyurtmalar mavjud emas." if lang == "uz" else "Пока нет заказов."
+        empty_msg = _("Hozircha buyurtmalar mavjud emas.")
         await message.answer(empty_msg)
         return
 
@@ -85,11 +85,10 @@ async def start_order_browsing_handler(
     result = await session.execute(stmt)
     orders = result.scalars().all()
 
-    text = (
-        f"🛒 <b>Barcha buyurtmalar ro'yxati (Jami: {total_orders} ta):</b>\nBatafsil ko'rish uchun buyurtmani tanlang:"
-        if lang == "uz"
-        else f"🛒 <b>Список всех заказов (Всего: {total_orders}):</b>\nВыберите заказ для просмотра:"
-    )
+    text = _(
+        "🛒 <b>Barcha buyurtmalar ro'yxati (Jami: {total_orders} ta):</b>\n"
+        "Batafsil ko'rish uchun buyurtmani tanlang:"
+    ).format(total_orders=total_orders)
 
     keyboard = get_order_list_keyboard(orders, total_pages, 1)
     await message.answer(text, reply_markup=keyboard, parse_mode="HTML")
@@ -117,12 +116,9 @@ async def paginate_orders_handler(
     result = await session.execute(stmt)
     orders = result.scalars().all()
 
-    lang = admin.language_code or "uz"
-    text = (
-        f"🛒 <b>Barcha buyurtmalar ro'yxati (Sahifa {callback_data.page}/{total_pages}):</b>"
-        if lang == "uz"
-        else f"🛒 <b>Список заказов (Страница {callback_data.page}/{total_pages}):</b>"
-    )
+    text = _(
+        "🛒 <b>Barcha buyurtmalar ro'yxati (Sahifa {page}/{total_pages}):</b>"
+    ).format(page=callback_data.page, total_pages=total_pages)
 
     keyboard = get_order_list_keyboard(orders, total_pages, callback_data.page)
     await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
@@ -145,38 +141,36 @@ async def select_order_handler(
     order = result.scalar_one_or_none()
 
     if not order:
-        await callback.answer("Buyurtma topilmadi.", show_alert=True)
+        await callback.answer(_("Buyurtma topilmadi."), show_alert=True)
         return
 
-    lang = admin.language_code or "uz"
-    user_label = f"@{order.user.username}" if (order.user and order.user.username) else (order.user.full_name if order.user else "Klient")
+    user_label = f"@{order.user.username}" if (order.user and order.user.username) else (order.user.full_name if order.user else _("Klient"))
 
+    tovar_str = _("Tovar")
     items_summary = "\n".join(
-        [f"  • {item.product.name if item.product else 'Tovar'}: <b>{item.grams} gr</b> x <b>{item.unit_price_per_gram:.2f} USD</b>" for item in order.items]
+        [f"  • {item.product.name if item.product else tovar_str}: <b>{item.grams} gr</b> x <b>{item.unit_price_per_gram:.2f} USD</b>" for item in order.items]
     )
 
-    if lang == "ru":
-        text = (
-            f"📦 <b>Заказ №{order.order_number}</b>\n\n"
-            f"• Клиент: <b>{user_label}</b> (ID: <code>{order.user.telegram_id if order.user else 0}</code>)\n"
-            f"• Статус: <b>{order.status.value}</b>\n"
-            f"• Сумма: <b>{order.total_amount:.2f} USD</b>\n"
-            f"• Дата: {order.created_at.strftime('%Y-%m-%d %H:%M')}\n\n"
-            f"<b>Товары:</b>\n{items_summary}"
-        )
-    else:
-        text = (
-            f"📦 <b>Buyurtma №{order.order_number}</b>\n\n"
-            f"• Mijoz: <b>{user_label}</b> (ID: <code>{order.user.telegram_id if order.user else 0}</code>)\n"
-            f"• Holati: <b>{order.status.value}</b>\n"
-            f"• Summasi: <b>{order.total_amount:.2f} USD</b>\n"
-            f"• Sana: {order.created_at.strftime('%Y-%m-%d %H:%M')}\n\n"
-            f"<b>Tovarlar:</b>\n{items_summary}"
-        )
+    text = _(
+        "📦 <b>Buyurtma №{order_number}</b>\n\n"
+        "• Mijoz: <b>{user_label}</b> (ID: <code>{user_id}</code>)\n"
+        "• Holati: <b>{status}</b>\n"
+        "• Summasi: <b>{total_amount:.2f} USD</b>\n"
+        "• Sana: {created_at}\n\n"
+        "<b>Tovarlar:</b>\n{items_summary}"
+    ).format(
+        order_number=order.order_number,
+        user_label=user_label,
+        user_id=order.user.telegram_id if order.user else 0,
+        status=order.status.value,
+        total_amount=order.total_amount,
+        created_at=order.created_at.strftime('%Y-%m-%d %H:%M'),
+        items_summary=items_summary,
+    )
 
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="⬅️ Ro'yxatga qaytish / К списку",
+        text=_("⬅️ Ro'yxatga qaytish"),
         callback_data=OrderBrowseCallback(action="page", page=callback_data.page).pack(),
     )
     await callback.message.edit_text(text, reply_markup=builder.as_markup(), parse_mode="HTML")

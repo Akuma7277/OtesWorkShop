@@ -2,6 +2,7 @@ from typing import Sequence
 
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.i18n import gettext as _
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from src.shopim.db.models import Product
@@ -55,12 +56,12 @@ def get_product_list_for_editing_keyboard(
 def get_product_edit_menu_keyboard(product_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     fields = [
-        ("✏️ Nomini o'zgartirish", "name"),
-        ("📝 Tavsifni o'zgartirish", "description"),
-        ("🖼 Rasmni o'zgartirish", "image"),
-        ("💰 Tannarxni o'zgartirish", "cost_price"),
-        ("💵 Sotuv narxini o'zgartirish", "sale_price"),
-        ("📉 Low stock chegarasini o'zgartirish", "low_stock_threshold"),
+        (_("✏️ Nomini o'zgartirish"), "name"),
+        (_("📝 Tavsifni o'zgartirish"), "description"),
+        (_("🖼 Rasmni o'zgartirish"), "image"),
+        (_("💰 Tannarxni o'zgartirish"), "cost_price"),
+        (_("💵 Sotuv narxini o'zgartirish"), "sale_price"),
+        (_("📉 Low stock chegarasini o'zgartirish"), "low_stock_threshold"),
     ]
     for text, field in fields:
         builder.button(
@@ -69,7 +70,7 @@ def get_product_edit_menu_keyboard(product_id: int) -> InlineKeyboardMarkup:
         )
 
     builder.button(
-        text="🗑 O'chirish",
+        text=_("🗑 O'chirish"),
         callback_data=ProductEditCallback(action="delete", product_id=product_id).pack(),
     )
     builder.adjust(1)
@@ -79,11 +80,11 @@ def get_product_edit_menu_keyboard(product_id: int) -> InlineKeyboardMarkup:
 def get_product_delete_confirmation_keyboard(product_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="✅ Ha, o'chirish",
+        text=_("✅ Ha, o'chirish"),
         callback_data=ProductEditCallback(action="confirm_delete", product_id=product_id).pack(),
     )
     builder.button(
-        text="❌ Yo'q, bekor qilish",
+        text=_("❌ Yo'q, bekor qilish"),
         callback_data=ProductEditCallback(action="cancel_delete", product_id=product_id).pack(),
     )
     builder.adjust(1)
@@ -93,7 +94,7 @@ def get_product_delete_confirmation_keyboard(product_id: int) -> InlineKeyboardM
 def get_back_to_edit_menu_keyboard(product_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="⬅️ Orqaga",
+        text=_("⬅️ Orqaga"),
         callback_data=ProductEditCallback(action="select", product_id=product_id).pack(),
     )
     return builder.as_markup()

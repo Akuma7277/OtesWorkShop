@@ -4,6 +4,7 @@ from aiogram import F, Router
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
+from aiogram.utils.i18n import gettext as _
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.shopim.db.models import Admin, AdminRole
@@ -36,20 +37,13 @@ async def show_admin_menu(
             await session.commit()
             await session.refresh(admin)
 
-    lang = admin.language_code or "uz"
-    if lang == "ru":
-        welcome_text = (
-            f"Здравствуйте, <b>{admin.full_name}</b>! Вы в панели администратора.\n"
-            f"Роль: <b>{admin.role.value}</b>"
-        )
-    else:
-        welcome_text = (
-            f"Salom, <b>{admin.full_name}</b>! Admin panelidasiz.\n"
-            f"Roli: <b>{admin.role.value}</b>"
-        )
+    welcome_text = _(
+        "Salom, <b>{full_name}</b>! Admin panelidasiz.\n"
+        "Roli: <b>{role}</b>"
+    ).format(full_name=admin.full_name, role=admin.role.value)
 
     await message.answer(
         welcome_text,
-        reply_markup=get_admin_main_keyboard(lang),
+        reply_markup=get_admin_main_keyboard(),
         parse_mode="HTML",
     )

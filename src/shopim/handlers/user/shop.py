@@ -55,15 +55,9 @@ async def start_buy_flow_handler(
     result = await session.execute(stmt)
     categories = result.scalars().all()
 
-    lang = user.language_code or "uz"
-
     if not categories:
-        empty_msg = (
-            "Afsuski, hozircha mavjud joylashuvlar yo'q."
-            if lang == "uz"
-            else "К сожалению, пока нет доступных районов."
-        )
-        await message.answer(empty_msg, reply_markup=get_user_main_keyboard(lang))
+        empty_msg = _("Afsuski, hozircha mavjud joylashuvlar yo'q.")
+        await message.answer(empty_msg, reply_markup=get_user_main_keyboard())
         return
 
     builder = InlineKeyboardBuilder()
@@ -73,11 +67,7 @@ async def start_buy_flow_handler(
         )
     builder.adjust(1)
 
-    prompt = (
-        "Joylash joyini (Toshkent tumanini) tanlang:"
-        if lang == "uz"
-        else "Выберите район:"
-    )
+    prompt = _("Joylash joyini (Toshkent tumanini) tanlang:")
     await message.answer(prompt, reply_markup=builder.as_markup())
 
 
@@ -97,14 +87,8 @@ async def select_category_handler(
     result = await session.execute(stmt)
     products = result.scalars().all()
 
-    lang = user.language_code or "uz"
-
     if not products:
-        no_prod_msg = (
-            "Ushbu tumanda hozircha tovarlar mavjud emas."
-            if lang == "uz"
-            else "В этом районе пока нет товаров в наличии."
-        )
+        no_prod_msg = _("Ushbu tumanda hozircha tovarlar mavjud emas.")
         await callback.answer(no_prod_msg, show_alert=True)
         return
 
@@ -117,16 +101,12 @@ async def select_category_handler(
         )
 
     builder.button(
-        text="⬅️ Orqaga" if lang == "uz" else "⬅️ Назад",
+        text=_("⬅️ Orqaga"),
         callback_data="back_to_categories",
     )
     builder.adjust(1)
 
-    prompt = (
-        "Ushbu tumandagi mahsulotni tanlang:"
-        if lang == "uz"
-        else "Выберите товар в этом районе:"
-    )
+    prompt = _("Ushbu tumandagi mahsulotni tanlang:")
     await callback.message.edit_text(prompt, reply_markup=builder.as_markup())
     await callback.answer()
 
@@ -139,8 +119,6 @@ async def back_to_categories_handler(
     result = await session.execute(stmt)
     categories = result.scalars().all()
 
-    lang = user.language_code or "uz"
-
     builder = InlineKeyboardBuilder()
     for cat in categories:
         builder.button(
@@ -148,11 +126,7 @@ async def back_to_categories_handler(
         )
     builder.adjust(1)
 
-    prompt = (
-        "Joylash joyini (Toshkent tumanini) tanlang:"
-        if lang == "uz"
-        else "Выберите район:"
-    )
+    prompt = _("Joylash joyini (Toshkent tumanini) tanlang:")
     await callback.message.edit_text(prompt, reply_markup=builder.as_markup())
     await callback.answer()
 
@@ -162,10 +136,9 @@ async def back_to_main_menu_handler(
     callback: types.CallbackQuery, state: FSMContext, user: User
 ):
     await state.clear()
-    lang = user.language_code or "uz"
     await callback.message.answer(
-        "Asosiy menyu:" if lang == "uz" else "Главное меню:",
-        reply_markup=get_user_main_keyboard(lang),
+        _("Asosiy menyu:"),
+        reply_markup=get_user_main_keyboard(),
     )
     await callback.answer()
 
@@ -178,14 +151,9 @@ async def select_product_handler(
     user: User,
 ):
     product = await session.get(Product, callback_data.product_id)
-    lang = user.language_code or "uz"
 
     if not product or not product.is_active:
-        not_found_msg = (
-            "Mahsulot topilmadi yoki tugagan."
-            if lang == "uz"
-            else "Товар не найден или распродан."
-        )
+        not_found_msg = _("Mahsulot topilmadi yoki tugagan.")
         await callback.answer(not_found_msg, show_alert=True)
         return
 
@@ -199,16 +167,12 @@ async def select_product_handler(
         callback_data=PaymentMethodCallback(product_id=product.id, method="USDT").pack(),
     )
     builder.button(
-        text="⬅️ Orqaga" if lang == "uz" else "⬅️ Назад",
+        text=_("⬅️ Orqaga"),
         callback_data="back_to_categories",
     )
     builder.adjust(2, 1)
 
-    text = (
-        f"To'lov uchun: <b>{product.sale_price_per_gram:.2f} USD</b>\nTo'lov usulini tanlang:"
-        if lang == "uz"
-        else f"К оплате: <b>{product.sale_price_per_gram:.2f} USD</b>\nВыберите способ оплаты:"
-    )
+    text = _("To'lov uchun: <b>{price:.2f} USD</b>\nTo'lov usulini tanlang:").format(price=product.sale_price_per_gram)
     await callback.message.edit_text(text, reply_markup=builder.as_markup(), parse_mode="HTML")
     await callback.answer()
 
@@ -221,10 +185,9 @@ async def choose_payment_method_handler(
     session: AsyncSession,
 ):
     product = await session.get(Product, callback_data.product_id)
-    lang = user.language_code or "uz"
 
     if not product:
-        await callback.answer("Mahsulot topilmadi." if lang == "uz" else "Товар не найден.", show_alert=True)
+        await callback.answer(_("Mahsulot topilmadi."), show_alert=True)
         return
 
     settings_service = SettingsService(session)
@@ -265,36 +228,31 @@ async def choose_payment_method_handler(
         else f"{product.sale_price_per_gram:.2f}"
     )
 
-    if lang == "ru":
-        invoice_text = (
-            f"К оплате: <b>{product.sale_price_per_gram:.2f} USD</b>\n"
-            f"Адрес {method}:\n"
-            f"<code>{wallet}</code>\n"
-            f"Сумма {method}: <b>{crypto_amount}</b>\n\n"
-            f"Оплата зачисляется после подтверждения сети — обычно несколько минут.\n"
-            f"После оплаты нажмите «Проверить оплату»."
-        )
-    else:
-        invoice_text = (
-            f"To'lov uchun: <b>{product.sale_price_per_gram:.2f} USD</b>\n"
-            f"Manzil {method}:\n"
-            f"<code>{wallet}</code>\n"
-            f"Summa {method}: <b>{crypto_amount}</b>\n\n"
-            f"To'lov tarmoq tasdiqlangach tushadi — odatda bir necha daqiqa.\n"
-            f"To'lagach «To'lovni tekshirish» tugmasini bosing."
-        )
+    invoice_text = _(
+        "To'lov uchun: <b>{price:.2f} USD</b>\n"
+        "Manzil {method}:\n"
+        "<code>{wallet}</code>\n"
+        "Summa {method}: <b>{crypto_amount}</b>\n\n"
+        "To'lov tarmoq tasdiqlangach tushadi — odatda bir necha daqiqa.\n"
+        "To'lagach «To'lovni tekshirish» tugmasini bosing."
+    ).format(
+        price=product.sale_price_per_gram,
+        method=method,
+        wallet=wallet,
+        crypto_amount=crypto_amount,
+    )
 
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="To'lovni tekshirish" if lang == "uz" else "Проверить оплату",
+        text=_("To'lovni tekshirish"),
         callback_data=OrderActionCallback(order_id=new_order.id, action="check").pack(),
     )
     builder.button(
-        text="To'lovni bekor qilish" if lang == "uz" else "Отменить платеж",
+        text=_("To'lovni bekor qilish"),
         callback_data=OrderActionCallback(order_id=new_order.id, action="cancel").pack(),
     )
     builder.button(
-        text="⬅️ Orqaga" if lang == "uz" else "⬅️ Назад",
+        text=_("⬅️ Orqaga"),
         callback_data="back_to_categories",
     )
     builder.adjust(2, 1)
@@ -315,8 +273,7 @@ async def cancel_payment_handler(
         order.status = OrderStatus.CANCELLED
         await session.commit()
 
-    lang = user.language_code or "uz"
-    cancel_text = "To'lov bekor qilindi." if lang == "uz" else "Платеж отменен."
+    cancel_text = _("To'lov bekor qilindi.")
     await callback.message.edit_text(cancel_text, reply_markup=None)
     await callback.answer()
 
@@ -330,38 +287,38 @@ async def check_payment_handler(
     bot: Bot,
 ):
     order = await session.get(Order, callback_data.order_id)
-    lang = user.language_code or "uz"
     if not order:
-        await callback.answer("Buyurtma topilmadi." if lang == "uz" else "Заказ не найден.", show_alert=True)
+        await callback.answer(_("Buyurtma topilmadi."), show_alert=True)
         return
 
     from src.shopim.services.notification_service import NotificationService
     notification_service = NotificationService(bot, session)
 
-    alert_text = (
-        f"🔔 <b>To'lov bo'yicha bildirishnoma!</b>\n"
-        f"Foydalanuvchi: {user.full_name} (@{user.username or 'без_юзернейма'})\n"
-        f"Buyurtma №: <b>{order.order_number}</b>\n"
-        f"Summa: <b>{order.total_amount:.2f} USD</b>"
+    alert_text = _(
+        "🔔 <b>To'lov bo'yicha bildirishnoma!</b>\n"
+        "Foydalanuvchi: {full_name} (@{username})\n"
+        "Buyurtma №: <b>{order_number}</b>\n"
+        "Summa: <b>{total_amount:.2f} USD</b>"
+    ).format(
+        full_name=user.full_name,
+        username=user.username or "bez_username",
+        order_number=order.order_number,
+        total_amount=order.total_amount,
     )
 
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="✅ Tasdiqlash / Подтвердить",
+        text=_("✅ Tasdiqlash"),
         callback_data=f"admin_approve_ord:{order.id}",
     )
     builder.button(
-        text="❌ Rad etish / Отклонить",
+        text=_("❌ Rad etish"),
         callback_data=f"admin_reject_ord:{order.id}",
     )
     builder.adjust(2)
 
     await notification_service.notify_admins(alert_text, reply_markup=builder.as_markup())
-    alert_user_text = (
-        "To'lov admin tekshiruviga yuborildi. Tasdiqlanishini kuting."
-        if lang == "uz"
-        else "Оплата отправлена на проверку администратору. Ожидайте подтверждения."
-    )
+    alert_user_text = _("To'lov admin tekshiruviga yuborildi. Tasdiqlanishini kuting.")
     await callback.answer(alert_user_text, show_alert=True)
 
 
@@ -383,30 +340,16 @@ async def show_stock_availability_handler(
     result = await session.execute(stmt)
     products = result.scalars().all()
 
-    lang = user.language_code or "uz"
-
     if not products:
-        empty_msg = (
-            "Afsuski, hozircha omborda tovarlar mavjud emas."
-            if lang == "uz"
-            else "К сожалению, на данный момент нет товаров в наличии."
-        )
-        await message.answer(empty_msg, reply_markup=get_user_main_keyboard(lang))
+        empty_msg = _("Afsuski, hozircha omborda tovarlar mavjud emas.")
+        await message.answer(empty_msg, reply_markup=get_user_main_keyboard())
         return
 
-    if lang == "ru":
-        lines = ["📦 <b>Товары в наличии:</b>\n"]
-        for prod in products:
-            lines.append(
-                f"• <b>{prod.name}</b> — {prod.sale_price_per_gram:.2f} USD ({prod.stock_grams:.1f} gr в наличии)"
-            )
-        lines.append("\nДля покупки нажмите кнопку <b>«Купить»</b>.")
-    else:
-        lines = ["📦 <b>Mavjud tovarlar:</b>\n"]
-        for prod in products:
-            lines.append(
-                f"• <b>{prod.name}</b> — {prod.sale_price_per_gram:.2f} USD ({prod.stock_grams:.1f} gr mavjud)"
-            )
-        lines.append("\nXarid qilish uchun <b>«Sotib olish»</b> tugmasini bosing.")
+    lines = [_("📦 <b>Mavjud tovarlar:</b>\n")]
+    for prod in products:
+        lines.append(
+            f"• <b>{prod.name}</b> — {prod.sale_price_per_gram:.2f} USD ({prod.stock_grams:.1f} gr {_('mavjud')})"
+        )
+    lines.append(_("\nXarid qilish uchun <b>«Sotib olish»</b> tugmasini bosing."))
 
-    await message.answer("\n".join(lines), reply_markup=get_user_main_keyboard(lang), parse_mode="HTML")
+    await message.answer("\n".join(lines), reply_markup=get_user_main_keyboard(), parse_mode="HTML")

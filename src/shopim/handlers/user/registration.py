@@ -1,6 +1,7 @@
 from aiogram import Bot, Router, types
 from aiogram.filters import CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
+from aiogram.utils.i18n import gettext as _
 
 from src.shopim.db.models import User
 from src.shopim.keyboards.reply.main_menu import get_user_main_keyboard
@@ -15,24 +16,16 @@ async def start_handler(
     await state.clear()
     bot_info = await bot.get_me()
     bot_name = bot_info.first_name or "Shopim"
-    full_name = message.from_user.full_name or "клиент"
-    lang = user.language_code if user else "ru"
+    full_name = message.from_user.full_name or _("mijoz")
 
-    if lang == "uz":
-        welcome_text = (
-            f"<b>{bot_name}</b> 👥 Xush kelibsiz!\n\n"
-            f"Assalomu alaykum, <b>{full_name}</b>!\n"
-            f"Mahsulotlarni tanlash va xarid qilish uchun pastdagi menyudan foydalaning."
-        )
-    else:
-        welcome_text = (
-            f"<b>{bot_name}</b> 👥 Добро пожаловать!\n\n"
-            f"Здравствуйте, <b>{full_name}</b>!\n"
-            f"Воспользуйтесь меню ниже для выбора товаров и совершения покупок."
-        )
+    welcome_text = _(
+        "<b>{bot_name}</b> 👥 Xush kelibsiz!\n\n"
+        "Assalomu alaykum, <b>{full_name}</b>!\n"
+        "Mahsulotlarni tanlash va xarid qilish uchun pastdagi menyudan foydalaning."
+    ).format(bot_name=bot_name, full_name=full_name)
 
     await message.answer(
         welcome_text,
-        reply_markup=get_user_main_keyboard(lang),
+        reply_markup=get_user_main_keyboard(),
         parse_mode="HTML",
     )

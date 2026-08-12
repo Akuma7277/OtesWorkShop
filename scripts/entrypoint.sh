@@ -10,5 +10,8 @@ if [ $MIGRATION_STATUS -ne 0 ]; then
     echo "Notice: Alembic migration skipped or ended with warnings. Proceeding with bot startup..."
 fi
 
+echo "Compiling locales..."
+poetry run python scripts/compile_locales.py
+
 echo "Starting Shopim Telegram Bot..."
 poetry run python -m src.shopim.bot

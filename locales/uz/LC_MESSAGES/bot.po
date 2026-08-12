@@ -1,0 +1,417 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Shopim Bot 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-12 18:00+0000\n"
+"PO-Revision-Date: 2026-08-12 18:00+0000\n"
+"Last-Translator: Antigravity AI\n"
+"Language-Team: Uzbek <>\n"
+"Language: uz\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "🛒 Sotib olish"
+msgstr "🛒 Sotib olish"
+
+msgid "📦 Mavjud yuklar"
+msgstr "📦 Mavjud yuklar"
+
+msgid "👤 Profil"
+msgstr "👤 Profil"
+
+msgid "📜 Xaridlar tarixi"
+msgstr "📜 Xaridlar tarixi"
+
+msgid "💼 Ish! YUQORI MAOSH!"
+msgstr "💼 Ish! YUQORI MAOSH!"
+
+msgid "🌐 Tilni o'zgartirish"
+msgstr "🌐 Tilni o'zgartirish"
+
+msgid "💬 Sharhlar"
+msgstr "💬 Sharhlar"
+
+msgid "📊 Dashboard"
+msgstr "📊 Dashboard"
+
+msgid "🛒 Buyurtmalar"
+msgstr "🛒 Buyurtmalar"
+
+msgid "👥 Foydalanuvchilar"
+msgstr "👥 Foydalanuvchilar"
+
+msgid "➕ Tovar qo'shish"
+msgstr "➕ Tovar qo'shish"
+
+msgid "✏️ Tovarlarni boshqarish"
+msgstr "✏️ Tovarlarni boshqarish"
+
+msgid "💳 To'lovlar"
+msgstr "💳 To'lovlar"
+
+msgid "⚙️ Sozlamalar"
+msgstr "⚙️ Sozlamalar"
+
+msgid "📱 Telefon raqamni yuborish"
+msgstr "📱 Telefon raqamni yuborish"
+
+msgid "⬅️ Orqaga"
+msgstr "⬅️ Orqaga"
+
+msgid "➡️ Oldinga"
+msgstr "➡️ Oldinga"
+
+msgid "❌ Bekor qilish"
+msgstr "❌ Bekor qilish"
+
+msgid "✅ Roziman"
+msgstr "✅ Roziman"
+
+msgid "✅ Tasdiqlash"
+msgstr "✅ Tasdiqlash"
+
+msgid "❌ Rad etish"
+msgstr "❌ Rad etish"
+
+msgid "👥 Xaridorlar ro'yxati"
+msgstr "👥 Xaridorlar ro'yxati"
+
+msgid "🔄 Yangilash"
+msgstr "🔄 Yangilash"
+
+msgid "📊 Dashboard ga qaytish"
+msgstr "📊 Dashboard ga qaytish"
+
+msgid "📦 Qadoqlashni boshlash"
+msgstr "📦 Qadoqlashni boshlash"
+
+msgid "🚚 Yo'lga chiqdi"
+msgstr "🚚 Yo'lga chiqdi"
+
+msgid "🏁 Yetkazib berildi"
+msgstr "🏁 Yetkazib berildi"
+
+msgid "⬅️ Qidiruv natijalariga"
+msgstr "⬅️ Qidiruv natijalariga"
+
+msgid "🔍 Buyurtma qidirish"
+msgstr "🔍 Buyurtma qidirish"
+
+msgid "⤴️ Yangi qidiruv"
+msgstr "⤴️ Yangi qidiruv"
+
+msgid "✏️ Nomini o'zgartirish"
+msgstr "✏️ Nomini o'zgartirish"
+
+msgid "📝 Tavsifni o'zgartirish"
+msgstr "📝 Tavsifni o'zgartirish"
+
+msgid "🖼 Rasmni o'zgartirish"
+msgstr "🖼 Rasmni o'zgartirish"
+
+msgid "💰 Tannarxni o'zgartirish"
+msgstr "💰 Tannarxni o'zgartirish"
+
+msgid "💵 Sotuv narxini o'zgartirish"
+msgstr "💵 Sotuv narxini o'zgartirish"
+
+msgid "📉 Low stock chegarasini o'zgartirish"
+msgstr "📉 Low stock chegarasini o'zgartirish"
+
+msgid "🗑 O'chirish"
+msgstr "🗑 O'chirish"
+
+msgid "✅ Ha, o'chirish"
+msgstr "✅ Ha, o'chirish"
+
+msgid "❌ Yo'q, bekor qilish"
+msgstr "❌ Yo'q, bekor qilish"
+
+msgid "⏭ O'tkazib yuborish"
+msgstr "⏭ O'tkazib yuborish"
+
+msgid "🌐 Admin tilini o'zgartirish"
+msgstr "🌐 Admin tilini o'zgartirish"
+
+msgid "📊 Qoldiqlar"
+msgstr "📊 Qoldiqlar"
+
+msgid "🔄 Harakatlar tarixi"
+msgstr "🔄 Harakatlar tarixi"
+
+msgid "✏️ Qoldiqni tuzatish"
+msgstr "✏️ Qoldiqni tuzatish"
+
+msgid "⬅️ Buyurtmalar ro'yxatiga"
+msgstr "⬅️ Buyurtmalar ro'yxatiga"
+
+msgid "✍️ Sharh qoldirish"
+msgstr "✍️ Sharh qoldirish"
+
+msgid "✅ Tasdiqlash va Kanalga joylash"
+msgstr "✅ Tasdiqlash va Kanalga joylash"
+
+msgid "To'lovni tekshirish"
+msgstr "To'lovni tekshirish"
+
+msgid "To'lovni bekor qilish"
+msgstr "To'lovni bekor qilish"
+
+msgid "mijoz"
+msgstr "mijoz"
+
+msgid "Klient"
+msgstr "Klient"
+
+msgid "so'm"
+msgstr "so'm"
+
+msgid "Sahifa"
+msgstr "Sahifa"
+
+msgid "Balansingiz"
+msgstr "Balansingiz"
+
+msgid "Tranzaksiyalar tarixi"
+msgstr "Tranzaksiyalar tarixi"
+
+msgid "Tranzaksiyalar tarixi bo'sh."
+msgstr "Tranzaksiyalar tarixi bo'sh."
+
+msgid "📥 Balans to'ldirish"
+msgstr "📥 Balans to'ldirish"
+
+msgid "📤 Xarid"
+msgstr "📤 Xarid"
+
+msgid "📥 Pul qaytarilishi"
+msgstr "📥 Pul qaytarilishi"
+
+msgid "📥 Manual to'ldirish"
+msgstr "📥 Manual to'ldirish"
+
+msgid "📤 Manual yechish"
+msgstr "📤 Manual yechish"
+
+msgid "Noma'lum operatsiya"
+msgstr "Noma'lum operatsiya"
+
+msgid "Noma'lum"
+msgstr "Noma'lum"
+
+msgid "Sizda hali buyurtmalar mavjud emas."
+msgstr "Sizda hali buyurtmalar mavjud emas."
+
+msgid "Sizning buyurtmalaringiz"
+msgstr "Sizning buyurtmalaringiz"
+
+msgid "Buyurtma topilmadi!"
+msgstr "Buyurtma topilmadi!"
+
+msgid "Buyurtma topilmadi."
+msgstr "Buyurtma topilmadi."
+
+msgid "⏳ Admin tasdiqlashi kutilmoqda"
+msgstr "⏳ Admin tasdiqlashi kutilmoqda"
+
+msgid "✅ Tasdiqlangan"
+msgstr "✅ Tasdiqlangan"
+
+msgid "📦 Qadoqlanmoqda"
+msgstr "📦 Qadoqlanmoqda"
+
+msgid "🚚 Yetkazib berilmoqda"
+msgstr "🚚 Yetkazib berilmoqda"
+
+msgid "🏁 Yetkazib berilgan"
+msgstr "🏁 Yetkazib berilgan"
+
+msgid "❌ Rad etilgan"
+msgstr "❌ Rad etilgan"
+
+msgid "🚫 Bekor qilingan"
+msgstr "🚫 Bekor qilingan"
+
+msgid "💰 Qaytarilgan"
+msgstr "💰 Qaytarilgan"
+
+msgid "📝 Qoralama"
+msgstr "📝 Qoralama"
+
+msgid "Tilni tanlang / Выберите язык:"
+msgstr "Tilni tanlang / Выберите язык:"
+
+msgid "Asosiy menyu:"
+msgstr "Asosiy menyu:"
+
+msgid "Sharh yuborish bekor qilindi."
+msgstr "Sharh yuborish bekor qilindi."
+
+msgid "Iltimos, batafsilroq sharh yozing (kamida 5 ta belgi)."
+msgstr "Iltimos, batafsilroq sharh yozing (kamida 5 ta belgi)."
+
+msgid "Rahmat! Sharhingiz adminga tekshirish uchun yuborildi."
+msgstr "Rahmat! Sharhingiz adminga tekshirish uchun yuborildi."
+
+msgid "Balans to'ldirish bekor qilindi."
+msgstr "Balans to'ldirish bekor qilindi."
+
+msgid "Balansni to'ldirish uchun summani kiriting (so'mda):"
+msgstr "Balansni to'ldirish uchun summani kiriting (so'mda):"
+
+msgid "Minimal to'ldirish summasi 1000 so'm."
+msgstr "Minimal to'ldirish summasi 1000 so'm."
+
+msgid "Xato. Iltimos, summani musbat raqamda kiriting (masalan, 50000)."
+msgstr "Xato. Iltimos, summani musbat raqamda kiriting (masalan, 50000)."
+
+msgid "Iltimos, chekni rasm ko'rinishida yuboring."
+msgstr "Iltimos, chekni rasm ko'rinishida yuboring."
+
+msgid "✅ So'rovingiz qabul qilindi. Admin tasdiqlashi bilan balansingizga pul o'tkaziladi."
+msgstr "✅ So'rovingiz qabul qilindi. Admin tasdiqlashi bilan balansingizga pul o'tkaziladi."
+
+msgid "Afsuski, hozircha mavjud joylashuvlar yo'q."
+msgstr "Afsuski, hozircha mavjud joylashuvlar yo'q."
+
+msgid "Joylash joyini (Toshkent tumanini) tanlang:"
+msgstr "Joylash joyini (Toshkent tumanini) tanlang:"
+
+msgid "Ushbu tumanda hozircha tovarlar mavjud emas."
+msgstr "Ushbu tumanda hozircha tovarlar mavjud emas."
+
+msgid "Ushbu tumandagi mahsulotni tanlang:"
+msgstr "Ushbu tumandagi mahsulotni tanlang:"
+
+msgid "Mahsulot topilmadi yoki tugagan."
+msgstr "Mahsulot topilmadi yoki tugagan."
+
+msgid "To'lov bekor qilindi."
+msgstr "To'lov bekor qilindi."
+
+msgid "To'lov admin tekshiruviga yuborildi. Tasdiqlanishini kuting."
+msgstr "To'lov admin tekshiruviga yuborildi. Tasdiqlanishini kuting."
+
+msgid "Afsuski, hozircha omborda tovarlar mavjud emas."
+msgstr "Afsuski, hozircha omborda tovarlar mavjud emas."
+
+msgid "mavjud"
+msgstr "mavjud"
+
+msgid "Analitika yangilandi!"
+msgstr "Analitika yangilandi!"
+
+msgid "Xaridorlar ro'yxati yangilandi!"
+msgstr "Xaridorlar ro'yxati yangilandi!"
+
+msgid "Noma'lum sozlama."
+msgstr "Noma'lum sozlama."
+
+msgid "Xatolik yuz berdi. Iltimos, boshidan boshlang."
+msgstr "Xatolik yuz berdi. Iltimos, boshidan boshlang."
+
+msgid "KECHIKMOQDA"
+msgstr "KECHIKMOQDA"
+
+msgid "MUDDAT YAQINLASHMOQDA"
+msgstr "MUDDAT YAQINLASHMOQDA"
+
+msgid "Chegara"
+msgstr "Chegara"
+
+msgid "<b>{bot_name}</b> 👥 Xush kelibsiz!\n\nAssalomu alaykum, <b>{full_name}</b>!\nMahsulotlarni tanlash va xarid qilish uchun pastdagi menyudan foydalaning."
+msgstr "<b>{bot_name}</b> 👥 Xush kelibsiz!\n\nAssalomu alaykum, <b>{full_name}</b>!\nMahsulotlarni tanlash va xarid qilish uchun pastdagi menyudan foydalaning."
+
+msgid "👤 <b>Sizning profilingiz</b>\n🧾 Xaridlar: <b>{total_purchases}</b>\n💰 Xaridlar summasi: <b>{total_spent:.2f} USD</b>\n💳 Balans: <b>0.00 USD</b>\n🎁 Chegirma: <b>0%</b>"
+msgstr "👤 <b>Sizning profilingiz</b>\n🧾 Xaridlar: <b>{total_purchases}</b>\n💰 Xaridlar summasi: <b>{total_spent:.2f} USD</b>\n💳 Balans: <b>0.00 USD</b>\n🎁 Chegirma: <b>0%</b>"
+
+msgid "💼 <b>Ish! YUQORI MAOSH!</b>\n\nKuryerlar, qadoqlovchilar va omborchilar talab qilinadi!\nYuqori maosh, moslashuvchan grafik va to'liq maxfiylik.\n\nOperator bilan bog'lanish: {operator}"
+msgstr "💼 <b>Ish! YUQORI MAOSH!</b>\n\nKuryerlar, qadoqlovchilar va omborchilar talab qilinadi!\nYuqori maosh, moslashuvchan grafik va to'liq maxfiylik.\n\nOperator bilan bog'lanish: {operator}"
+
+msgid "Summa qabul qilindi: {amount:.2f} {so_m}.\n\nEndi to'lovni tasdiqlovchi chek yoki skrinshotni rasm qilib yuboring."
+msgstr "Summa qabul qilindi: {amount:.2f} {so_m}.\n\nEndi to'lovni tasdiqlovchi chek yoki skrinshotni rasm qilib yuboring."
+
+msgid "<b>Buyurtma №{order_number}</b>\n\n<b>Holati:</b> {status}\n<b>Sana:</b> {created_at}\n<b>Jami summa:</b> {total_amount:.2f} {so_m}\n<b>Yetkazish manzili:</b> {delivery_address}\n\n<b>Mahsulotlar:</b>\n{items_text}"
+msgstr "<b>Buyurtma №{order_number}</b>\n\n<b>Holati:</b> {status}\n<b>Sana:</b> {created_at}\n<b>Jami summa:</b> {total_amount:.2f} {so_m}\n<b>Yetkazish manzili:</b> {delivery_address}\n\n<b>Mahsulotlar:</b>\n{items_text}"
+
+msgid "💬 <b>Mijozlarimiz sharhlari:</b>\n"
+msgstr "💬 <b>Mijozlarimiz sharhlari:</b>\n"
+
+msgid "Hozircha sharhlar mavjud emas. Birinchi bo'ling!\n"
+msgstr "Hozircha sharhlar mavjud emas. Birinchi bo'ling!\n"
+
+msgid "✍️ <b>Sharhingizni yozing:</b>\n\nXizmatimiz haqidagi fikringizni qoldiring."
+msgstr "✍️ <b>Sharhingizni yozing:</b>\n\nXizmatimiz haqidagi fikringizni qoldiring."
+
+msgid "📝 <b>Yangi sharh moderatsiyaga keldi!</b>\n\n👤 Mijoz: <b>{user_label}</b> (ID: {telegram_id})\n💬 Sharh: <i>\"{review_text}\"</i>"
+msgstr "📝 <b>Yangi sharh moderatsiyaga keldi!</b>\n\n👤 Mijoz: <b>{user_label}</b> (ID: {telegram_id})\n💬 Sharh: <i>\"{review_text}\"</i>"
+
+msgid "To'lov uchun: <b>{price:.2f} USD</b>\nTo'lov usulini tanlang:"
+msgstr "To'lov uchun: <b>{price:.2f} USD</b>\nTo'lov usulini tanlang:"
+
+msgid "To'lov uchun: <b>{price:.2f} USD</b>\nManzil {method}:\n<code>{wallet}</code>\nSumma {method}: <b>{crypto_amount}</b>\n\nTo'lov tarmoq tasdiqlangach tushadi — odatda bir necha daqiqa.\nTo'lagach «To'lovni tekshirish» tugmasini bosing."
+msgstr "To'lov uchun: <b>{price:.2f} USD</b>\nManzil {method}:\n<code>{wallet}</code>\nSumma {method}: <b>{crypto_amount}</b>\n\nTo'lov tarmoq tasdiqlangach tushadi — odatda bir necha daqiqa.\nTo'lagach «To'lovni tekshirish» tugmasini bosing."
+
+msgid "🔔 <b>To'lov bo'yicha bildirishnoma!</b>\nFoydalanuvchi: {full_name} (@{username})\nBuyurtma №: <b>{order_number}</b>\nSumma: <b>{total_amount:.2f} USD</b>"
+msgstr "🔔 <b>To'lov bo'yicha bildirishnoma!</b>\nFoydalanuvchi: {full_name} (@{username})\nBuyurtma №: <b>{order_number}</b>\nSumma: <b>{total_amount:.2f} USD</b>"
+
+msgid "📦 <b>Mavjud tovarlar:</b>\n"
+msgstr "📦 <b>Mavjud tovarlar:</b>\n"
+
+msgid "\nXarid qilish uchun <b>«Sotib olish»</b> tugmasini bosing."
+msgstr "\nXarid qilish uchun <b>«Sotib olish»</b> tugmasini bosing."
+
+msgid "Salom, <b>{full_name}</b>! Admin panelidasiz.\nRoli: <b>{role}</b>"
+msgstr "Salom, <b>{full_name}</b>! Admin panelidasiz.\nRoli: <b>{role}</b>"
+
+msgid "<b>📊 Tizim Analitikasi va Moliyaviy Grafik</b>\n<i>{now} holatiga ko'ra avto-yangilandi</i>\n\n<b>📈 Bugungi Ko'rsatkichlar:</b>\n  • Tushgan buyurtmalar: <b>{orders_today_count} ta</b>\n  • Tushgan tushum: <b>{revenue_today:,.2f} USD</b>\n  • Taxminiy sof foyda: <b>{profit_today:,.2f} USD</b>\n\n<b>💎 Barcha Vaqtlardagi Statistika:</b>\n  • Jami tushgan pullar: <b>{total_revenue:,.2f} USD</b>\n  • Ketgan (sotilgan) tovarlar: <b>{total_grams_sold:,.2f} gramm</b>\n  • Jami buyurtmalar soni: <b>{total_orders_count} ta</b>\n\n<b>⏳ Kutilayotgan harakatlar:</b>\n  • Kutilayotgan to'lovlar: <b>{pending_topups_count} ta</b>\n  • Tasdiqlanmagan buyurtmalar: <b>{pending_orders_count} ta</b>\n\n<b>📦 Ombordagi holat va Foydalanuvchilar:</b>\n  • Ogohlantirish (oz qolgan): <b>{low_stock_products_count} ta tovar</b>\n  • Faol xaridorlar (botda): <b>{active_users_count} ta</b>"
+msgstr "<b>📊 Tizim Analitikasi va Moliyaviy Grafik</b>\n<i>{now} holatiga ko'ra avto-yangilandi</i>\n\n<b>📈 Bugungi Ko'rsatkichlar:</b>\n  • Tushgan buyurtmalar: <b>{orders_today_count} ta</b>\n  • Tushgan tushum: <b>{revenue_today:,.2f} USD</b>\n  • Taxminiy sof foyda: <b>{profit_today:,.2f} USD</b>\n\n<b>💎 Barcha Vaqtlardagi Statistika:</b>\n  • Jami tushgan pullar: <b>{total_revenue:,.2f} USD</b>\n  • Ketgan (sotilgan) tovarlar: <b>{total_grams_sold:,.2f} gramm</b>\n  • Jami buyurtmalar soni: <b>{total_orders_count} ta</b>\n\n<b>⏳ Kutilayotgan harakatlar:</b>\n  • Kutilayotgan to'lovlar: <b>{pending_topups_count} ta</b>\n  • Tasdiqlanmagan buyurtmalar: <b>{pending_orders_count} ta</b>\n\n<b>📦 Ombordagi holat va Foydalanuvchilar:</b>\n  • Ogohlantirish (oz qolgan): <b>{low_stock_products_count} ta tovar</b>\n  • Faol xaridorlar (botda): <b>{active_users_count} ta</b>"
+
+msgid "<b>👥 Top Xaridorlar Ro'yxati (Kimlar tovar olgan):</b>"
+msgstr "<b>👥 Top Xaridorlar Ro'yxati (Kimlar tovar olgan):</b>"
+
+msgid "<i>Hozircha xaridlar mavjud emas.</i>"
+msgstr "<i>Hozircha xaridlar mavjud emas.</i>"
+
+msgid "<b>{idx}. {user_label}</b> (ID: <code>{telegram_id}</code>)\n   • Buyurtmalar: <b>{count} ta</b> | Soni/Og'irligi: <b>{grams:,.2f} gr</b>\n   • Sarflagan summasi: <b>{spent:,.2f} USD</b>\n"
+msgstr "<b>{idx}. {user_label}</b> (ID: <code>{telegram_id}</code>)\n   • Buyurtmalar: <b>{count} ta</b> | Soni/Og'irligi: <b>{grams:,.2f} gr</b>\n   • Sarflagan summasi: <b>{spent:,.2f} USD</b>\n"
+
+msgid "<b>⚙️ Tizim va Baza Sozlamalari</b>\n\n{settings_text}\n\n<i>O'zgartirmoqchi bo'lgan parametrni tanlang:</i>"
+msgstr "<b>⚙️ Tizim va Baza Sozlamalari</b>\n\n{settings_text}\n\n<i>O'zgartirmoqchi bo'lgan parametrni tanlang:</i>"
+
+msgid "✍️ Iltimos, <b>{field_desc}</b> uchun yangi qiymatni kiriting:"
+msgstr "✍️ Iltimos, <b>{field_desc}</b> uchun yangi qiymatni kiriting:"
+
+msgid "'{field_desc}' muvaffaqiyatli yangilandi!"
+msgstr "'{field_desc}' muvaffaqiyatli yangilandi!"
+
+msgid "❌ Xato: Noto'g'ri format.\nIltimos, qiymatni to'g'ri kiriting.\n\n<i>{error}</i>"
+msgstr "❌ Xato: Noto'g'ri format.\nIltimos, qiymatni to'g'ri kiriting.\n\n<i>{error}</i>"
+
+msgid "❌ Sozlamani yangilashda xatolik: {error}"
+msgstr "❌ Sozlamani yangilashda xatolik: {error}"
+
+msgid "👤 Yangi foydalanuvchi ro'yxatdan o'tdi va tasdiq kutmoqda.\n\nFoydalanuvchi ID: `{user_id}`\nTelegram ID: `{telegram_id}`\nIsm: {full_name}\nUsername: @{username}"
+msgstr "👤 Yangi foydalanuvchi ro'yxatdan o'tdi va tasdiq kutmoqda.\n\nFoydalanuvchi ID: `{user_id}`\nTelegram ID: `{telegram_id}`\nIsm: {full_name}\nUsername: @{username}"
+
+msgid "🛒 Yangi buyurtma keldi!\n\nBuyurtma №: <b>{order_number}</b>\nFoydalanuvchi: {user_name}\nSumma: <b>{total_amount:.2f} {so_m}</b>\nSana: {created_at}"
+msgstr "🛒 Yangi buyurtma keldi!\n\nBuyurtma №: <b>{order_number}</b>\nFoydalanuvchi: {user_name}\nSumma: <b>{total_amount:.2f} {so_m}</b>\nSana: {created_at}"
+
+msgid "💳 Yangi balans to'ldirish so'rovi!\n\nFoydalanuvchi: {user_name}\nSumma: <b>{amount:.2f} {so_m}</b>\nSana: {created_at}"
+msgstr "💳 Yangi balans to'ldirish so'rovi!\n\nFoydalanuvchi: {user_name}\nSumma: <b>{amount:.2f} {so_m}</b>\nSana: {created_at}"
+
+msgid "Sizning №{order_number} buyurtmangiz holati o'zgardi.\n\nYangi holat: <b>{new_status_text}</b>"
+msgstr "Sizning №{order_number} buyurtmangiz holati o'zgardi.\n\nYangi holat: <b>{new_status_text}</b>"
+
+msgid "Belgilangan vaqt ({time}) o'tib ketdi."
+msgstr "Belgilangan vaqt ({time}) o'tib ketdi."
+
+msgid "Yetkazib berishga ~{minutes} daqiqa qoldi."
+msgstr "Yetkazib berishga ~{minutes} daqiqa qoldi."
+
+msgid "❗️ <b>DIQQAT: {issue_text}</b>\n\nBuyurtma №: <b>{order_number}</b>\nFoydalanuvchi: {full_name}\nHolati: {status}\nDeadline: {deadline}\n\n{details}"
+msgstr "❗️ <b>DIQQAT: {issue_text}</b>\n\nBuyurtma №: <b>{order_number}</b>\nFoydalanuvchi: {full_name}\nHolati: {status}\nDeadline: {deadline}\n\n{details}"
+
+msgid "⚠️ <b>DIQQAT: Mahsulotlar kam qolmoqda!</b>\n\nQuyidagi mahsulotlar belgilangan miqdordan kam qolgan:\n{product_list_str}"
+msgstr "⚠️ <b>DIQQAT: Mahsulotlar kam qolmoqda!</b>\n\nQuyidagi mahsulotlar belgilangan miqdordan kam qolgan:\n{product_list_str}"

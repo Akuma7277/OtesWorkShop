@@ -2,6 +2,7 @@ from typing import Sequence
 
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.i18n import gettext as _
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from src.shopim.db.models import Category
@@ -17,23 +18,23 @@ class ProductCategoryCallback(CallbackData, prefix="prod_cat"):
     page: int = 1
 
 
-def get_cancellation_keyboard(lang: str = "uz") -> InlineKeyboardMarkup:
+def get_cancellation_keyboard(lang: str | None = None) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="❌ Bekor qilish" if lang == "uz" else "❌ Отмена",
+        text=_("❌ Bekor qilish"),
         callback_data=ProductCreationCallback(action="cancel").pack(),
     )
     return builder.as_markup()
 
 
-def get_skip_or_cancel_keyboard(skip_action: str, lang: str = "uz") -> InlineKeyboardMarkup:
+def get_skip_or_cancel_keyboard(skip_action: str, lang: str | None = None) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="⏭ O'tkazib yuborish" if lang == "uz" else "⏭ Пропустить",
+        text=_("⏭ O'tkazib yuborish"),
         callback_data=ProductCreationCallback(action=skip_action).pack(),
     )
     builder.button(
-        text="❌ Bekor qilish" if lang == "uz" else "❌ Отмена",
+        text=_("❌ Bekor qilish"),
         callback_data=ProductCreationCallback(action="cancel").pack(),
     )
     builder.adjust(1)
@@ -41,7 +42,7 @@ def get_skip_or_cancel_keyboard(skip_action: str, lang: str = "uz") -> InlineKey
 
 
 def get_category_selection_keyboard(
-    categories: Sequence[Category], total_pages: int, current_page: int, lang: str = "uz"
+    categories: Sequence[Category], total_pages: int, current_page: int, lang: str | None = None
 ) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for cat in categories:
@@ -73,7 +74,7 @@ def get_category_selection_keyboard(
 
     builder.row(
         InlineKeyboardButton(
-            text="❌ Bekor qilish" if lang == "uz" else "❌ Отмена",
+            text=_("❌ Bekor qilish"),
             callback_data=ProductCreationCallback(action="cancel").pack(),
         )
     )

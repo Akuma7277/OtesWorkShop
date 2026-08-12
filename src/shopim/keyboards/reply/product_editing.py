@@ -3,6 +3,7 @@ from typing import Optional
 
 from aiogram import F, Router, types
 from aiogram.fsm.context import FSMContext
+from aiogram.utils.i18n import gettext as _
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.shopim.db.models import Admin, Product
@@ -38,13 +39,10 @@ async def _show_product_edit_menu(
 ):
     product = await session.get(Product, product_id)
     if not product:
-        await target.answer("Mahsulot topilmadi.")
+        await target.answer(_("Mahsulot topilmadi."))
         return
 
-    text = (
-        f"Mahsulotni tahrirlash: <b>{product.name}</b>\n\n"
-        f"Qaysi maydonni o'zgartirmoqchisiz?"
-    )
+    text = _("Mahsulotni tahrirlash: <b>{product_name}</b>\n\nQaysi maydonni o'zgartirmoqchisiz?").format(product_name=product.name)
     if success_message:
         text = f"✅ {success_message}\n\n{text}"
 
@@ -62,7 +60,7 @@ async def _show_products_for_editing(
     service = WarehouseService(session, items_per_page=ITEMS_PER_PAGE)
     result = await service.get_products_stock(page=page)
 
-    text = "Tahrirlash uchun mahsulot tanlang:"
+    text = _("Tahrirlash uchun mahsulot tanlang:")
     keyboard = get_product_list_for_editing_keyboard(
         products=result.products,
         total_pages=result.total_pages,
@@ -137,23 +135,23 @@ async def choose_field_to_edit_handler(
     state: FSMContext,
 ):
     field_map = {
-        "name": (ProductEditingState.getting_name, "Yangi nomni kiriting:"),
+        "name": (ProductEditingState.getting_name, _("Yangi nomni kiriting:")),
         "description": (
             ProductEditingState.getting_description,
-            "Yangi tavsifni kiriting:",
+            _("Yangi tavsifni kiriting:"),
         ),
-        "image": (ProductEditingState.getting_image, "Yangi rasmni yuboring:"),
+        "image": (ProductEditingState.getting_image, _("Yangi rasmni yuboring:")),
         "sale_price_per_gram": (
             ProductEditingState.getting_sale_price,
-            "Yangi sotuv narxini kiriting (so'm/gramm):",
+            _("Yangi sotuv narxini kiriting (so'm/gramm):"),
         ),
         "cost_price_per_gram": (
             ProductEditingState.getting_cost_price,
-            "Yangi tannarxni kiriting (so'm/gramm):",
+            _("Yangi tannarxni kiriting (so'm/gramm):"),
         ),
         "low_stock_threshold_grams": (
             ProductEditingState.getting_low_stock_threshold,
-            "Yangi minimal qoldiq chegarasini kiriting (gramm):",
+            _("Yangi minimal qoldiq chegarasini kiriting (gramm):"),
         ),
     }
     field = callback_data.field
@@ -178,13 +176,13 @@ async def toggle_product_active_handler(
     service = ProductManagementService(session)
     product = await session.get(Product, product_id)
     if not product:
-        await callback.answer("Mahsulot topilmadi!", show_alert=True)
+        await callback.answer(_("Mahsulot topilmadi!"), show_alert=True)
         return
 
     new_status = not product.is_active
     await service.update_product(product_id, {"is_active": new_status})
 
-    success_message = "Mahsulot yashirildi" if not new_status else "Mahsulot ko'rsatildi"
+    success_message = _("Mahsulot yashirildi") if not new_status else _("Mahsulot ko'rsatildi")
 
     await _show_product_edit_menu(
         callback, product_id, page, session, success_message=success_message
@@ -207,17 +205,17 @@ async def start_delete_product_handler(
 
     if not can_delete:
         await callback.answer(
-            "Bu mahsulotni o'chirib bo'lmaydi, chunki u bilan bog'liq buyurtmalar mavjud. "
-            "O'chirish o'rniga yashirishingiz mumkin.",
+            _("Bu mahsulotni o'chirib bo'lmaydi, chunki u bilan bog'liq buyurtmalar mavjud. "
+              "O'chirish o'rniga yashirishingiz mumkin."),
             show_alert=True,
         )
         return
 
     product = await session.get(Product, product_id)
-    text = (
-        f"❓ Rostdan ham <b>{product.name}</b> mahsulotini o'chirmoqchimisiz?\n\n"
+    text = _(
+        "❓ Rostdan ham <b>{product_name}</b> mahsulotini o'chirmoqchimisiz?\n\n"
         "<b>DIQQAT:</b> Bu amalni orqaga qaytarib bo'lmaydi!"
-    )
+    ).format(product_name=product.name)
     await callback.message.edit_text(
         text,
         reply_markup=get_product_delete_confirmation_keyboard(),
@@ -262,29 +260,29 @@ async def confirm_delete_product_handler(
     deleted = await service.delete_product(product_id)
 
     await state.clear()
-    await callback.answer("Mahsulot o'chirildi.", show_alert=True)
+    await callback.answer(_("Mahsulot o'chirildi."), show_alert=True)
 
     if deleted:
         await _show_products_for_editing(callback, page, session)
     else:
         await callback.message.edit_text(
-            "❌ Mahsulotni o'chirishda xatolik yuz berdi. "
-            "Balki u buyurtmalar bilan bog'liqdir."
+            _("❌ Mahsulotni o'chirishda xatolik yuz berdi. "
+              "Balki u buyurtmalar bilan bog'liqdir.")
         )
 
 @router.message(ProductEditingState.getting_name)
 async def process_new_name_handler(message: types.Message, state: FSMContext, session: AsyncSession):
-    await _process_update(message, state, session, "name", message.text, "Nom yangilandi")
+    await _process_update(message, state, session, "name", message.text, _("Nom yangilandi"))
 
 
 @router.message(ProductEditingState.getting_description)
 async def process_new_description_handler(message: types.Message, state: FSMContext, session: AsyncSession):
-    await _process_update(message, state, session, "description", message.text, "Tavsif yangilandi")
+    await _process_update(message, state, session, "description", message.text, _("Tavsif yangilandi"))
 
 
 @router.message(ProductEditingState.getting_image, F.photo)
 async def process_new_image_handler(message: types.Message, state: FSMContext, session: AsyncSession):
-    await _process_update(message, state, session, "image_file_id", message.photo[-1].file_id, "Rasm yangilandi")
+    await _process_update(message, state, session, "image_file_id", message.photo[-1].file_id, _("Rasm yangilandi"))
 
 
 async def _process_decimal_update(
@@ -296,19 +294,19 @@ async def _process_decimal_update(
             raise ValueError
         await _process_update(message, state, session, field_name, str(value), success_message)
     except (InvalidOperation, ValueError):
-        await message.answer("Xato. Iltimos, musbat raqam kiriting.")
+        await message.answer(_("Xato. Iltimos, musbat raqam kiriting."))
 
 
 @router.message(ProductEditingState.getting_sale_price)
 async def process_new_sale_price_handler(message: types.Message, state: FSMContext, session: AsyncSession):
-    await _process_decimal_update(message, state, session, "sale_price_per_gram", "Sotuv narxi yangilandi")
+    await _process_decimal_update(message, state, session, "sale_price_per_gram", _("Sotuv narxi yangilandi"))
 
 
 @router.message(ProductEditingState.getting_cost_price)
 async def process_new_cost_price_handler(message: types.Message, state: FSMContext, session: AsyncSession):
-    await _process_decimal_update(message, state, session, "cost_price_per_gram", "Tannarx yangilandi")
+    await _process_decimal_update(message, state, session, "cost_price_per_gram", _("Tannarx yangilandi"))
 
 
 @router.message(ProductEditingState.getting_low_stock_threshold)
 async def process_new_low_stock_handler(message: types.Message, state: FSMContext, session: AsyncSession):
-    await _process_decimal_update(message, state, session, "low_stock_threshold_grams", "Minimal qoldiq chegarasi yangilandi")
+    await _process_decimal_update(message, state, session, "low_stock_threshold_grams", _("Minimal qoldiq chegarasi yangilandi"))

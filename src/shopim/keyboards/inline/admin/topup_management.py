@@ -1,5 +1,6 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.i18n import gettext as _
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
@@ -21,11 +22,11 @@ def get_topup_review_keyboard(topup_id: int) -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text="✅ Tasdiqlash",
+                    text=_("✅ Tasdiqlash"),
                     callback_data=TopupActionCallback(action="approve", topup_id=topup_id).pack(),
                 ),
                 InlineKeyboardButton(
-                    text="❌ Rad etish",
+                    text=_("❌ Rad etish"),
                     callback_data=TopupActionCallback(action="reject", topup_id=topup_id).pack(),
                 ),
             ]

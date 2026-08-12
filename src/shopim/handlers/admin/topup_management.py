@@ -27,20 +27,15 @@ ITEMS_PER_PAGE = 5
 
 
 async def _send_topup_list(
-    target: types.Message | types.CallbackQuery, page: int, session: AsyncSession, admin: Admin
+    target: types.Message | types.CallbackQuery, page: int, session: AsyncSession, admin: Optional[Admin] = None
 ):
     service = TopupManagementService(session, items_per_page=ITEMS_PER_PAGE)
     result = await service.get_pending_topups(page=page)
-    lang = admin.language_code or "uz"
 
     chat_id = target.chat.id if isinstance(target, types.Message) else target.message.chat.id
 
     if not result.topups:
-        text = (
-            "⏳ Kutilayotgan balans to'ldirish so'rovlari mavjud emas."
-            if lang == "uz"
-            else "⏳ Нет ожидающих запросов на пополнение баланса."
-        )
+        text = _("⏳ Kutilayotgan balans to'ldirish so'rovlari mavjud emas.")
         if isinstance(target, types.CallbackQuery) and target.message:
             await target.message.answer(text)
             await target.answer()
@@ -49,30 +44,24 @@ async def _send_topup_list(
         return
 
     if isinstance(target, types.Message):
-        header_text = (
-            f"Kutilayotgan so'rovlar (Sahifa {result.current_page}/{result.total_pages}):"
-            if lang == "uz"
-            else f"Ожидающие запросы (Страница {result.current_page}/{result.total_pages}):"
+        header_text = _("Kutilayotgan so'rovlar (Sahifa {current_page}/{total_pages}):").format(
+            current_page=result.current_page, total_pages=result.total_pages
         )
         await target.answer(header_text)
 
     for topup in result.topups:
-        if lang == "ru":
-            text = (
-                f"<b>Новый запрос на пополнение!</b>\n\n"
-                f"Пользователь: {topup.user.full_name}\n"
-                f"Telegram ID: <code>{topup.user.telegram_id}</code>\n"
-                f"Сумма: <b>{topup.amount:.2f} USD</b>\n"
-                f"Дата: {topup.created_at.strftime('%Y-%m-%d %H:%M')}"
-            )
-        else:
-            text = (
-                f"<b>Yangi to'lov so'rovi!</b>\n\n"
-                f"Foydalanuvchi: {topup.user.full_name}\n"
-                f"Telegram ID: <code>{topup.user.telegram_id}</code>\n"
-                f"Summa: <b>{topup.amount:.2f} USD</b>\n"
-                f"Sana: {topup.created_at.strftime('%Y-%m-%d %H:%M')}"
-            )
+        text = _(
+            "<b>Yangi to'lov so'rovi!</b>\n\n"
+            "Foydalanuvchi: {full_name}\n"
+            "Telegram ID: <code>{telegram_id}</code>\n"
+            "Summa: <b>{amount:.2f} USD</b>\n"
+            "Sana: {created_at}"
+        ).format(
+            full_name=topup.user.full_name,
+            telegram_id=topup.user.telegram_id,
+            amount=topup.amount,
+            created_at=topup.created_at.strftime('%Y-%m-%d %H:%M'),
+        )
         keyboard = get_topup_review_keyboard(topup_id=topup.id)
 
         if topup.receipt_file_id:
@@ -92,7 +81,7 @@ async def _send_topup_list(
         total_pages=result.total_pages, current_page=result.current_page
     )
     if pagination_keyboard and hasattr(target, 'bot'):
-        nav_label = "Navigatsiya:" if lang == "uz" else "Навигация:"
+        nav_label = _("Navigatsiya:")
         await target.bot.send_message(
             chat_id, nav_label, reply_markup=pagination_keyboard
         )
@@ -186,6 +175,7 @@ async def get_topup_rejection_reason_handler(
     topup = await service.reject_topup(topup_id=topup_id, admin=admin, reason=reason)
 
     if topup:
+        user = await session.get(User, topup.user_id)
         if user:
             new_caption = (
                 _("❌ <b>So'rov rad etildi!</b>\n\n"

@@ -1,5 +1,6 @@
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.i18n import gettext as _
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
@@ -18,14 +19,14 @@ def get_balance_history_keyboard(
     if current_page > 1:
         nav_buttons.append(
             InlineKeyboardButton(
-                text="⬅️ Orqaga",
+                text=_("⬅️ Orqaga"),
                 callback_data=BalanceHistoryPageCallback(page=current_page - 1).pack(),
             )
         )
     if current_page < total_pages:
         nav_buttons.append(
             InlineKeyboardButton(
-                text="➡️ Oldinga",
+                text=_("➡️ Oldinga"),
                 callback_data=BalanceHistoryPageCallback(page=current_page + 1).pack(),
             )
         )

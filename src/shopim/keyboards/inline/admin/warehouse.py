@@ -2,6 +2,7 @@ from typing import Sequence
 
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.i18n import gettext as _
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from src.shopim.db.models import Product
@@ -20,15 +21,15 @@ class ProductAdjustCallback(CallbackData, prefix="prod_adj"):
 def get_warehouse_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="📊 Qoldiqlar",
+        text=_("📊 Qoldiqlar"),
         callback_data=WarehouseCallback(action="stock").pack(),
     )
     builder.button(
-        text="🔄 Harakatlar tarixi",
+        text=_("🔄 Harakatlar tarixi"),
         callback_data=WarehouseCallback(action="movements").pack(),
     )
     builder.button(
-        text="✏️ Qoldiqni tuzatish",
+        text=_("✏️ Qoldiqni tuzatish"),
         callback_data=WarehouseCallback(action="adjust_start").pack(),
     )
     builder.adjust(1)
@@ -59,7 +60,7 @@ def get_stock_balance_keyboard(
 
     builder.row(
         InlineKeyboardButton(
-            text="⬅️ Orqaga",
+            text=_("⬅️ Orqaga"),
             callback_data=WarehouseCallback(action="menu").pack(),
         )
     )
@@ -90,7 +91,7 @@ def get_stock_movements_keyboard(
 
     builder.row(
         InlineKeyboardButton(
-            text="⬅️ Orqaga",
+            text=_("⬅️ Orqaga"),
             callback_data=WarehouseCallback(action="menu").pack(),
         )
     )
@@ -132,7 +133,7 @@ def get_product_selection_for_adjustment_keyboard(
 
     builder.row(
         InlineKeyboardButton(
-            text="⬅️ Orqaga",
+            text=_("⬅️ Orqaga"),
             callback_data=WarehouseCallback(action="menu").pack(),
         )
     )

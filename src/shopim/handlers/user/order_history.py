@@ -1,10 +1,11 @@
 from typing import Optional
 
 from aiogram import F, Router, types
-from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.utils.i18n import gettext as _
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.shopim.db.models import OrderStatus, User, UserStatus
+from src.shopim.filters import IsApprovedUserFilter
 from src.shopim.keyboards.inline.order_history import (
     OrderHistoryPageCallback,
     ViewOrderCallback,
@@ -12,10 +13,6 @@ from src.shopim.keyboards.inline.order_history import (
     get_order_history_keyboard,
 )
 from src.shopim.services.order_history_service import OrderHistoryService
-
-
-from src.shopim.filters import IsApprovedUserFilter
-
 
 router = Router(name="order-history-router")
 router.message.filter(IsApprovedUserFilter())
@@ -30,11 +27,11 @@ async def show_paginated_orders(
     service = OrderHistoryService(session, orders_per_page=ORDERS_PER_PAGE)
     result = await service.get_user_orders(user.id, page)
 
-    text = "Sizda hali buyurtmalar mavjud emas."
+    text = _("Sizda hali buyurtmalar mavjud emas.")
     keyboard = None
 
-    if result.orders:  # type: ignore
-        text = f"<b>Sizning buyurtmalaringiz (Sahifa {result.current_page}/{result.total_pages})</b>"
+    if result.orders:
+        text = f"<b>{_('Sizning buyurtmalaringiz')} ({_('Sahifa')} {result.current_page}/{result.total_pages})</b>"
         keyboard = get_order_history_keyboard(
             orders=result.orders,
             total_pages=result.total_pages,
@@ -42,12 +39,12 @@ async def show_paginated_orders(
         )
 
     if isinstance(target, types.CallbackQuery):
-        await target.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")  # type: ignore
+        await target.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     else:
-        await target.answer(text, reply_markup=keyboard, parse_mode="HTML")  # type: ignore
+        await target.answer(text, reply_markup=keyboard, parse_mode="HTML")
 
 
-@router.message(F.text == "📦 Buyurtmalarim")
+@router.message(F.text.in_({"📦 Buyurtmalarim", "📦 Buyurtmalar", "📦 Мои заказы", "Buyurtmalarim", "Мои заказы"}))
 async def show_order_history_handler(
     message: types.Message, user: User, session: AsyncSession
 ):
@@ -91,26 +88,31 @@ async def view_order_detail_handler(
         OrderStatus.DRAFT: _("📝 Qoralama"),
     }
 
+    so_m = _("so'm")
     items_text = "\n".join(
         [
-            f"  - {item.product_name_snapshot}: {item.grams} gr. = {item.subtotal:.2f} so'm"
+            f"  - {item.product_name_snapshot}: {item.grams} gr. = {item.subtotal:.2f} {so_m}"
             for item in order.items
         ]
     )
 
-    text = (
-        _("<b>Buyurtma №{order_number}</b>\n\n"
-          "<b>Holati:</b> {status}\n"
-          "<b>Sana:</b> {created_at}\n"
-          "<b>Jami summa:</b> {total_amount:.2f} so'm\n"
-          "<b>Yetkazish manzili:</b> {delivery_address}\n\n"
-          "<b>Mahsulotlar:</b>\n{items_text}").format(
-            order_number=order.order_number, status=order_status_map.get(order.status, _("Noma'lum")),
-            created_at=order.created_at.strftime('%Y-%m-%d %H:%M'), total_amount=order.total_amount,
-            delivery_address=order.delivery_address, items_text=items_text
-        )
+    text = _(
+        "<b>Buyurtma №{order_number}</b>\n\n"
+        "<b>Holati:</b> {status}\n"
+        "<b>Sana:</b> {created_at}\n"
+        "<b>Jami summa:</b> {total_amount:.2f} {so_m}\n"
+        "<b>Yetkazish manzili:</b> {delivery_address}\n\n"
+        "<b>Mahsulotlar:</b>\n{items_text}"
+    ).format(
+        order_number=order.order_number,
+        status=order_status_map.get(order.status, _("Noma'lum")),
+        created_at=order.created_at.strftime('%Y-%m-%d %H:%M'),
+        total_amount=order.total_amount,
+        so_m=so_m,
+        delivery_address=order.delivery_address,
+        items_text=items_text,
     )
 
     keyboard = get_order_detail_keyboard(page=callback_data.page)
-    await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")  # type: ignore
+    await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     await callback.answer()

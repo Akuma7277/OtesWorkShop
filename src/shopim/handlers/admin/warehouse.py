@@ -31,7 +31,7 @@ ITEMS_PER_PAGE = 10
 @router.message(F.text == "📦 Sklad")
 async def warehouse_menu_handler(message: types.Message):
     await message.answer(
-        "Skladni boshqarish bo'limi:",
+        _("Skladni boshqarish bo'limi:"),
         reply_markup=get_warehouse_menu_keyboard(),
     )
 

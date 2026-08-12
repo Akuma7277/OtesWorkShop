@@ -1,25 +1,24 @@
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
+from aiogram.utils.i18n import gettext as _
 
-from src.shopim.utils.i18n_messages import t
 
-
-def get_user_main_keyboard(lang: str = "ru") -> ReplyKeyboardMarkup:
+def get_user_main_keyboard(lang: str | None = None) -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
             [
-                KeyboardButton(text=t("user_keyboard_buy", lang)),
-                KeyboardButton(text=t("user_keyboard_stock", lang)),
+                KeyboardButton(text=_("🛒 Sotib olish")),
+                KeyboardButton(text=_("📦 Mavjud yuklar")),
             ],
             [
-                KeyboardButton(text=t("user_keyboard_profile", lang)),
-                KeyboardButton(text=t("user_keyboard_history", lang)),
+                KeyboardButton(text=_("👤 Profil")),
+                KeyboardButton(text=_("📜 Xaridlar tarixi")),
             ],
             [
-                KeyboardButton(text=t("user_keyboard_jobs", lang)),
-                KeyboardButton(text=t("user_keyboard_lang", lang)),
+                KeyboardButton(text=_("💼 Ish! YUQORI MAOSH!")),
+                KeyboardButton(text=_("🌐 Tilni o'zgartirish")),
             ],
             [
-                KeyboardButton(text=t("user_keyboard_reviews", lang)),
+                KeyboardButton(text=_("💬 Sharhlar")),
             ],
         ],
         resize_keyboard=True,

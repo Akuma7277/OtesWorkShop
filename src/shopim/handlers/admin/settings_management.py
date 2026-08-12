@@ -4,6 +4,7 @@ from typing import Optional
 from aiogram import F, Router, types
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
+from aiogram.utils.i18n import gettext as _
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,7 +33,6 @@ async def _show_settings_menu(
 ):
     service = SettingsService(session)
     settings = await service.get_bot_settings()
-    lang = admin.language_code or "uz"
 
     settings_text = "\n".join(
         [
@@ -41,10 +41,7 @@ async def _show_settings_menu(
         ]
     )
 
-    if lang == "ru":
-        text = f"<b>⚙️ Настройки системы и базы данных</b>\n\n{settings_text}\n\n<i>Выберите параметр для изменения:</i>"
-    else:
-        text = f"<b>⚙️ Tizim va Baza Sozlamalari</b>\n\n{settings_text}\n\n<i>O'zgartirmoqchi bo'lgan parametrni tanlang:</i>"
+    text = _("<b>⚙️ Tizim va Baza Sozlamalari</b>\n\n{settings_text}\n\n<i>O'zgartirmoqchi bo'lgan parametrni tanlang:</i>").format(settings_text=settings_text)
 
     if success_message:
         text = f"✅ <b>{success_message}</b>\n\n{text}"
@@ -71,16 +68,18 @@ async def toggle_admin_lang_handler(
     admin.language_code = new_lang
     await session.commit()
 
-    alert_text = (
-        "Admin tili O'zbekchaga o'zgartirildi!"
-        if new_lang == "uz"
-        else "Язык админки изменен на Русский!"
-    )
+    if new_lang == "uz":
+        alert_text = "Admin tili O'zbekchaga o'zgartirildi!"
+        msg_text = "Admin Paneli:"
+    else:
+        alert_text = "Язык админки изменен на Русский!"
+        msg_text = "Панель администратора:"
+
     await callback.answer(alert_text, show_alert=True)
 
     await callback.message.answer(
-        "Admin Paneli:" if new_lang == "uz" else "Панель администратора:",
-        reply_markup=get_admin_main_keyboard(new_lang),
+        msg_text,
+        reply_markup=get_admin_main_keyboard(),
     )
     await _show_settings_menu(callback, session, admin)
 
@@ -101,14 +100,14 @@ async def choose_setting_to_edit_handler(
     field_name = callback_data.field
     field_info = BotSettings.model_fields.get(field_name)
     if not field_info:
-        await callback.answer("Noma'lum sozlama.", show_alert=True)
+        await callback.answer(_("Noma'lum sozlama."), show_alert=True)
         return
 
     await state.set_state(SettingsManagementState.getting_new_value)
     await state.update_data(field_to_edit=field_name)
 
     field_desc = field_info.description or field_name
-    prompt = f"✍️ Iltimos, <b>{field_desc}</b> uchun yangi qiymatni kiriting:"
+    prompt = _("✍️ Iltimos, <b>{field_desc}</b> uchun yangi qiymatni kiriting:").format(field_desc=field_desc)
     await callback.message.edit_text(prompt, reply_markup=get_back_to_settings_menu_keyboard(), parse_mode="HTML")
     await callback.answer()
 
@@ -123,7 +122,7 @@ async def get_new_setting_value_handler(
 
     if not field_name:
         await state.clear()
-        await message.answer("Xatolik yuz berdi. Iltimos, boshidan boshlang.")
+        await message.answer(_("Xatolik yuz berdi. Iltimos, boshidan boshlang."))
         return
 
     service = SettingsService(session)
@@ -133,10 +132,13 @@ async def get_new_setting_value_handler(
         await state.set_state(SettingsManagementState.choosing_setting)
         field_info = BotSettings.model_fields[field_name]
         field_desc = field_info.description or field_name
+        success_txt = _("'{field_desc}' muvaffaqiyatli yangilandi!").format(field_desc=field_desc)
         await _show_settings_menu(
-            message, session, admin, success_message=f"'{field_desc}' muvaffaqiyatli yangilandi!"
+            message, session, admin, success_message=success_txt
         )
     except (ValidationError, ValueError) as e:
-        await message.answer(f"❌ Xato: Noto'g'ri format.\nIltimos, qiymatni to'g'ri kiriting.\n\n<i>{e}</i>", parse_mode="HTML")
+        err_msg = _("❌ Xato: Noto'g'ri format.\nIltimos, qiymatni to'g'ri kiriting.\n\n<i>{error}</i>").format(error=str(e))
+        await message.answer(err_msg, parse_mode="HTML")
     except Exception as e:
-        await message.answer(f"❌ Sozlamani yangilashda xatolik: {e}")
+        err_msg = _("❌ Sozlamani yangilashda xatolik: {error}").format(error=str(e))
+        await message.answer(err_msg)

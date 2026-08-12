@@ -92,27 +92,31 @@ async def get_order_rejection_reason_handler(
     await message.delete()
 
     if order:
+        rejection_msg = _(
+            "❌ Buyurtma (№{order_number}) {admin_full_name} tomonidan rad etildi.\nSabab: {reason}"
+        ).format(order_number=order.order_number, admin_full_name=admin.full_name, reason=reason)
         try:
             await bot.edit_message_text(
-                f"❌ Buyurtma (№{order.order_number}) {admin.full_name} tomonidan rad etildi.\nSabab: {reason}",
+                rejection_msg,
                 chat_id=message.chat.id,
                 message_id=message_id,
             )
         except Exception:
-            await message.answer(
-                f"❌ Buyurtma (№{order.order_number}) {admin.full_name} tomonidan rad etildi.\nSabab: {reason}"
-            )
+            await message.answer(rejection_msg)
 
         user = await session.get(User, order.user_id)
         if user:
             try:
+                user_msg = _(
+                    "Afsuski, sizning №{order_number} buyurtmangiz rad etildi.\nSabab: {reason}\n\nTo'langan summa balansingizga qaytarildi."
+                ).format(order_number=order.order_number, reason=reason)
                 await bot.send_message(
                     user.telegram_id,
-                    f"Afsuski, sizning №{order.order_number} buyurtmangiz rad etildi.\nSabab: {reason}\n\nTo'langan summa balansingizga qaytarildi.",
+                    user_msg,
                 )
             except Exception as e:
                 print(
                     f"Could not send rejection notification to user for order {order.id}: {e}"
                 )
     else:
-        await message.answer("Buyurtma topilmadi yoki allaqachon ko'rib chiqilgan.")
+        await message.answer(_("Buyurtma topilmadi yoki allaqachon ko'rib chiqilgan."))

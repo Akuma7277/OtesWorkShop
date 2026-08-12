@@ -1,92 +1,417 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Shopim Bot\n"
-"POT-Creation-Date: 2024-08-09 21:00+0000\n"
-"PO-Revision-Date: 2024-08-09 21:00+0000\n"
-"Last-Translator: Gemini <>\n"
+"Project-Id-Version: Shopim Bot 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-12 18:00+0000\n"
+"PO-Revision-Date: 2026-08-12 18:00+0000\n"
+"Last-Translator: Antigravity AI\n"
 "Language-Team: Russian <>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-msgid "Siz avval ro'yxatdan o'tgansiz. Iltimos, admin tasdig'ini kuting."
-msgstr "Вы уже зарегистрированы. Пожалуйста, дождитесь подтверждения администратора."
+msgid "🛒 Sotib olish"
+msgstr "🛒 Купить"
+
+msgid "📦 Mavjud yuklar"
+msgstr "📦 Наличие"
+
+msgid "👤 Profil"
+msgstr "👤 Профиль"
+
+msgid "📜 Xaridlar tarixi"
+msgstr "📜 История покупок"
+
+msgid "💼 Ish! YUQORI MAOSH!"
+msgstr "💼 Работа! ПЛАТИМ МНОГО!"
+
+msgid "🌐 Tilni o'zgartirish"
+msgstr "🌐 Сменить язык"
+
+msgid "💬 Sharhlar"
+msgstr "💬 Отзывы"
+
+msgid "📊 Dashboard"
+msgstr "📊 Дашборд"
+
+msgid "🛒 Buyurtmalar"
+msgstr "🛒 Заказы"
+
+msgid "👥 Foydalanuvchilar"
+msgstr "👥 Пользователи"
+
+msgid "➕ Tovar qo'shish"
+msgstr "➕ Добавить товар"
+
+msgid "✏️ Tovarlarni boshqarish"
+msgstr "✏️ Управление товарами"
+
+msgid "💳 To'lovlar"
+msgstr "💳 Пополнения"
+
+msgid "⚙️ Sozlamalar"
+msgstr "⚙️ Настройки"
+
+msgid "📱 Telefon raqamni yuborish"
+msgstr "📱 Отправить номер телефона"
+
+msgid "⬅️ Orqaga"
+msgstr "⬅️ Назад"
+
+msgid "➡️ Oldinga"
+msgstr "➡️ Вперед"
+
+msgid "❌ Bekor qilish"
+msgstr "❌ Отмена"
+
+msgid "✅ Roziman"
+msgstr "✅ Согласен"
+
+msgid "✅ Tasdiqlash"
+msgstr "✅ Подтвердить"
+
+msgid "❌ Rad etish"
+msgstr "❌ Отклонить"
+
+msgid "👥 Xaridorlar ro'yxati"
+msgstr "👥 Список покупателей"
+
+msgid "🔄 Yangilash"
+msgstr "🔄 Обновить"
+
+msgid "📊 Dashboard ga qaytish"
+msgstr "📊 Вернуться в Дашборд"
+
+msgid "📦 Qadoqlashni boshlash"
+msgstr "📦 Начать упаковку"
+
+msgid "🚚 Yo'lga chiqdi"
+msgstr "🚚 В пути"
+
+msgid "🏁 Yetkazib berildi"
+msgstr "🏁 Доставлено"
+
+msgid "⬅️ Qidiruv natijalariga"
+msgstr "⬅️ К результатам поиска"
+
+msgid "🔍 Buyurtma qidirish"
+msgstr "🔍 Поиск заказа"
+
+msgid "⤴️ Yangi qidiruv"
+msgstr "⤴️ Новый поиск"
+
+msgid "✏️ Nomini o'zgartirish"
+msgstr "✏️ Изменить название"
+
+msgid "📝 Tavsifni o'zgartirish"
+msgstr "📝 Изменить описание"
+
+msgid "🖼 Rasmni o'zgartirish"
+msgstr "🖼 Изменить изображение"
+
+msgid "💰 Tannarxni o'zgartirish"
+msgstr "💰 Изменить себестоимость"
+
+msgid "💵 Sotuv narxini o'zgartirish"
+msgstr "💵 Изменить цену продажи"
+
+msgid "📉 Low stock chegarasini o'zgartirish"
+msgstr "📉 Изменить порог остатка"
+
+msgid "🗑 O'chirish"
+msgstr "🗑 Удалить"
+
+msgid "✅ Ha, o'chirish"
+msgstr "✅ Да, удалить"
+
+msgid "❌ Yo'q, bekor qilish"
+msgstr "❌ Нет, отменить"
+
+msgid "⏭ O'tkazib yuborish"
+msgstr "⏭ Пропустить"
+
+msgid "🌐 Admin tilini o'zgartirish"
+msgstr "🌐 Сменить язык админки"
+
+msgid "📊 Qoldiqlar"
+msgstr "📊 Остатки"
+
+msgid "🔄 Harakatlar tarixi"
+msgstr "🔄 История движений"
+
+msgid "✏️ Qoldiqni tuzatish"
+msgstr "✏️ Скорректировать остаток"
+
+msgid "⬅️ Buyurtmalar ro'yxatiga"
+msgstr "⬅️ К списку заказов"
+
+msgid "✍️ Sharh qoldirish"
+msgstr "✍️ Оставить отзыв"
+
+msgid "✅ Tasdiqlash va Kanalga joylash"
+msgstr "✅ Подтвердить и опубликовать"
+
+msgid "To'lovni tekshirish"
+msgstr "Проверить оплату"
+
+msgid "To'lovni bekor qilish"
+msgstr "Отменить платеж"
+
+msgid "mijoz"
+msgstr "клиент"
+
+msgid "Klient"
+msgstr "Клиент"
+
+msgid "so'm"
+msgstr "сум"
+
+msgid "Sahifa"
+msgstr "Страница"
+
+msgid "Balansingiz"
+msgstr "Ваш баланс"
+
+msgid "Tranzaksiyalar tarixi"
+msgstr "История транзакций"
+
+msgid "Tranzaksiyalar tarixi bo'sh."
+msgstr "История транзакций пуста."
+
+msgid "📥 Balans to'ldirish"
+msgstr "📥 Пополнение баланса"
+
+msgid "📤 Xarid"
+msgstr "📤 Покупка"
+
+msgid "📥 Pul qaytarilishi"
+msgstr "📥 Возврат средств"
+
+msgid "📥 Manual to'ldirish"
+msgstr "📥 Ручное пополнение"
+
+msgid "📤 Manual yechish"
+msgstr "📤 Ручное списание"
+
+msgid "Noma'lum operatsiya"
+msgstr "Неизвестная операция"
+
+msgid "Noma'lum"
+msgstr "Неизвестно"
+
+msgid "Sizda hali buyurtmalar mavjud emas."
+msgstr "У вас пока нет заказов."
+
+msgid "Sizning buyurtmalaringiz"
+msgstr "Ваши заказы"
+
+msgid "Buyurtma topilmadi!"
+msgstr "Заказ не найден!"
+
+msgid "Buyurtma topilmadi."
+msgstr "Заказ не найден."
+
+msgid "⏳ Admin tasdiqlashi kutilmoqda"
+msgstr "⏳ Ожидает подтверждения админа"
+
+msgid "✅ Tasdiqlangan"
+msgstr "✅ Подтверждено"
+
+msgid "📦 Qadoqlanmoqda"
+msgstr "📦 Упаковывается"
+
+msgid "🚚 Yetkazib berilmoqda"
+msgstr "🚚 Доставляется"
+
+msgid "🏁 Yetkazib berilgan"
+msgstr "🏁 Доставлено"
+
+msgid "❌ Rad etilgan"
+msgstr "❌ Отклонено"
+
+msgid "🚫 Bekor qilingan"
+msgstr "🚫 Отменено"
+
+msgid "💰 Qaytarilgan"
+msgstr "💰 Возвращено"
+
+msgid "📝 Qoralama"
+msgstr "📝 Черновик"
 
 msgid "Tilni tanlang / Выберите язык:"
-msgstr "Tilni tanlang / Выберите язык:"
+msgstr "Выберите язык / Tilni tanlang:"
 
-msgid "Assalomu alaykum! Shopim botiga xush kelibsiz.\nRo'yxatdan o'tish uchun ism-familiyangizni kiriting:"
-msgstr "Здравствуйте! Добро пожаловать в бот Shopim.\nДля регистрации введите ваше имя и фамилию:"
+msgid "Asosiy menyu:"
+msgstr "Главное меню:"
 
-msgid "Iltimos, to'liq ism-familiyangizni kiriting (masalan, Alisher Valiyev)."
-msgstr "Пожалуйста, введите ваше полное имя и фамилию (например, Иван Иванов)."
+msgid "Sharh yuborish bekor qilindi."
+msgstr "Отправка отзыва отменена."
 
-msgid "Ajoyib! Endi telefon raqamingizni yuboring."
-msgstr "Отлично! Теперь отправьте свой номер телефона."
+msgid "Iltimos, batafsilroq sharh yozing (kamida 5 ta belgi)."
+msgstr "Пожалуйста, напишите более подробный отзыв (минимум 5 символов)."
 
-msgid "Raqamingiz qabul qilindi. Endi yashash manzilingizni to'liq kiriting:"
-msgstr "Ваш номер принят. Теперь введите ваш полный адрес проживания:"
+msgid "Rahmat! Sharhingiz adminga tekshirish uchun yuborildi."
+msgstr "Спасибо! Ваш отзыв отправлен администратору на проверку."
 
-msgid "Iltimos, manzilingizni to'liqroq kiriting."
-msgstr "Пожалуйста, введите ваш адрес более подробно."
+msgid "Balans to'ldirish bekor qilindi."
+msgstr "Пополнение баланса отменено."
 
-msgid "Manzilingiz qabul qilindi. Endi yoshingizni kiriting:"
-msgstr "Ваш адрес принят. Теперь введите ваш возраст:"
+msgid "Balansni to'ldirish uchun summani kiriting (so'mda):"
+msgstr "Введите сумму для пополнения баланса (в сумах):"
 
-msgid "Iltimos, yoshingizni to'g'ri kiriting (raqamda, {min_age} dan {max_age} gacha)."
-msgstr "Пожалуйста, введите ваш возраст корректно (числом, от {min_age} до {max_age})."
+msgid "Minimal to'ldirish summasi 1000 so'm."
+msgstr "Минимальная сумма пополнения 1000 сум."
 
-msgid "Ro'yxatdan o'tish deyarli yakunlandi.\nIltimos, botdan foydalanish qoidalari bilan tanishib chiqing va roziligingizni bildiring."
-msgstr "Регистрация почти завершена.\nПожалуйста, ознакомьтесь с правилами использования бота и дайте свое согласие."
+msgid "Xato. Iltimos, summani musbat raqamda kiriting (masalan, 50000)."
+msgstr "Ошибка. Пожалуйста, введите положительное число (например, 50000)."
 
-msgid "Ro'yxatdan o'tish bekor qilindi."
-msgstr "Регистрация отменена."
+msgid "Iltimos, chekni rasm ko'rinishida yuboring."
+msgstr "Пожалуйста, отправьте чек в виде изображения."
 
-msgid "Tabriklaymiz, {full_name}! Siz muvaffaqiyatli ro'yxatdan o'tdingiz.\nSizning profilingiz tasdiqlash uchun adminga yuborildi. Tasdiqlangandan so'ng sizga xabar beramiz."
-msgstr "Поздравляем, {full_name}! Вы успешно зарегистрировались.\nВаш профиль отправлен на подтверждение администратору. Мы сообщим вам, когда он будет подтвержден."
+msgid "✅ So'rovingiz qabul qilindi. Admin tasdiqlashi bilan balansingizga pul o'tkaziladi."
+msgstr "✅ Ваш запрос принят. Деньги будут зачислены на баланс после подтверждения администратором."
 
-msgid "Xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring."
-msgstr "Произошла ошибка. Пожалуйста, попробуйте позже."
+msgid "Afsuski, hozircha mavjud joylashuvlar yo'q."
+msgstr "К сожалению, пока нет доступных районов."
 
-msgid "Assalomu alaykum, {full_name}! Asosiy menyudasiz."
-msgstr "Здравствуйте, {full_name}! Вы в главном меню."
+msgid "Joylash joyini (Toshkent tumanini) tanlang:"
+msgstr "Выберите район:"
 
-msgid "Asosiy menyu"
-msgstr "Главное меню"
+msgid "Ushbu tumanda hozircha tovarlar mavjud emas."
+msgstr "В этом районе пока нет товаров в наличии."
 
-msgid "🛍 Katalog"
-msgstr "🛍 Каталог"
+msgid "Ushbu tumandagi mahsulotni tanlang:"
+msgstr "Выберите товар в этом районе:"
 
-msgid "💰 Balansim"
-msgstr "💰 Мой баланс"
+msgid "Mahsulot topilmadi yoki tugagan."
+msgstr "Товар не найден или распродан."
 
-msgid "➕ Balans to'ldirish"
-msgstr "➕ Пополнить баланс"
+msgid "To'lov bekor qilindi."
+msgstr "Платеж отменен."
 
-msgid "📦 Buyurtmalarim"
-msgstr "📦 Мои заказы"
+msgid "To'lov admin tekshiruviga yuborildi. Tasdiqlanishini kuting."
+msgstr "Оплата отправлена на проверку администратору. Ожидайте подтверждения."
 
-msgid "👤 Profilim"
-msgstr "👤 Мой профиль"
+msgid "Afsuski, hozircha omborda tovarlar mavjud emas."
+msgstr "К сожалению, на данный момент нет товаров в наличии."
 
-msgid "📞 Operator bilan aloqa"
-msgstr "📞 Связь с оператором"
+msgid "mavjud"
+msgstr "в наличии"
 
-msgid "ℹ️ Qoidalar"
-msgstr "ℹ️ Правила"
+msgid "Analitika yangilandi!"
+msgstr "Аналитика обновлена!"
 
-msgid "<b>Sizning profilingiz</b>\n\n<b>Ism:</b> {full_name}\n<b>Telefon:</b> {phone}\n<b>Manzil:</b> {address}\n<b>Til:</b> {language}"
-msgstr "<b>Ваш профиль</b>\n\n<b>Имя:</b> {full_name}\n<b>Телефон:</b> {phone}\n<b>Адрес:</b> {address}\n<b>Язык:</b> {language}"
+msgid "Xaridorlar ro'yxati yangilandi!"
+msgstr "Список покупателей обновлен!"
 
-msgid "O'zbekcha"
-msgstr "Узбекский"
+msgid "Noma'lum sozlama."
+msgstr "Неизвестная настройка."
 
-msgid "Русский"
-msgstr "Русский"
+msgid "Xatolik yuz berdi. Iltimos, boshidan boshlang."
+msgstr "Произошла ошибка. Пожалуйста, начните сначала."
 
-msgid "Tilni o'zgartirish"
-msgstr "Сменить язык"
+msgid "KECHIKMOQDA"
+msgstr "ПРОСРОЧЕНО"
 
-msgid "Til o'zgartirildi!"
-msgstr "Язык изменен!"
+msgid "MUDDAT YAQINLASHMOQDA"
+msgstr "СРОК ПРИБЛИЖАЕТСЯ"
+
+msgid "Chegara"
+msgstr "Порог"
+
+msgid "<b>{bot_name}</b> 👥 Xush kelibsiz!\n\nAssalomu alaykum, <b>{full_name}</b>!\nMahsulotlarni tanlash va xarid qilish uchun pastdagi menyudan foydalaning."
+msgstr "<b>{bot_name}</b> 👥 Добро пожаловать!\n\nЗдравствуйте, <b>{full_name}</b>!\nВоспользуйтесь меню ниже для выбора товаров и совершения покупок."
+
+msgid "👤 <b>Sizning profilingiz</b>\n🧾 Xaridlar: <b>{total_purchases}</b>\n💰 Xaridlar summasi: <b>{total_spent:.2f} USD</b>\n💳 Balans: <b>0.00 USD</b>\n🎁 Chegirma: <b>0%</b>"
+msgstr "👤 <b>Ваш профиль</b>\n🧾 Покупок: <b>{total_purchases}</b>\n💰 Сумма покупок: <b>{total_spent:.2f} USD</b>\n💳 Баланс: <b>0.00 USD</b>\n🎁 Скидка: <b>0%</b>"
+
+msgid "💼 <b>Ish! YUQORI MAOSH!</b>\n\nKuryerlar, qadoqlovchilar va omborchilar talab qilinadi!\nYuqori maosh, moslashuvchan grafik va to'liq maxfiylik.\n\nOperator bilan bog'lanish: {operator}"
+msgstr "💼 <b>Работа! ПЛАТИМ МНОГО!</b>\n\nТребуются курьеры, фасовщики и складские работники!\nВысокая оплата, гибкий график и полная анонимность.\n\nДля связи с оператором: {operator}"
+
+msgid "Summa qabul qilindi: {amount:.2f} {so_m}.\n\nEndi to'lovni tasdiqlovchi chek yoki skrinshotni rasm qilib yuboring."
+msgstr "Сумма принята: {amount:.2f} {so_m}.\n\nТеперь отправьте чек или скриншот оплаты в виде фотографии."
+
+msgid "<b>Buyurtma №{order_number}</b>\n\n<b>Holati:</b> {status}\n<b>Sana:</b> {created_at}\n<b>Jami summa:</b> {total_amount:.2f} {so_m}\n<b>Yetkazish manzili:</b> {delivery_address}\n\n<b>Mahsulotlar:</b>\n{items_text}"
+msgstr "<b>Заказ №{order_number}</b>\n\n<b>Статус:</b> {status}\n<b>Дата:</b> {created_at}\n<b>Общая сумма:</b> {total_amount:.2f} {so_m}\n<b>Адрес доставки:</b> {delivery_address}\n\n<b>Товары:</b>\n{items_text}"
+
+msgid "💬 <b>Mijozlarimiz sharhlari:</b>\n"
+msgstr "💬 <b>Отзывы наших клиентов:</b>\n"
+
+msgid "Hozircha sharhlar mavjud emas. Birinchi bo'ling!\n"
+msgstr "Пока нет опубликованных отзывов. Будьте первыми!\n"
+
+msgid "✍️ <b>Sharhingizni yozing:</b>\n\nXizmatimiz haqidagi fikringizni qoldiring."
+msgstr "✍️ <b>Напишите ваш отзыв:</b>\n\nПоделитесь вашим впечатлением о нашей работе."
+
+msgid "📝 <b>Yangi sharh moderatsiyaga keldi!</b>\n\n👤 Mijoz: <b>{user_label}</b> (ID: {telegram_id})\n💬 Sharh: <i>\"{review_text}\"</i>"
+msgstr "📝 <b>Новый отзыв на модерацию!</b>\n\n👤 Клиент: <b>{user_label}</b> (ID: {telegram_id})\n💬 Отзыв: <i>\"{review_text}\"</i>"
+
+msgid "To'lov uchun: <b>{price:.2f} USD</b>\nTo'lov usulini tanlang:"
+msgstr "К оплате: <b>{price:.2f} USD</b>\nВыберите способ оплаты:"
+
+msgid "To'lov uchun: <b>{price:.2f} USD</b>\nManzil {method}:\n<code>{wallet}</code>\nSumma {method}: <b>{crypto_amount}</b>\n\nTo'lov tarmoq tasdiqlangach tushadi — odatda bir necha daqiqa.\nTo'lagach «To'lovni tekshirish» tugmasini bosing."
+msgstr "К оплате: <b>{price:.2f} USD</b>\nАдрес {method}:\n<code>{wallet}</code>\nСумма {method}: <b>{crypto_amount}</b>\n\nОплата зачисляется после подтверждения сети — обычно несколько минут.\nПосле оплаты нажмите «Проверить оплату»."
+
+msgid "🔔 <b>To'lov bo'yicha bildirishnoma!</b>\nFoydalanuvchi: {full_name} (@{username})\nBuyurtma №: <b>{order_number}</b>\nSumma: <b>{total_amount:.2f} USD</b>"
+msgstr "🔔 <b>Уведомление об оплате!</b>\nПользователь: {full_name} (@{username})\nЗаказ №: <b>{order_number}</b>\nСумма: <b>{total_amount:.2f} USD</b>"
+
+msgid "📦 <b>Mavjud tovarlar:</b>\n"
+msgstr "📦 <b>Товары в наличии:</b>\n"
+
+msgid "\nXarid qilish uchun <b>«Sotib olish»</b> tugmasini bosing."
+msgstr "\nДля покупки нажмите кнопку <b>«Купить»</b>."
+
+msgid "Salom, <b>{full_name}</b>! Admin panelidasiz.\nRoli: <b>{role}</b>"
+msgstr "Здравствуйте, <b>{full_name}</b>! Вы в панели администратора.\nРоль: <b>{role}</b>"
+
+msgid "<b>📊 Tizim Analitikasi va Moliyaviy Grafik</b>\n<i>{now} holatiga ko'ra avto-yangilandi</i>\n\n<b>📈 Bugungi Ko'rsatkichlar:</b>\n  • Tushgan buyurtmalar: <b>{orders_today_count} ta</b>\n  • Tushgan tushum: <b>{revenue_today:,.2f} USD</b>\n  • Taxminiy sof foyda: <b>{profit_today:,.2f} USD</b>\n\n<b>💎 Barcha Vaqtlardagi Statistika:</b>\n  • Jami tushgan pullar: <b>{total_revenue:,.2f} USD</b>\n  • Ketgan (sotilgan) tovarlar: <b>{total_grams_sold:,.2f} gramm</b>\n  • Jami buyurtmalar soni: <b>{total_orders_count} ta</b>\n\n<b>⏳ Kutilayotgan harakatlar:</b>\n  • Kutilayotgan to'lovlar: <b>{pending_topups_count} ta</b>\n  • Tasdiqlanmagan buyurtmalar: <b>{pending_orders_count} ta</b>\n\n<b>📦 Ombordagi holat va Foydalanuvchilar:</b>\n  • Ogohlantirish (oz qolgan): <b>{low_stock_products_count} ta tovar</b>\n  • Faol xaridorlar (botda): <b>{active_users_count} ta</b>"
+msgstr "<b>📊 Аналитика системы и Финансовый График</b>\n<i>Авто-обновлено на {now}</i>\n\n<b>📈 Показатели за сегодня:</b>\n  • Поступившие заказы: <b>{orders_today_count} шт</b>\n  • Выручка за сегодня: <b>{revenue_today:,.2f} USD</b>\n  • Чистая прибыль (приблиз.): <b>{profit_today:,.2f} USD</b>\n\n<b>💎 Статистика за всё время:</b>\n  • Всего поступило денег: <b>{total_revenue:,.2f} USD</b>\n  • Продано товаров: <b>{total_grams_sold:,.2f} грамм</b>\n  • Общее кол-во заказов: <b>{total_orders_count} шт</b>\n\n<b>⏳ Ожидающие действия:</b>\n  • Ожидающие пополнения: <b>{pending_topups_count} шт</b>\n  • Неподтвержденные заказы: <b>{pending_orders_count} шт</b>\n\n<b>📦 Состояние склада и Пользователи:</b>\n  • Предупреждение (мало на складе): <b>{low_stock_products_count} шт товаров</b>\n  • Активные покупатели в боте: <b>{active_users_count} чел</b>"
+
+msgid "<b>👥 Top Xaridorlar Ro'yxati (Kimlar tovar olgan):</b>"
+msgstr "<b>👥 Список топ покупателей (Кто совершал покупки):</b>"
+
+msgid "<i>Hozircha xaridlar mavjud emas.</i>"
+msgstr "<i>Пока нет совершённых покупок.</i>"
+
+msgid "<b>{idx}. {user_label}</b> (ID: <code>{telegram_id}</code>)\n   • Buyurtmalar: <b>{count} ta</b> | Soni/Og'irligi: <b>{grams:,.2f} gr</b>\n   • Sarflagan summasi: <b>{spent:,.2f} USD</b>\n"
+msgstr "<b>{idx}. {user_label}</b> (ID: <code>{telegram_id}</code>)\n   • Заказы: <b>{count} шт</b> | Количество/Вес: <b>{grams:,.2f} гр</b>\n   • Потраченная сумма: <b>{spent:,.2f} USD</b>\n"
+
+msgid "<b>⚙️ Tizim va Baza Sozlamalari</b>\n\n{settings_text}\n\n<i>O'zgartirmoqchi bo'lgan parametrni tanlang:</i>"
+msgstr "<b>⚙️ Настройки системы и базы данных</b>\n\n{settings_text}\n\n<i>Выберите параметр для изменения:</i>"
+
+msgid "✍️ Iltimos, <b>{field_desc}</b> uchun yangi qiymatni kiriting:"
+msgstr "✍️ Пожалуйста, введите новое значение для <b>{field_desc}</b>:"
+
+msgid "'{field_desc}' muvaffaqiyatli yangilandi!"
+msgstr "'{field_desc}' успешно обновлено!"
+
+msgid "❌ Xato: Noto'g'ri format.\nIltimos, qiymatni to'g'ri kiriting.\n\n<i>{error}</i>"
+msgstr "❌ Ошибка: Неверный формат.\nПожалуйста, введите корректное значение.\n\n<i>{error}</i>"
+
+msgid "❌ Sozlamani yangilashda xatolik: {error}"
+msgstr "❌ Ошибка при обновлении настройки: {error}"
+
+msgid "👤 Yangi foydalanuvchi ro'yxatdan o'tdi va tasdiq kutmoqda.\n\nFoydalanuvchi ID: `{user_id}`\nTelegram ID: `{telegram_id}`\nIsm: {full_name}\nUsername: @{username}"
+msgstr "👤 Зарегистрирован новый пользователь и ожидает подтверждения.\n\nID пользователя: `{user_id}`\nTelegram ID: `{telegram_id}`\nИмя: {full_name}\nUsername: @{username}"
+
+msgid "🛒 Yangi buyurtma keldi!\n\nBuyurtma №: <b>{order_number}</b>\nFoydalanuvchi: {user_name}\nSumma: <b>{total_amount:.2f} {so_m}</b>\nSana: {created_at}"
+msgstr "🛒 Поступил новый заказ!\n\nЗаказ №: <b>{order_number}</b>\nПользователь: {user_name}\nСумма: <b>{total_amount:.2f} {so_m}</b>\nДата: {created_at}"
+
+msgid "💳 Yangi balans to'ldirish so'rovi!\n\nFoydalanuvchi: {user_name}\nSumma: <b>{amount:.2f} {so_m}</b>\nSana: {created_at}"
+msgstr "💳 Новый запрос на пополнение баланса!\n\nПользователь: {user_name}\nСумма: <b>{amount:.2f} {so_m}</b>\nДата: {created_at}"
+
+msgid "Sizning №{order_number} buyurtmangiz holati o'zgardi.\n\nYangi holat: <b>{new_status_text}</b>"
+msgstr "Статус вашего заказа №{order_number} изменился.\n\nНовый статус: <b>{new_status_text}</b>"
+
+msgid "Belgilangan vaqt ({time}) o'tib ketdi."
+msgstr "Указанное время ({time}) истекло."
+
+msgid "Yetkazib berishga ~{minutes} daqiqa qoldi."
+msgstr "До доставки осталось ~{minutes} минут."
+
+msgid "❗️ <b>DIQQAT: {issue_text}</b>\n\nBuyurtma №: <b>{order_number}</b>\nFoydalanuvchi: {full_name}\nHolati: {status}\nDeadline: {deadline}\n\n{details}"
+msgstr "❗️ <b>ВНИМАНИЕ: {issue_text}</b>\n\nЗаказ №: <b>{order_number}</b>\nПользователь: {full_name}\nСтатус: {status}\nДедлайн: {deadline}\n\n{details}"
+
+msgid "⚠️ <b>DIQQAT: Mahsulotlar kam qolmoqda!</b>\n\nQuyidagi mahsulotlar belgilangan miqdordan kam qolgan:\n{product_list_str}"
+msgstr "⚠️ <b>ВНИМАНИЕ: Заканчиваются товары!</b>\n\nСледующие товары остались ниже установленного лимита:\n{product_list_str}"

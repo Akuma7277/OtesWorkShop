@@ -39,7 +39,7 @@ async def _show_product_edit_menu(
 ):
     product = await session.get(Product, product_id)
     if not product:
-        await target.answer("Mahsulot topilmadi.")
+        await target.answer(_("Mahsulot topilmadi."))
         return  # type: ignore
 
     text = (  # type: ignore
@@ -60,13 +60,12 @@ async def _show_product_edit_menu(
 
 
 async def _show_products_for_editing(
-    target: types.Message | types.CallbackQuery, page: int, session: AsyncSession, admin: Admin
+    target: types.Message | types.CallbackQuery, page: int, session: AsyncSession, admin: Optional[Admin] = None
 ):
     service = WarehouseService(session, items_per_page=ITEMS_PER_PAGE)
     result = await service.get_products_stock(page=page)
-    lang = admin.language_code or "uz"
 
-    text = "Tahrirlash uchun mahsulot tanlang:" if lang == "uz" else "Выберите товар для редактирования:"
+    text = _("Tahrirlash uchun mahsulot tanlang:")
     keyboard = get_product_list_for_editing_keyboard(
         products=result.products,
         total_pages=result.total_pages,
@@ -143,23 +142,23 @@ async def choose_field_to_edit_handler(
     state: FSMContext,
 ):
     field_map = {
-        "name": (ProductEditingState.getting_name, "Yangi nomni kiriting:"),
+        "name": (ProductEditingState.getting_name, _("Yangi nomni kiriting:")),
         "description": (
             ProductEditingState.getting_description,
-            "Yangi tavsifni kiriting:",
+            _("Yangi tavsifni kiriting:"),
         ),
-        "image": (ProductEditingState.getting_image, "Yangi rasmni yuboring:"),
+        "image": (ProductEditingState.getting_image, _("Yangi rasmni yuboring:")),
         "sale_price_per_gram": (
             ProductEditingState.getting_sale_price,
-            "Yangi sotuv narxini kiriting (so'm/gramm):",
+            _("Yangi sotuv narxini kiriting (so'm/gramm):"),
         ),
         "cost_price_per_gram": (
             ProductEditingState.getting_cost_price,
-            "Yangi tannarxni kiriting (so'm/gramm):",
+            _("Yangi tannarxni kiriting (so'm/gramm):"),
         ),
         "low_stock_threshold_grams": (
             ProductEditingState.getting_low_stock_threshold,
-            "Yangi minimal qoldiq chegarasini kiriting (gramm):",
+            _("Yangi minimal qoldiq chegarasini kiriting (gramm):"),
         ),
     }
     field = callback_data.field
@@ -184,13 +183,13 @@ async def toggle_product_active_handler(
     service = ProductManagementService(session)
     product = await session.get(Product, product_id)
     if not product:
-        await callback.answer("Mahsulot topilmadi!", show_alert=True)
+        await callback.answer(_("Mahsulot topilmadi!"), show_alert=True)
         return
 
     new_status = not product.is_active
     await service.update_product(product_id, {"is_active": new_status})
 
-    success_message = "Mahsulot yashirildi" if not new_status else "Mahsulot ko'rsatildi"
+    success_message = _("Mahsulot yashirildi") if not new_status else _("Mahsulot ko'rsatildi")
 
     await _show_product_edit_menu(
         callback, product_id, page, session, success_message=success_message
@@ -213,17 +212,17 @@ async def start_delete_product_handler(
 
     if not can_delete:
         await callback.answer(
-            "Bu mahsulotni o'chirib bo'lmaydi, chunki u bilan bog'liq buyurtmalar mavjud. "
-            "O'chirish o'rniga yashirishingiz mumkin.",
+            _("Bu mahsulotni o'chirib bo'lmaydi, chunki u bilan bog'liq buyurtmalar mavjud. "
+              "O'chirish o'rniga yashirishingiz mumkin."),
             show_alert=True,
         )
         return
 
     product = await session.get(Product, product_id)
-    text = (
-        f"❓ Rostdan ham <b>{product.name}</b> mahsulotini o'chirmoqchimisiz?\n\n"
+    text = _(
+        "❓ Rostdan ham <b>{product_name}</b> mahsulotini o'chirmoqchimisiz?\n\n"
         "<b>DIQQAT:</b> Bu amalni orqaga qaytarib bo'lmaydi!"
-    )
+    ).format(product_name=product.name)
     await callback.message.edit_text(
         text,
         reply_markup=get_product_delete_confirmation_keyboard(),

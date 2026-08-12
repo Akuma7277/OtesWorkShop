@@ -3,6 +3,7 @@ from typing import Optional
 
 from aiogram import F, Router, types
 from aiogram.filters import StateFilter
+from aiogram.utils.i18n import gettext as _
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.shopim.db.models import Admin
@@ -19,80 +20,65 @@ router.message.filter(IsAdminFilter())
 router.callback_query.filter(IsAdminFilter())
 
 
-def format_dashboard_message(stats: DashboardStats, lang: str = "uz") -> str:
+def format_dashboard_message(stats: DashboardStats, lang: str | None = None) -> str:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-    if lang == "ru":
-        return (
-            f"<b>📊 Аналитика системы и Финансовый График</b>\n"
-            f"<i>Авто-обновлено на {now}</i>\n\n"
-            f"<b>📈 Показатели за сегодня:</b>\n"
-            f"  • Поступившие заказы: <b>{stats.orders_today_count} шт</b>\n"
-            f"  • Выручка за сегодня: <b>{stats.revenue_today:,.2f} USD</b>\n"
-            f"  • Чистая прибыль (приблиз.): <b>{stats.profit_today:,.2f} USD</b>\n\n"
-            f"<b>💎 Статистика за всё время:</b>\n"
-            f"  • Всего поступило денег: <b>{stats.total_revenue:,.2f} USD</b>\n"
-            f"  • Продано товаров: <b>{stats.total_grams_sold:,.2f} грамм</b>\n"
-            f"  • Общее кол-во заказов: <b>{stats.total_orders_count} шт</b>\n\n"
-            f"<b>⏳ Ожидающие действия:</b>\n"
-            f"  • Ожидающие пополнения: <b>{stats.pending_topups_count} шт</b>\n"
-            f"  • Неподтвержденные заказы: <b>{stats.pending_orders_count} шт</b>\n\n"
-            f"<b>📦 Состояние склада и Пользователи:</b>\n"
-            f"  • Предупреждение (мало на складе): <b>{stats.low_stock_products_count} шт товаров</b>\n"
-            f"  • Активные покупатели в боте: <b>{stats.active_users_count} чел</b>"
-        ).replace(",", " ")
-    else:
-        return (
-            f"<b>📊 Tizim Analitikasi va Moliyaviy Grafik</b>\n"
-            f"<i>{now} holatiga ko'ra avto-yangilandi</i>\n\n"
-            f"<b>📈 Bugungi Ko'rsatkichlar:</b>\n"
-            f"  • Tushgan buyurtmalar: <b>{stats.orders_today_count} ta</b>\n"
-            f"  • Tushgan tushum: <b>{stats.revenue_today:,.2f} USD</b>\n"
-            f"  • Taxminiy sof foyda: <b>{stats.profit_today:,.2f} USD</b>\n\n"
-            f"<b>💎 Barcha Vaqtlardagi Statistika:</b>\n"
-            f"  • Jami tushgan pullar: <b>{stats.total_revenue:,.2f} USD</b>\n"
-            f"  • Ketgan (sotilgan) tovarlar: <b>{stats.total_grams_sold:,.2f} gramm</b>\n"
-            f"  • Jami buyurtmalar soni: <b>{stats.total_orders_count} ta</b>\n\n"
-            f"<b>⏳ Kutilayotgan harakatlar:</b>\n"
-            f"  • Kutilayotgan to'lovlar: <b>{stats.pending_topups_count} ta</b>\n"
-            f"  • Tasdiqlanmagan buyurtmalar: <b>{stats.pending_orders_count} ta</b>\n\n"
-            f"<b>📦 Ombordagi holat va Foydalanuvchilar:</b>\n"
-            f"  • Ogohlantirish (oz qolgan): <b>{stats.low_stock_products_count} ta tovar</b>\n"
-            f"  • Faol xaridorlar (botda): <b>{stats.active_users_count} ta</b>"
-        ).replace(",", " ")
+    text = _(
+        "<b>📊 Tizim Analitikasi va Moliyaviy Grafik</b>\n"
+        "<i>{now} holatiga ko'ra avto-yangilandi</i>\n\n"
+        "<b>📈 Bugungi Ko'rsatkichlar:</b>\n"
+        "  • Tushgan buyurtmalar: <b>{orders_today_count} ta</b>\n"
+        "  • Tushgan tushum: <b>{revenue_today:,.2f} USD</b>\n"
+        "  • Taxminiy sof foyda: <b>{profit_today:,.2f} USD</b>\n\n"
+        "<b>💎 Barcha Vaqtlardagi Statistika:</b>\n"
+        "  • Jami tushgan pullar: <b>{total_revenue:,.2f} USD</b>\n"
+        "  • Ketgan (sotilgan) tovarlar: <b>{total_grams_sold:,.2f} gramm</b>\n"
+        "  • Jami buyurtmalar soni: <b>{total_orders_count} ta</b>\n\n"
+        "<b>⏳ Kutilayotgan harakatlar:</b>\n"
+        "  • Kutilayotgan to'lovlar: <b>{pending_topups_count} ta</b>\n"
+        "  • Tasdiqlanmagan buyurtmalar: <b>{pending_orders_count} ta</b>\n\n"
+        "<b>📦 Ombordagi holat va Foydalanuvchilar:</b>\n"
+        "  • Ogohlantirish (oz qolgan): <b>{low_stock_products_count} ta tovar</b>\n"
+        "  • Faol xaridorlar (botda): <b>{active_users_count} ta</b>"
+    ).format(
+        now=now,
+        orders_today_count=stats.orders_today_count,
+        revenue_today=stats.revenue_today,
+        profit_today=stats.profit_today,
+        total_revenue=stats.total_revenue,
+        total_grams_sold=stats.total_grams_sold,
+        total_orders_count=stats.total_orders_count,
+        pending_topups_count=stats.pending_topups_count,
+        pending_orders_count=stats.pending_orders_count,
+        low_stock_products_count=stats.low_stock_products_count,
+        active_users_count=stats.active_users_count,
+    )
+    return text.replace(",", " ")
 
 
-def format_buyers_message(stats: DashboardStats, lang: str = "uz") -> str:
+def format_buyers_message(stats: DashboardStats, lang: str | None = None) -> str:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-    if lang == "ru":
-        lines = [
-            f"<b>👥 Список топ покупателей (Кто совершал покупки):</b>",
-            f"<i>На момент {now}</i>\n",
-        ]
-        if not stats.top_buyers:
-            lines.append("<i>Пока нет совершённых покупок.</i>")
-        else:
-            for idx, (u, count, spent, grams) in enumerate(stats.top_buyers, 1):
-                user_label = f"@{u.username}" if u.username else u.full_name
-                lines.append(
-                    f"<b>{idx}. {user_label}</b> (ID: <code>{u.telegram_id}</code>)\n"
-                    f"   • Заказы: <b>{count} шт</b> | Количество/Вес: <b>{grams:,.2f} гр</b>\n"
-                    f"   • Потраченная сумма: <b>{spent:,.2f} USD</b>\n"
-                )
+    lines = [
+        _("<b>👥 Top Xaridorlar Ro'yxati (Kimlar tovar olgan):</b>"),
+        f"<i>{now} holatiga ko'ra</i>\n",
+    ]
+    if not stats.top_buyers:
+        lines.append(_("<i>Hozircha xaridlar mavjud emas.</i>"))
     else:
-        lines = [
-            f"<b>👥 Top Xaridorlar Ro'yxati (Kimlar tovar olgan):</b>",
-            f"<i>{now} holatiga ko'ra</i>\n",
-        ]
-        if not stats.top_buyers:
-            lines.append("<i>Hozircha xaridlar mavjud emas.</i>")
-        else:
-            for idx, (u, count, spent, grams) in enumerate(stats.top_buyers, 1):
-                user_label = f"@{u.username}" if u.username else u.full_name
-                lines.append(
-                    f"<b>{idx}. {user_label}</b> (ID: <code>{u.telegram_id}</code>)\n"
-                    f"   • Buyurtmalar: <b>{count} ta</b> | Soni/Og'irligi: <b>{grams:,.2f} gr</b>\n"
-                    f"   • Sarflagan summasi: <b>{spent:,.2f} USD</b>\n"
-                )
+        for idx, (u, count, spent, grams) in enumerate(stats.top_buyers, 1):
+            user_label = f"@{u.username}" if u.username else u.full_name
+            entry = _(
+                "<b>{idx}. {user_label}</b> (ID: <code>{telegram_id}</code>)\n"
+                "   • Buyurtmalar: <b>{count} ta</b> | Soni/Og'irligi: <b>{grams:,.2f} gr</b>\n"
+                "   • Sarflagan summasi: <b>{spent:,.2f} USD</b>\n"
+            ).format(
+                idx=idx,
+                user_label=user_label,
+                telegram_id=u.telegram_id,
+                count=count,
+                grams=grams,
+                spent=spent,
+            )
+            lines.append(entry)
 
     return "\n".join(lines).replace(",", " ")
 
@@ -102,16 +88,15 @@ async def show_dashboard(
 ):
     service = DashboardService(session)
     stats = await service.get_stats()
-    lang = admin.language_code or "uz"
-    text = format_dashboard_message(stats, lang=lang)
-    keyboard = get_dashboard_keyboard(lang=lang)
+    text = format_dashboard_message(stats)
+    keyboard = get_dashboard_keyboard()
 
     if isinstance(target, types.CallbackQuery):
         try:
             await target.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
         except Exception:
             pass
-        await target.answer("Аналитика обновлена!" if lang == "ru" else "Analitika yangilandi!")
+        await target.answer(_("Analitika yangilandi!"))
     else:
         await target.answer(text, reply_markup=keyboard, parse_mode="HTML")
 
@@ -134,14 +119,13 @@ async def buyers_dashboard_handler(
 ):
     service = DashboardService(session)
     stats = await service.get_stats()
-    lang = admin.language_code or "uz"
-    text = format_buyers_message(stats, lang=lang)
-    keyboard = get_buyers_keyboard(lang=lang)
+    text = format_buyers_message(stats)
+    keyboard = get_buyers_keyboard()
     try:
         await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     except Exception:
         pass
-    await callback.answer("Список покупателей обновлен!" if lang == "ru" else "Xaridorlar ro'yxati yangilandi!")
+    await callback.answer(_("Xaridorlar ro'yxati yangilandi!"))
 
 
 @router.callback_query(DashboardCallback.filter(F.action == "main_stats"))

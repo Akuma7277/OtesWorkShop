@@ -4,6 +4,7 @@ from aiogram import F, Router, types
 from aiogram.filters import StateFilter
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.i18n import gettext as _
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -68,14 +69,14 @@ def get_user_detail_keyboard(user: User, page: int) -> InlineKeyboardMarkup:
 
     if user.status == UserStatus.BLOCKED:
         builder.button(
-            text="🔓 Blokdan chiqarish / Разблокировать",
+            text=_("🔓 Blokdan chiqarish"),
             callback_data=UserActionCallback(
                 action="toggle_block", user_id=user.id, page=page
             ).pack(),
         )
     else:
         builder.button(
-            text="🚫 Bloklash / Заблокировать",
+            text=_("🚫 Bloklash"),
             callback_data=UserActionCallback(
                 action="toggle_block", user_id=user.id, page=page
             ).pack(),
@@ -84,7 +85,7 @@ def get_user_detail_keyboard(user: User, page: int) -> InlineKeyboardMarkup:
     builder.adjust(1)
     builder.row(
         InlineKeyboardButton(
-            text="⬅️ Ro'yxatga qaytish / К списку",
+            text=_("⬅️ Ro'yxatga qaytish"),
             callback_data=UserManageCallback(action="page", page=page).pack(),
         )
     )
@@ -101,11 +102,7 @@ async def user_management_handler(
     service = UserManagementService(session)
     result = await service.search_users(query="", page=1)
 
-    lang = admin.language_code or "uz"
-    if lang == "ru":
-        text = "👥 <b>Список пользователей:</b>\nВыберите пользователя для управления (блокировка/просмотр):"
-    else:
-        text = "👥 <b>Foydalanuvchilar ro'yxati:</b>\nBoshqarish uchun foydalanuvchini tanlang (bloklash/ko'rish):"
+    text = _("👥 <b>Foydalanuvchilar ro'yxati:</b>\nBoshqarish uchun foydalanuvchini tanlang (bloklash/ko'rish):")
 
     keyboard = get_user_search_results_keyboard(
         result.users, result.total_pages, result.current_page
@@ -123,11 +120,7 @@ async def paginate_users_handler(
     service = UserManagementService(session)
     result = await service.search_users(query="", page=callback_data.page)
 
-    lang = admin.language_code or "uz"
-    if lang == "ru":
-        text = "👥 <b>Список пользователей:</b>\nВыберите пользователя для управления:"
-    else:
-        text = "👥 <b>Foydalanuvchilar ro'yxati:</b>\nBoshqarish uchun foydalanuvchini tanlang:"
+    text = _("👥 <b>Foydalanuvchilar ro'yxati:</b>\nBoshqarish uchun foydalanuvchini tanlang:")
 
     keyboard = get_user_search_results_keyboard(
         result.users, result.total_pages, result.current_page
@@ -147,31 +140,26 @@ async def select_user_handler(
     user = await service.get_user_by_id(callback_data.user_id)
 
     if not user:
-        await callback.answer("Foydalanuvchi topilmadi.", show_alert=True)
+        await callback.answer(_("Foydalanuvchi topilmadi."), show_alert=True)
         return
 
-    lang = admin.language_code or "uz"
     user_label = f"@{user.username}" if user.username else user.full_name
     status_label = "🚫 BLOCKED" if user.status == UserStatus.BLOCKED else "✅ APPROVED"
 
-    if lang == "ru":
-        text = (
-            f"👤 <b>Карточка пользователя:</b>\n\n"
-            f"• Имя: <b>{user.full_name}</b>\n"
-            f"• Юзернейм: <b>{user_label}</b>\n"
-            f"• Telegram ID: <code>{user.telegram_id}</code>\n"
-            f"• Статус: <b>{status_label}</b>\n"
-            f"• Дата регистрации: {user.created_at.strftime('%Y-%m-%d %H:%M')}"
-        )
-    else:
-        text = (
-            f"👤 <b>Foydalanuvchi kartochkasi:</b>\n\n"
-            f"• Ismi: <b>{user.full_name}</b>\n"
-            f"• Yuzerneym: <b>{user_label}</b>\n"
-            f"• Telegram ID: <code>{user.telegram_id}</code>\n"
-            f"• Holati: <b>{status_label}</b>\n"
-            f"• Ro'yxatdan o'tgan sana: {user.created_at.strftime('%Y-%m-%d %H:%M')}"
-        )
+    text = _(
+        "👤 <b>Foydalanuvchi kartochkasi:</b>\n\n"
+        "• Ismi: <b>{full_name}</b>\n"
+        "• Yuzerneym: <b>{user_label}</b>\n"
+        "• Telegram ID: <code>{telegram_id}</code>\n"
+        "• Holati: <b>{status_label}</b>\n"
+        "• Ro'yxatdan o'tgan sana: {created_at}"
+    ).format(
+        full_name=user.full_name,
+        user_label=user_label,
+        telegram_id=user.telegram_id,
+        status_label=status_label,
+        created_at=user.created_at.strftime('%Y-%m-%d %H:%M'),
+    )
 
     keyboard = get_user_detail_keyboard(user, page=callback_data.page)
     await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
@@ -189,10 +177,10 @@ async def toggle_user_block_handler(
     user = await service.toggle_user_block(callback_data.user_id, admin)
 
     if not user:
-        await callback.answer("Xatolik yuz berdi.", show_alert=True)
+        await callback.answer(_("Xatolik yuz berdi."), show_alert=True)
         return
 
-    msg = "Пользователь заблокирован/разблокирован" if admin.language_code == "ru" else "Foydalanuvchi holati o'zgartirildi!"
+    msg = _("Foydalanuvchi holati o'zgartirildi!")
     await callback.answer(msg, show_alert=True)
 
     keyboard = get_user_detail_keyboard(user, page=callback_data.page)
