@@ -83,7 +83,9 @@ async def _send_topup_list(
         )
 
 
-@router.message(F.text == "💳 Popolneniya")
+from aiogram.filters import StateFilter
+
+@router.message(F.text.in_({"💳 To'lovlar", "💳 Popolneniya", "💳 Пополнения"}), StateFilter("*"))
 async def show_pending_topups_handler(message: types.Message, session: AsyncSession):
     await _send_topup_list(message, 1, session)
     

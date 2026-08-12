@@ -78,7 +78,9 @@ async def _show_products_for_editing(
         await target.answer(text, reply_markup=keyboard)  # type: ignore
 
 
-@router.message(F.text == "✏️ Tovarlarni boshqarish")
+from aiogram.filters import StateFilter
+
+@router.message(F.text.in_({"✏️ Tovarlarni boshqarish", "✏️ Управление товарами"}), StateFilter("*"))
 async def start_editing_handler(message: types.Message, session: AsyncSession):
     await _show_products_for_editing(message, 1, session)
 

@@ -15,7 +15,7 @@ router = Router(name="admin-main-menu-router")
 
 @router.message(Command("admin"), StateFilter("*"))
 @router.message(
-    F.text.in_({"⚙️ Sozlamalar", "Admin Panel", "Панель администратора"}),
+    F.text.in_({"⚙️ Sozlamalar", "⚙️ Настройки", "Admin Panel", "Панель администратора"}),
     StateFilter("*"),
 )
 async def show_admin_menu(
@@ -36,9 +36,20 @@ async def show_admin_menu(
             await session.commit()
             await session.refresh(admin)
 
+    lang = admin.language_code or "uz"
+    if lang == "ru":
+        welcome_text = (
+            f"Здравствуйте, <b>{admin.full_name}</b>! Вы в панели администратора.\n"
+            f"Роль: <b>{admin.role.value}</b>"
+        )
+    else:
+        welcome_text = (
+            f"Salom, <b>{admin.full_name}</b>! Admin panelidasiz.\n"
+            f"Roli: <b>{admin.role.value}</b>"
+        )
+
     await message.answer(
-        f"Salom, <b>{admin.full_name}</b>! Admin panelidasiz.\n"
-        f"Роль: <b>{admin.role.value}</b>",
-        reply_markup=get_admin_main_keyboard(),
+        welcome_text,
+        reply_markup=get_admin_main_keyboard(lang),
         parse_mode="HTML",
     )

@@ -38,9 +38,11 @@ async def cancel_creation_handler(callback: types.CallbackQuery, state: FSMConte
     await callback.answer()
 
 
+from aiogram.filters import StateFilter
+
 # --- Product Creation Flow ---
-@router.message(F.text == "➕ Tovar qo'shish")
-async def start_product_creation_handler(message: types.Message, state: FSMContext):
+@router.message(F.text.in_({"➕ Tovar qo'shish", "➕ Добавить товар", "➕ Add product"}), StateFilter("*"))
+async def start_product_creation_handler(message: types.Message, state: FSMContext, admin: Admin):
     await state.clear()
     await state.set_state(ProductCreationState.getting_name)  # type: ignore
     await message.answer(  # type: ignore
