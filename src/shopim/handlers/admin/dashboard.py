@@ -2,19 +2,16 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from aiogram import F, Router, types
+from aiogram.filters import StateFilter
 from sqlalchemy.ext.asyncio import AsyncSession
-from aiogram.utils.i18n import gettext as _
 
-from src.shopim.db.models import Admin
+from src.shopim.filters import IsAdminFilter
 from src.shopim.keyboards.inline.admin.dashboard import (
     DashboardCallback,
+    get_buyers_keyboard,
     get_dashboard_keyboard,
 )
 from src.shopim.services.dashboard_service import DashboardService, DashboardStats
-
-
-from src.shopim.filters import IsAdminFilter
-
 
 router = Router(name="admin-dashboard-router")
 router.message.filter(IsAdminFilter())
@@ -24,25 +21,43 @@ router.callback_query.filter(IsAdminFilter())
 def format_dashboard_message(stats: DashboardStats) -> str:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     return (
-        _("<b>📊 Asosiy ko'rsatkichlar</b>\n"
-          "_{now} holatiga ko'ra_\n\n"
-          "<b>📈 Bugun:</b>\n"
-          "  - Buyurtmalar: {orders_today_count} ta\n"
-          "  - Tushum: {revenue_today:,.2f} so'm\n"
-          "  - Foyda (taxminiy): {profit_today:,.2f} so'm\n\n"
-          "<b>⏳ Kutilmoqda:</b>\n"
-          "  - Yangi userlar: {pending_registrations_count} ta\n"
-          "  - To'lovlar: {pending_topups_count} ta\n"
-          "  - Buyurtmalar: {pending_orders_count} ta\n\n"
-          "<b>📦 Sklad va Foydalanuvchilar:</b>\n"
-          "  - Kam qolgan tovarlar: {low_stock_products_count} ta\n"
-          "  - Faol foydalanuvchilar: {active_users_count} ta").format(
-            now=now, orders_today_count=stats.orders_today_count, revenue_today=stats.revenue_today,
-            profit_today=stats.profit_today, pending_registrations_count=stats.pending_registrations_count,
-            pending_topups_count=stats.pending_topups_count, pending_orders_count=stats.pending_orders_count,
-            low_stock_products_count=stats.low_stock_products_count, active_users_count=stats.active_users_count
-        )
+        f"<b>📊 Tizim Analitikasi va Moliyaviy Grafik</b>\n"
+        f"<i>{now} holatiga ko'ra avto-yangilandi</i>\n\n"
+        f"<b>📈 Bugungi Ko'rsatkichlar:</b>\n"
+        f"  • Tushgan buyurtmalar: <b>{stats.orders_today_count} ta</b>\n"
+        f"  • Tushgan tushum: <b>{stats.revenue_today:,.2f} USD</b>\n"
+        f"  • Taxminiy sof foyda: <b>{stats.profit_today:,.2f} USD</b>\n\n"
+        f"<b>💎 Barcha Vaqtlardagi Statistika:</b>\n"
+        f"  • Jami tushgan pullar: <b>{stats.total_revenue:,.2f} USD</b>\n"
+        f"  • Ketgan (sotilgan) tovarlar: <b>{stats.total_grams_sold:,.2f} gramm</b>\n"
+        f"  • Jami buyurtmalar soni: <b>{stats.total_orders_count} ta</b>\n\n"
+        f"<b>⏳ Kutilayotgan harakatlar:</b>\n"
+        f"  • Kutilayotgan to'lovlar: <b>{stats.pending_topups_count} ta</b>\n"
+        f"  • Tasdiqlanmagan buyurtmalar: <b>{stats.pending_orders_count} ta</b>\n\n"
+        f"<b>📦 Ombordagi holat va Foydalanuvchilar:</b>\n"
+        f"  • Ogohlantirish (oz qolgan): <b>{stats.low_stock_products_count} ta tovar</b>\n"
+        f"  • Faol xaridorlar (botda): <b>{stats.active_users_count} ta</b>"
     ).replace(",", " ")
+
+
+def format_buyers_message(stats: DashboardStats) -> str:
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    lines = [
+        f"<b>👥 Top Xaridorlar Ro'yxati (Kimlar tovar olgan):</b>",
+        f"<i>{now} holatiga ko'ra</i>\n",
+    ]
+    if not stats.top_buyers:
+        lines.append("<i>Hozircha xaridlar mavjud emas.</i>")
+    else:
+        for idx, (u, count, spent, grams) in enumerate(stats.top_buyers, 1):
+            user_label = f"@{u.username}" if u.username else u.full_name
+            lines.append(
+                f"<b>{idx}. {user_label}</b> (ID: <code>{u.telegram_id}</code>)\n"
+                f"   • Buyurtmalar: <b>{count} ta</b> | Soni/Og'irligi: <b>{grams:,.2f} gr</b>\n"
+                f"   • Sarflagan summasi: <b>{spent:,.2f} USD</b>\n"
+            )
+
+    return "\n".join(lines).replace(",", " ")
 
 
 async def show_dashboard(
@@ -56,20 +71,42 @@ async def show_dashboard(
     if isinstance(target, types.CallbackQuery):
         try:
             await target.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
-        except Exception:  # type: ignore # If message is not modified
+        except Exception:
             pass
-        await target.answer(_("Ma'lumotlar yangilandi"))
+        await target.answer("Analitika yangilandi!")
     else:
         await target.answer(text, reply_markup=keyboard, parse_mode="HTML")
 
 
-@router.message(F.text == "📊 Dashboard")
+@router.message(F.text.in_({"📊 Dashboard", "📊 Analitika", "Analitika", "Dashboard"}), StateFilter("*"))
 async def dashboard_handler(message: types.Message, session: AsyncSession):
     await show_dashboard(message, session)
 
 
 @router.callback_query(DashboardCallback.filter(F.action == "refresh"))
 async def refresh_dashboard_handler(
+    callback: types.CallbackQuery, session: AsyncSession
+):
+    await show_dashboard(callback, session)
+
+
+@router.callback_query(DashboardCallback.filter(F.action == "buyers"))
+async def buyers_dashboard_handler(
+    callback: types.CallbackQuery, session: AsyncSession
+):
+    service = DashboardService(session)
+    stats = await service.get_stats()
+    text = format_buyers_message(stats)
+    keyboard = get_buyers_keyboard()
+    try:
+        await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
+    except Exception:
+        pass
+    await callback.answer("Xaridorlar ro'yxati yangilandi!")
+
+
+@router.callback_query(DashboardCallback.filter(F.action == "main_stats"))
+async def main_stats_dashboard_handler(
     callback: types.CallbackQuery, session: AsyncSession
 ):
     await show_dashboard(callback, session)

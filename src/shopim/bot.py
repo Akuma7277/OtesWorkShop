@@ -134,9 +134,32 @@ async def main():
 
     setup_routers(dp)
 
+    async def auto_analytics_scheduler():
+        while True:
+            try:
+                await asyncio.sleep(1800)  # Every 30 minutes
+                async with session_pool() as session:
+                    from src.shopim.handlers.admin.dashboard import format_dashboard_message
+                    from src.shopim.services.dashboard_service import DashboardService
+                    from src.shopim.services.notification_service import NotificationService
+
+                    service = DashboardService(session)
+                    stats = await service.get_stats()
+                    report_text = f"🔄 <b>[AVTO-ANALITIKA - HAR 30 MINUT]</b>\n\n" + format_dashboard_message(stats)
+
+                    notification_service = NotificationService(bot, session)
+                    await notification_service.notify_admins(report_text)
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Error in auto_analytics_scheduler: {e}")
+
+    analytics_task = asyncio.create_task(auto_analytics_scheduler())
+
     try:
         await dp.start_polling(bot)
     finally:
+        analytics_task.cancel()
         await bot.session.close()
         if redis_client:
             await redis_client.close()
