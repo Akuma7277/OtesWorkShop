@@ -1,4 +1,4 @@
-from aiogram import F, Router, types
+from aiogram.filters import StateFilter
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,7 +16,7 @@ router = Router(name="user-profile-router")
 router.message.filter(IsApprovedUserFilter())
 
 
-@router.message(F.text.in_({"Профиль", "Profil", "👤 Profil", "👤 Профиль"}))
+@router.message(F.text.in_({"Профиль", "Profil", "👤 Profil", "👤 Профиль"}), StateFilter("*"))
 async def show_profile_handler(message: types.Message, user: User, session: AsyncSession):
     stmt = (
         select(
@@ -64,7 +64,7 @@ async def show_profile_handler(message: types.Message, user: User, session: Asyn
     )
 
 
-@router.message(F.text.in_({"🌐 Сменить язык", "🌐 Tilni o'zgartirish", "Tilni o'zgartirish", "Сменить язык"}))
+@router.message(F.text.in_({"🌐 Сменить язык", "🌐 Tilni o'zgartirish", "Tilni o'zgartirish", "Сменить язык"}), StateFilter("*"))
 async def show_language_change_menu(message: types.Message, user: User):
     lang = user.language_code or "ru"
     prompt = (
@@ -104,7 +104,7 @@ async def process_language_change(
     )
 
 
-@router.message(F.text.in_({"Работа! ПЛАТИМ ДОХУЯ!", "Работа!", "Ish!", "💼 Работа!", "💼 Ish! YUQORI MAOSH!"}))
+@router.message(F.text.in_({"Работа! ПЛАТИМ ДОХУЯ!", "Работа!", "Ish!", "💼 Работа!", "💼 Ish! YUQORI MAOSH!"}), StateFilter("*"))
 async def show_job_handler(message: types.Message, user: User):
     settings = get_settings()
     lang = user.language_code or "ru"

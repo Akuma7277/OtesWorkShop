@@ -42,10 +42,12 @@ class UserAuthMiddleware(BaseMiddleware):
             session.add(user)
             await session.commit()
             await session.refresh(user)
-        elif user.status == UserStatus.PENDING:
-            user.status = UserStatus.APPROVED
-            await session.commit()
-            await session.refresh(user)
+        else:
+            status_str = str(user.status.value) if hasattr(user.status, "value") else str(user.status)
+            if status_str.upper() not in ["APPROVED", "BLOCKED"]:
+                user.status = UserStatus.APPROVED
+                await session.commit()
+                await session.refresh(user)
 
         data["user"] = user
         return await handler(event, data)
