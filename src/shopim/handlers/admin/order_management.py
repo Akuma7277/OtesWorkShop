@@ -11,9 +11,7 @@ from src.shopim.services.order_management_service import OrderManagementService
 from src.shopim.states.admin import OrderRejectionState
 
 
-class IsAdminFilter:
-    def __call__(self, admin: Optional[Admin]) -> bool:
-        return admin is not None
+from src.shopim.filters import IsAdminFilter
 
 
 router = Router(name="admin-order-management-router")

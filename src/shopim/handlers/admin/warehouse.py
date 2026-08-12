@@ -19,9 +19,7 @@ from src.shopim.services.warehouse_service import WarehouseService
 from src.shopim.states.admin import StockAdjustmentState
 
 
-class IsAdminFilter:
-    def __call__(self, admin: Optional[Admin]) -> bool:
-        return admin is not None
+from src.shopim.filters import IsAdminFilter
 
 
 router = Router(name="admin-warehouse-router")

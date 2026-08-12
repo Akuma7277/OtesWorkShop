@@ -22,9 +22,7 @@ from src.shopim.states.admin import ProductCreationState
 CATEGORIES_PER_PAGE = 6
 
 
-class IsAdminFilter:
-    def __call__(self, admin: Optional[Admin]) -> bool:
-        return admin is not None
+from src.shopim.filters import IsAdminFilter
 
 
 router = Router(name="admin-product-management-router")

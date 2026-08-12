@@ -15,9 +15,7 @@ from src.shopim.services.delivery_service import DeliveryService
 from src.shopim.services.notification_service import NotificationService
 
 
-class IsAdminFilter:
-    def __call__(self, admin: Optional[Admin]) -> bool:
-        return admin is not None
+from src.shopim.filters import IsAdminFilter
 
 
 router = Router(name="admin-delivery-management-router")

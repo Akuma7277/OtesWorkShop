@@ -9,9 +9,7 @@ from src.shopim.db.models import Admin
 from src.shopim.keyboards.reply.admin import get_admin_main_keyboard
 
 
-class IsAdminFilter:
-    def __call__(self, admin: Optional[Admin]) -> bool:
-        return admin is not None
+from src.shopim.filters import IsAdminFilter
 
 
 router = Router(name="admin-main-menu-router")
