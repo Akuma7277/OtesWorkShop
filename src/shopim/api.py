@@ -1168,6 +1168,7 @@ async def admin_update_settings(
     data = await request.json()
     service = SettingsService(db)
     updated = await service.update_bot_settings(data, admin.id)
+    await db.commit()
     return updated.model_dump(mode="json")
 
 

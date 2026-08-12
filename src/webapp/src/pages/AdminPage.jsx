@@ -622,7 +622,7 @@ function SettingsTab({ initialSettings, reload }) {
         <input type="number" className="input" value={settings.max_user_age} onChange={e => setSettings({...settings, max_user_age: parseInt(e.target.value)})} />
       </div>
       <div className="input-group">
-        <label className="input-label">Minimal to'lov (so'm)</label>
+        <label className="input-label">Minimal to'lov ($)</label>
         <input type="number" className="input" value={settings.min_topup_amount} onChange={e => setSettings({...settings, min_topup_amount: parseFloat(e.target.value)})} />
       </div>
       <div className="input-group">

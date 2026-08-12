@@ -30,6 +30,6 @@ class SettingsRepository:
                 created_at=now,
                 updated_at=now,
             )
-            self.session.add(setting)
         await self.session.flush()
+        await self.session.commit()
         return setting
