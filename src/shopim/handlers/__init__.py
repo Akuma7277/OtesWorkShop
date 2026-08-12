@@ -40,6 +40,7 @@ from src.shopim.handlers.user.registration import router as user_registration_ro
 from src.shopim.handlers.user.reviews import router as user_reviews_router
 from src.shopim.handlers.user.shop import router as user_shop_router
 from src.shopim.handlers.user.topup import router as user_topup_router
+from src.shopim.handlers.miniapp import router as miniapp_router
 
 
 def setup_routers(dp: Dispatcher):
@@ -72,4 +73,5 @@ def setup_routers(dp: Dispatcher):
     dp.include_router(user_balance_router)
     dp.include_router(user_topup_router)
     dp.include_router(user_order_history_router)
+    dp.include_router(miniapp_router)
 

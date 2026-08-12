@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     delivery_sla_minutes: int = Field(default=60, validation_alias="DELIVERY_SLA_MINUTES")
     low_stock_notify_interval_hours: int = Field(default=24, validation_alias="LOW_STOCK_NOTIFY_INTERVAL_HOURS")
     operator_contact: str = Field(default="@support", validation_alias="OPERATOR_CONTACT")
+    mini_app_url: str = Field(default="", validation_alias="MINI_APP_URL")
 
     @property
     def db_url(self) -> str:

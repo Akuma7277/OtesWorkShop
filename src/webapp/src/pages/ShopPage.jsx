@@ -1,0 +1,118 @@
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { getProducts, getCategories } from '../api'
+import { useApp } from '../context/AppContext'
+import Spinner from '../components/Spinner'
+import { haptic } from '../tg'
+
+export default function ShopPage() {
+  const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
+  const [selectedCat, setSelectedCat] = useState(null)
+  const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    getCategories()
+      .then(data => setCategories(data || []))
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    setLoading(true)
+    const params = { is_active: true }
+    if (selectedCat) params.category_id = selectedCat
+    if (search) params.search = search
+
+    const t = setTimeout(() => {
+      getProducts(params)
+        .then(data => setProducts(data?.items || data || []))
+        .catch(() => {})
+        .finally(() => setLoading(false))
+    }, 300)
+    return () => clearTimeout(t)
+  }, [selectedCat, search])
+
+  return (
+    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
+      {/* Search bar */}
+      <div style={{ padding: '16px 16px 0' }}>
+        <input
+          className="input"
+          placeholder="🔍 Mahsulot izlash..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+
+      {/* Category pills */}
+      {categories.length > 0 && (
+        <div className="scroll-x" style={{ padding: '12px 16px 4px' }}>
+          <button
+            className="btn btn-sm"
+            style={{ flexShrink: 0, ...(selectedCat === null ? {} : { background: 'var(--bg-glass)', color: 'var(--text-secondary)' }) }}
+            onClick={() => { haptic.light(); setSelectedCat(null) }}
+          >
+            Barchasi
+          </button>
+          {categories.map(cat => (
+            <button
+              key={cat.id}
+              className="btn btn-sm"
+              style={{ flexShrink: 0, ...(selectedCat === cat.id ? {} : { background: 'var(--bg-glass)', color: 'var(--text-secondary)' }) }}
+              onClick={() => { haptic.light(); setSelectedCat(cat.id) }}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="page-content" style={{ paddingTop: 8 }}>
+        {loading ? (
+          <Spinner text="Mahsulotlar yuklanmoqda..." />
+        ) : products.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-icon">🔍</div>
+            <div className="empty-state-title">Mahsulot topilmadi</div>
+            <div className="empty-state-desc">Boshqa kalit so'z yoki kategoriya tanlang</div>
+          </div>
+        ) : (
+          <div className="grid-2 stagger">
+            {products.map(p => (
+              <ProductCard key={p.id} product={p} onPress={() => navigate(`/shop/${p.id}`)} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ProductCard({ product, onPress }) {
+  const hasImage = !!product.image_url
+  const stock = Number(product.stock_grams)
+  const isOut = stock <= 0
+  const isLow = !isOut && stock < 100
+
+  return (
+    <div className="product-card" onClick={() => { haptic.light(); onPress() }}>
+      <div className="product-image-placeholder">
+        {hasImage ? <img src={product.image_url} alt={product.name} /> : <span>🍃</span>}
+      </div>
+      {isLow && <div className="product-badge" style={{ background: 'var(--gradient-gold)' }}>⚠️ Kam</div>}
+      {isOut && <div className="product-badge" style={{ background: 'linear-gradient(135deg,#f87171,#ef4444)' }}>❌ Tugagan</div>}
+      <div className="product-info">
+        <div className="product-name">{product.name}</div>
+        {product.description && (
+          <div className="text-xs text-muted mb-2 truncate">{product.description}</div>
+        )}
+        <div className="product-price">{Number(product.sale_price_per_gram).toFixed(0)} so'm/g</div>
+        <div className={`product-stock ${isOut ? 'out' : isLow ? 'low' : 'ok'}`}>
+          {isOut ? '❌ Tugagan' : isLow ? `⚠️ ${stock.toFixed(0)} g qoldi` : `✅ ${stock.toFixed(0)} g`}
+        </div>
+      </div>
+    </div>
+  )
+}

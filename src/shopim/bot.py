@@ -18,10 +18,11 @@ from src.shopim.middlewares.db import DbSessionMiddleware
 from src.shopim.middlewares.user import UserAuthMiddleware
 
 
-async def setup_bot_commands(bot: Bot):
+async def setup_bot_commands(bot: Bot, settings=None):
     commands = [
         BotCommand(command="start", description="🚀 Botni boshlash / Restart bot"),
         BotCommand(command="menu", description="📋 Asosiy menyu / Main menu"),
+        BotCommand(command="app", description="🛍️ Mini App do'kon / Open Mini App"),
         BotCommand(command="admin", description="🛠 Admin paneli / Admin panel"),
         BotCommand(command="user", description="🏠 Foydalanuvchi rejimi / User mode"),
         BotCommand(command="profile", description="👤 Profil / Profile"),
@@ -29,6 +30,7 @@ async def setup_bot_commands(bot: Bot):
         BotCommand(command="cancel", description="🚫 Bekor qilish / Cancel action"),
     ]
     await bot.set_my_commands(commands, scope=BotCommandScopeDefault())
+
 
 
 async def main():
