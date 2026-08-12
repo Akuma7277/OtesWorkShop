@@ -23,7 +23,7 @@ services:
         echo 'PostgreSQL is ready.' &&
         poetry run alembic upgrade head &&
         echo 'Alembic migrations applied.' &&
-        poetry run python -m shopim
+        poetry run python -m src.shopim.bot
       "
     restart: on-failure
 
