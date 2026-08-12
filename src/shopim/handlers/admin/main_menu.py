@@ -11,6 +11,8 @@ from src.shopim.db.models import Admin, AdminRole
 from src.shopim.db.repositories.admin_repository import AdminRepository
 from src.shopim.keyboards.reply.admin import get_admin_main_keyboard
 from src.shopim.keyboards.reply.main_menu import get_user_main_keyboard
+from src.shopim.core.config import get_settings
+
 
 router = Router(name="admin-main-menu-router")
 
@@ -42,14 +44,23 @@ async def show_admin_menu(
 
     welcome_text = _(
         "Salom, <b>{full_name}</b>! Admin panelidasiz.\n"
-        "Roli: <b>{role}</b>"
+        "Roli: <b>{role}</b>\n\n"
+        "🛠️ Admin panelni to'liq premium Mini App'da boshqarish uchun pastdagi tugmani bosing!"
     ).format(full_name=admin.full_name, role=admin.role.value)
 
-    await message.answer(
-        welcome_text,
-        reply_markup=get_admin_main_keyboard(),
-        parse_mode="HTML",
-    )
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+    settings = get_settings()
+    url = settings.get_mini_app_url
+    
+    keyboard = get_admin_main_keyboard()
+    if url:
+        inline_kb = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="🛠️ Admin Mini App'ni ochish", web_app=WebAppInfo(url=f"{url}/admin"))
+        ]])
+        await message.answer(welcome_text, reply_markup=inline_kb, parse_mode="HTML")
+    else:
+        await message.answer(welcome_text, reply_markup=keyboard, parse_mode="HTML")
+
 
 
 @router.message(Command("user"), StateFilter("*"))
