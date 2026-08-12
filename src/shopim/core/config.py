@@ -59,7 +59,9 @@ class Settings(BaseSettings):
             domain = railway_domain.removeprefix("https://").removeprefix("http://")
             return f"https://{domain}"
 
-        return ""
+        # Fallback to the production domain so bot still works when run locally
+        return "https://otesworkshop-production.up.railway.app"
+
 
 
     @property
