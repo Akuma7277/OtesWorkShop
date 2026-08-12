@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { getProducts, getMyOrders } from '../api'
+import { getProducts, getMyOrders, getNews } from '../api'
 import Spinner from '../components/Spinner'
 import { t } from '../i18n'
+import { haptic } from '../tg'
 
 export default function HomePage() {
   const { user, balance, tgUser, lang } = useApp()
   const [products, setProducts] = useState([])
   const [recentOrders, setRecentOrders] = useState([])
+  const [news, setNews] = useState([])
   const [loadingProducts, setLoadingProducts] = useState(true)
   const [loadingOrders, setLoadingOrders] = useState(true)
+  const [selectedNews, setSelectedNews] = useState(null)
 
   const STATUS_MAP = {
     PENDING_ADMIN: { label: t('status_pending'), cls: 'status-pending', icon: '⏳' },
@@ -33,6 +36,10 @@ export default function HomePage() {
       .then(data => setRecentOrders(data?.items || data || []))
       .catch(() => {})
       .finally(() => setLoadingOrders(false))
+
+    getNews()
+      .then(data => setNews(data || []))
+      .catch(() => {})
   }, [])
 
   const displayName = user?.full_name || tgUser?.first_name || 'Foydalanuvchi'
@@ -56,12 +63,39 @@ export default function HomePage() {
 
         <div className="profile-balance" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="balance-amount">{Number(balance).toLocaleString()}</div>
-          <div className="balance-label">so'm — {t('balance')}</div>
-          <Link to="/profile" className="btn btn-primary btn-sm mt-2" style={{ display: 'inline-flex', marginTop: 12, textDecoration: 'none' }}>
+          <div className="balance-label">$ — {t('balance')}</div>
+          <Link to="/profile" className="btn btn-gold btn-sm mt-2" style={{ display: 'inline-flex', marginTop: 12, textDecoration: 'none' }}>
             💳 {t('topup_balance')}
           </Link>
         </div>
       </div>
+
+      {/* News / Announcements Widget */}
+      {news.length > 0 && (
+        <div className="mb-6">
+          <div className="section-header mb-3">
+            <h2 className="section-title">📰 {t('news')}</h2>
+          </div>
+          <div className="scroll-x gap-3" style={{ paddingBottom: 8 }}>
+            {news.map(item => (
+              <div
+                key={item.id}
+                className="card"
+                style={{ width: 240, flexShrink: 0, padding: 12, cursor: 'pointer', background: 'var(--bg-glass)' }}
+                onClick={() => { haptic.light(); setSelectedNews(item) }}
+              >
+                {item.image_url ? (
+                  <img src={item.image_url} alt={item.title} style={{ width: '100%', height: 100, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }} />
+                ) : (
+                  <div style={{ width: '100%', height: 100, background: 'rgba(255,255,255,0.05)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: 8 }}>📢</div>
+                )}
+                <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', height: 32, lineHeight: 1.4 }}>{item.content}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div className="section-header mb-4">
@@ -122,6 +156,45 @@ export default function HomePage() {
           </div>
         </>
       )}
+
+      {/* News Lightbox/Modal */}
+      {selectedNews && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9999, padding: 20, backdropFilter: 'blur(10px)'
+          }}
+          onClick={() => setSelectedNews(null)}
+        >
+          <div
+            className="card scale-in"
+            style={{ width: '100%', maxWidth: 400, maxHeight: '80vh', overflowY: 'auto', background: 'var(--bg-glass)', border: '1px solid var(--border)', padding: 20 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{selectedNews.title}</h3>
+              <button
+                className="btn btn-sm"
+                style={{ padding: '4px 8px', background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', borderRadius: '50%' }}
+                onClick={() => setSelectedNews(null)}
+              >✕</button>
+            </div>
+            
+            {selectedNews.image_url && (
+              <img src={selectedNews.image_url} alt="News large" style={{ width: '100%', maxHeight: 200, objectFit: 'contain', borderRadius: 8, marginBottom: 16 }} />
+            )}
+
+            <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6, whiteSpace: 'pre-wrap', marginBottom: 16 }}>
+              {selectedNews.content}
+            </div>
+
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'right' }}>
+              {new Date(selectedNews.created_at).toLocaleString()}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -142,7 +215,7 @@ function ProductMiniCard({ product, lang }) {
       </div>
       <div className="product-info">
         <div className="product-name">{product.name}</div>
-        <div className="product-price">{Number(product.sale_price_per_gram).toFixed(0)} so'm/g</div>
+        <div className="product-price">{Number(product.sale_price_per_gram).toFixed(0)} $/g</div>
         <div className={`product-stock ${stockCls}`}>
           {stockCls === 'out'
             ? `❌ ${t('stock_none')}`
@@ -166,7 +239,7 @@ function RecentOrderRow({ order, statusMap, lang }) {
       </div>
       <div className="flex items-center justify-between">
         <div className="order-date">{new Date(order.created_at).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'uz-Latn')}</div>
-        <div className="order-total">{Number(order.total_amount).toLocaleString()} so'm</div>
+        <div className="order-total">{Number(order.total_amount).toLocaleString()} $</div>
       </div>
     </Link>
   )

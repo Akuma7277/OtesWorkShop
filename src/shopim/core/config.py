@@ -25,12 +25,13 @@ class Settings(BaseSettings):
 
     # App
     log_level: str = Field(default="INFO", validation_alias="LOG_LEVEL")
-    currency_symbol: str = Field(default="so'm", validation_alias="CURRENCY_SYMBOL")
+    currency_symbol: str = Field(default="$", validation_alias="CURRENCY_SYMBOL")
 
     # Business Logic
     min_user_age: int = Field(default=16, validation_alias="MIN_USER_AGE")
     max_user_age: int = Field(default=100, validation_alias="MAX_USER_AGE")
-    min_topup_amount: float = Field(default=10000.0, validation_alias="MIN_TOPUP_AMOUNT")
+    min_topup_amount: float = Field(default=5.0, validation_alias="MIN_TOPUP_AMOUNT")
+
     delivery_sla_minutes: int = Field(default=60, validation_alias="DELIVERY_SLA_MINUTES")
     low_stock_notify_interval_hours: int = Field(default=24, validation_alias="LOW_STOCK_NOTIFY_INTERVAL_HOURS")
     operator_contact: str = Field(default="@support", validation_alias="OPERATOR_CONTACT")

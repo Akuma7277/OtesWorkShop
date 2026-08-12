@@ -2,51 +2,55 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getMyOrders } from '../api'
 import Spinner from '../components/Spinner'
+import { haptic } from '../tg'
+import { t, getLanguage } from '../i18n'
+import { useApp } from '../context/AppContext'
 
 const STATUS_MAP = {
-  PENDING_ADMIN:    { label: 'Kutilmoqda', cls: 'status-pending', icon: '⏳' },
-  APPROVED:         { label: 'Tasdiqlangan', cls: 'status-approved', icon: '✅' },
-  PACKING:          { label: 'Qadoqlanmoqda', cls: 'status-packing', icon: '📦' },
-  OUT_FOR_DELIVERY: { label: 'Yetkazilmoqda', cls: 'status-delivery', icon: '🚚' },
-  DELIVERED:        { label: 'Yetkazildi', cls: 'status-delivered', icon: '🏁' },
-  REJECTED:         { label: 'Rad etildi', cls: 'status-rejected', icon: '❌' },
-  CANCELLED:        { label: 'Bekor qilindi', cls: 'status-cancelled', icon: '🚫' },
-  REFUNDED:         { label: 'Qaytarildi', cls: 'status-cancelled', icon: '💰' },
-  DRAFT:            { label: 'Qoralama', cls: 'status-pending', icon: '📝' },
+  PENDING_ADMIN: { label: t('status_pending'), cls: 'status-pending', icon: '⏳' },
+  APPROVED:      { label: t('status_approved'), cls: 'status-approved', icon: '✅' },
+  PACKING:       { label: t('status_packing'), cls: 'status-packing', icon: '📦' },
+  OUT_FOR_DELIVERY: { label: t('status_delivery'), cls: 'status-delivery', icon: '🚚' },
+  DELIVERED:     { label: t('status_delivered'), cls: 'status-delivered', icon: '🏁' },
+  REJECTED:      { label: t('status_rejected'), cls: 'status-rejected', icon: '❌' },
+  CANCELLED:     { label: t('status_cancelled'), cls: 'status-cancelled', icon: '🚫' },
+  REFUNDED:      { label: t('status_refunded'), cls: 'status-cancelled', icon: '💰' },
 }
 
-const FILTERS = [
-  { key: null, label: 'Barchasi' },
-  { key: 'PENDING_ADMIN', label: '⏳ Kutilmoqda' },
-  { key: 'APPROVED', label: '✅ Tasdiqlangan' },
-  { key: 'OUT_FOR_DELIVERY', label: '🚚 Yetkazilmoqda' },
-  { key: 'DELIVERED', label: '🏁 Yetkazildi' },
-]
-
 export default function OrdersPage() {
+  const { lang } = useApp()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState(null)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [filter, setFilter] = useState(null)
+
+  const FILTERS = [
+    { key: null,               label: lang === 'ru' ? 'Все' : 'Barchasi' },
+    { key: 'PENDING_ADMIN',    label: lang === 'ru' ? '⏳ Ожидает' : '⏳ Kutilmoqda' },
+    { key: 'OUT_FOR_DELIVERY', label: lang === 'ru' ? '🚚 В пути' : '🚚 Yetkazilmoqda' },
+    { key: 'DELIVERED',        label: lang === 'ru' ? '🏁 Доставлен' : '🏁 Yetkazildi' },
+  ]
 
   useEffect(() => {
     setLoading(true)
-    const params = { page, per_page: 10 }
-    if (filter) params.status = filter
-    getMyOrders(params)
-      .then(data => {
-        setOrders(data?.items || data || [])
-        setTotalPages(data?.total_pages || 1)
+    getMyOrders({ page, status: filter || undefined })
+      .then(res => {
+        setOrders(res.items || [])
+        setTotalPages(res.total_pages || 1)
       })
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [filter, page])
+  }, [page, filter])
 
   return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column' }}>
-      {/* Filter pills */}
-      <div className="scroll-x" style={{ padding: '16px 16px 4px' }}>
+    <div className="page-content fade-in" style={{ paddingBottom: 'var(--nav-height)' }}>
+      <div className="section-header mb-4">
+        <h1 className="section-title">📦 {t('my_orders')}</h1>
+      </div>
+
+      {/* Filter tab bar */}
+      <div className="scroll-x mb-4">
         {FILTERS.map(f => (
           <button
             key={String(f.key)}
@@ -61,22 +65,27 @@ export default function OrdersPage() {
 
       <div className="page-content" style={{ paddingTop: 8 }}>
         {loading ? (
-          <Spinner text="Buyurtmalar yuklanmoqda..." />
+          <Spinner text={lang === 'ru' ? 'Загрузка заказов...' : 'Buyurtmalar yuklanmoqda...'} />
         ) : orders.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">📦</div>
-            <div className="empty-state-title">Buyurtmalar topilmadi</div>
+            <div className="empty-state-title">{lang === 'ru' ? 'Заказы не найдены' : 'Buyurtmalar topilmadi'}</div>
             <div className="empty-state-desc">
-              {filter ? 'Bu statusdagi buyurtmalar yo\'q' : 'Hali birorta buyurtma bermadingiz'}
+              {filter 
+                ? (lang === 'ru' ? 'Нет заказов с этим статусом' : 'Bu statusdagi buyurtmalar yo\'q') 
+                : t('no_orders_desc')
+              }
             </div>
             {!filter && (
-              <Link className="btn btn-primary mt-4" to="/shop">🛍️ Xarid qilish</Link>
+              <Link className="btn btn-primary mt-4" to="/shop" style={{ textDecoration: 'none' }}>
+                🛍️ {lang === 'ru' ? 'В магазин' : 'Xarid qilish'}
+              </Link>
             )}
           </div>
         ) : (
           <>
             <div className="stagger">
-              {orders.map(order => <OrderCard key={order.id} order={order} />)}
+              {orders.map(order => <OrderCard key={order.id} order={order} lang={lang} />)}
             </div>
             {totalPages > 1 && (
               <div className="flex justify-between items-center mt-4 gap-2">
@@ -84,13 +93,13 @@ export default function OrdersPage() {
                   className="btn btn-secondary btn-sm"
                   disabled={page === 1}
                   onClick={() => setPage(p => p - 1)}
-                >← Oldingi</button>
+                >{lang === 'ru' ? '← Назад' : '← Oldingi'}</button>
                 <span className="text-sm text-muted">{page} / {totalPages}</span>
                 <button
                   className="btn btn-secondary btn-sm"
                   disabled={page >= totalPages}
                   onClick={() => setPage(p => p + 1)}
-                >Keyingi →</button>
+                >{lang === 'ru' ? 'Вперед →' : 'Keyingi →'}</button>
               </div>
             )}
           </>
@@ -100,9 +109,9 @@ export default function OrdersPage() {
   )
 }
 
-function OrderCard({ order }) {
+function OrderCard({ order, lang }) {
   const s = STATUS_MAP[order.status] || { label: order.status, cls: 'status-pending', icon: '📋' }
-  const date = new Date(order.created_at).toLocaleDateString('uz-Latn', {
+  const date = new Date(order.created_at).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'uz-Latn', {
     day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
   })
 
@@ -117,9 +126,9 @@ function OrderCard({ order }) {
       </div>
       <div className="flex justify-between items-center">
         <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-          {order.items?.length || '—'} mahsulot · {order.delivery_address?.slice(0, 30)}...
+          {order.items?.length || '—'} {lang === 'ru' ? 'товар(ов)' : 'mahsulot'} · {order.delivery_address?.slice(0, 30)}...
         </div>
-        <div className="order-total">{Number(order.total_amount).toLocaleString()} so'm</div>
+        <div className="order-total">{Number(order.total_amount).toLocaleString()} $</div>
       </div>
     </Link>
   )

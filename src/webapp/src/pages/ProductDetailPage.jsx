@@ -67,7 +67,7 @@ export default function ProductDetailPage() {
             color: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 600,
           }}
         >
-          ← Orqaga
+          ← {t('back')}
         </button>
       </div>
 
@@ -78,7 +78,7 @@ export default function ProductDetailPage() {
             {product.name}
           </h1>
           <div style={{ fontSize: 22, fontWeight: 900, background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginLeft: 12 }}>
-            {Number(product.sale_price_per_gram).toFixed(0)} so'm/g
+            {Number(product.sale_price_per_gram).toFixed(1)} $/g
           </div>
         </div>
 
@@ -140,11 +140,11 @@ export default function ProductDetailPage() {
             {/* Subtotal */}
             <div className="card mb-6" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div className="text-xs text-muted">Jami narx</div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{grams} g × {Number(product.sale_price_per_gram).toFixed(0)} so'm</div>
+                <div className="text-xs text-muted">{t('subtotal')}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{grams} g × {Number(product.sale_price_per_gram).toFixed(1)} $</div>
               </div>
               <div style={{ fontSize: 24, fontWeight: 900, background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                {subtotal.toFixed(0)} so'm
+                {subtotal.toFixed(1)} $
               </div>
             </div>
           </>
@@ -164,7 +164,7 @@ export default function ProductDetailPage() {
             onClick={handleAdd}
             disabled={adding}
           >
-            {adding ? '✅ Qo\'shildi!' : `🛒 Savatga qo'shish — ${subtotal.toFixed(0)} so'm`}
+            {adding ? '✅ Qo\'shildi!' : `🛒 ${t('add_to_cart')} — ${subtotal.toFixed(1)} $`}
           </button>
         </div>
       )}

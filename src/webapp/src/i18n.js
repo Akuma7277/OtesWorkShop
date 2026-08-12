@@ -8,6 +8,7 @@ const translations = {
     my_orders: "Buyurtmalarim",
     cart: "Savat",
     reviews: "Sharhlar",
+    news: "Yangiliklar",
     featured_products: "Mashhur mahsulotlar",
     recent_orders: "So'nggi buyurtmalar",
     all: "Barchasi",
@@ -47,13 +48,13 @@ const translations = {
     delivery_progress: "Yetkazib berish holati",
     delivery_history: "Yetkazib berish tarixi",
     profile: "Profil",
-    full_name: "To'liq ism",
+    full_name: "Ism yoki laqab",
     telegram_id: "Telegram ID",
     phone: "Telefon",
     age: "Yosh",
     status: "Holat",
     language: "Til",
-    amount: "Miqdor",
+    amount: "Miqdor (USD $)",
     payment_method: "To'lov usuli",
     submit_review: "Sharh yuborish",
     rating: "Baholash",
@@ -65,6 +66,26 @@ const translations = {
     settings: "Sozlamalar",
     access_denied: "Kirish taqiqlangan",
     admin_only: "Bu sahifa faqat adminlar uchun",
+    
+    // News Panel UZ
+    create_announcement: "Yangilik qo'shish",
+    announcement_title: "Yangilik sarlavhasi",
+    announcement_content: "Yangilik matni",
+    announcement_image: "Rasm yuklash",
+    publish: "Nashr qilish",
+    delete: "O'chirish",
+    no_news: "Yangiliklar yo'q",
+    no_news_desc: "Hozircha hech qanday yangilik nashr etilmagan",
+
+    // Registration Form UZ
+    registration: "Ro'yxatdan o'tish",
+    enter_name_nickname: "Ismingiz yoki laqabingizni kiriting",
+    enter_age: "Yoshingizni kiriting",
+    select_language: "Tilni tanlang",
+    register_btn: "Ro'yxatdan o'tish",
+    awaiting_approval_title: "Tasdiqlash kutilmoqda",
+    awaiting_approval_desc: "Tizimdan foydalanish uchun administrator arizangizni tasdiqlashini kuting. Tez orada faollashtiriladi.",
+    required_field: "Ushbu maydon majburiy"
   },
   ru: {
     welcome: "Добро пожаловать",
@@ -75,6 +96,7 @@ const translations = {
     my_orders: "Мои заказы",
     cart: "Корзина",
     reviews: "Отзывы",
+    news: "Новости",
     featured_products: "Популярные товары",
     recent_orders: "Последние заказы",
     all: "Все",
@@ -114,13 +136,13 @@ const translations = {
     delivery_progress: "Статус доставки",
     delivery_history: "История доставки",
     profile: "Профиль",
-    full_name: "Полное имя",
+    full_name: "Имя или никнейм",
     telegram_id: "Telegram ID",
     phone: "Телефон",
     age: "Возраст",
     status: "Статус",
     language: "Язык",
-    amount: "Сумма",
+    amount: "Сумма (USD $)",
     payment_method: "Способ оплаты",
     submit_review: "Отправить отзыв",
     rating: "Оценка",
@@ -132,6 +154,26 @@ const translations = {
     settings: "Настройки",
     access_denied: "Доступ запрещен",
     admin_only: "Эта страница только для администраторов",
+    
+    // News Panel RU
+    create_announcement: "Добавить новость",
+    announcement_title: "Заголовок новости",
+    announcement_content: "Текст новости",
+    announcement_image: "Загрузить изображение",
+    publish: "Опубликовать",
+    delete: "Удалить",
+    no_news: "Нет новостей",
+    no_news_desc: "На данный момент новостей не опубликовано",
+
+    // Registration Form RU
+    registration: "Регистрация",
+    enter_name_nickname: "Введите ваше имя или никнейм",
+    enter_age: "Введите ваш возраст",
+    select_language: "Выберите язык",
+    register_btn: "Зарегистрироваться",
+    awaiting_approval_title: "Ожидание подтверждения",
+    awaiting_approval_desc: "Для использования системы дождитесь подтверждения вашей заявки администратором. Скоро аккаунт будет активирован.",
+    required_field: "Это поле обязательно"
   }
 }
 

@@ -110,7 +110,7 @@ function ProductCard({ product, onPress }) {
         {product.description && (
           <div className="text-xs text-muted mb-2 truncate">{product.description}</div>
         )}
-        <div className="product-price">{Number(product.sale_price_per_gram).toFixed(0)} so'm/g</div>
+        <div className="product-price">{Number(product.sale_price_per_gram).toFixed(1)} $/g</div>
         <div className={`product-stock ${isOut ? 'out' : isLow ? 'low' : 'ok'}`}>
           {isOut ? `❌ ${t('stock_none')}` : isLow ? `⚠️ ${t('stock_low')} (${stock.toFixed(0)} g)` : `✅ ${stock.toFixed(0)} g`}
         </div>

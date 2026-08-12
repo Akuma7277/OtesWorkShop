@@ -46,6 +46,12 @@ export const updateMe = (data) => api.patch('/users/me', data)
 export const getBalance = () => api.get('/balance/me')
 export const createTopup = (data) => api.post('/topups', data)
 
+// ---- News & Registration ----
+export const registerUser = (data) => api.post('/register', data)
+export const getNews = () => api.get('/news')
+export const adminCreateNews = (data) => api.post('/admin/news', data)
+export const adminDeleteNews = (id) => api.delete(`/admin/news/${id}`)
+
 // ---- Reviews ----
 export const getReviews = (params = {}) => api.get('/reviews', { params })
 export const submitReview = (data) => api.post('/reviews', data)

@@ -469,3 +469,16 @@ class Review(Base):
 
     user: Mapped[User] = relationship("User")
 
+
+class News(Base):
+    __tablename__ = "news"
+
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
+    title: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
+    content: Mapped[str] = mapped_column(TEXT, nullable=False)
+    image_url: Mapped[str | None] = mapped_column(TEXT)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+

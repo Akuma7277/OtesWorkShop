@@ -6,11 +6,13 @@ import {
   adminGetUsers, adminApproveUser, adminRejectUser, adminBlockUser, adminUnblockUser,
   adminCreateProduct, adminUpdateProduct, adminDeleteProduct, getProducts,
   adminGetPendingReviews, adminApproveReview, adminRejectReview,
-  adminGetSettings, adminUpdateSettings, getCategories
+  adminGetSettings, adminUpdateSettings, getCategories,
+  getNews, adminCreateNews, adminDeleteNews
 } from '../api'
 import { useApp } from '../context/AppContext'
 import Spinner from '../components/Spinner'
 import { haptic } from '../tg'
+
 
 const STATUS_MAP = {
   PENDING_ADMIN:    { label: 'Kutilmoqda',    cls: 'status-pending',  icon: '⏳' },
@@ -41,6 +43,7 @@ export default function AdminPage() {
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
   const [reviews, setReviews] = useState([])
+  const [newsList, setNewsList] = useState([])
   const [settings, setSettings] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -63,6 +66,7 @@ export default function AdminPage() {
     { key: 'users', label: '👥' },
     { key: 'products', label: '🏬' },
     { key: 'reviews', label: '⭐' },
+    { key: 'news', label: '📰' },
     { key: 'settings', label: '⚙️' },
   ]
 
@@ -84,6 +88,7 @@ export default function AdminPage() {
         setCategories(catData || [])
       }
       if (tab === 'reviews') setReviews(await adminGetPendingReviews() || [])
+      if (tab === 'news') setNewsList(await getNews() || [])
       if (tab === 'settings') setSettings(await adminGetSettings() || null)
     } catch {}
     setLoading(false)
@@ -117,6 +122,7 @@ export default function AdminPage() {
           {tab === 'users' && <UsersTab users={users} reload={loadTab} />}
           {tab === 'products' && <ProductsTab products={products} categories={categories} reload={loadTab} />}
           {tab === 'reviews' && <ReviewsTab reviews={reviews} reload={loadTab} />}
+          {tab === 'news' && <NewsTab newsList={newsList} reload={loadTab} />}
           {tab === 'settings' && settings && <SettingsTab initialSettings={settings} reload={loadTab} />}
         </>
       )}
@@ -645,3 +651,150 @@ function SettingsTab({ initialSettings, reload }) {
     </form>
   )
 }
+
+
+function NewsTab({ newsList, reload }) {
+  const { showToast } = useApp()
+  const [title, setTitle] = useState('')
+  const [content, setContent] = useState('')
+  const [image, setImage] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [processingId, setProcessingId] = useState(null)
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setImage(reader.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!title.trim() || !content.trim()) {
+      showToast('❌ Sarlavha va matn majburiy!')
+      return
+    }
+    haptic.medium()
+    setSubmitting(true)
+    try {
+      await adminCreateNews({ title: title.trim(), content: content.trim(), image_url: image || null })
+      haptic.success()
+      showToast('✅ Yangilik nashr qilindi!')
+      setTitle('')
+      setContent('')
+      setImage('')
+      reload()
+    } catch (err) {
+      haptic.error()
+      showToast(`❌ ${err.message}`)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleDelete = async (id) => {
+    if (!confirm('Haqiqatan ham ushbu yangilikni o\'chirmoqchimisiz?')) return
+    haptic.medium()
+    setProcessingId(id)
+    try {
+      await adminDeleteNews(id)
+      haptic.success()
+      showToast('✅ O\'chirildi!')
+      reload()
+    } catch (err) {
+      haptic.error()
+      showToast(`❌ ${err.message}`)
+    } finally {
+      setProcessingId(null)
+    }
+  }
+
+  return (
+    <div className="stagger">
+      {/* Create form */}
+      <form onSubmit={handleSubmit} className="card mb-4">
+        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>📰 Yangi e'lon qo'shish</h3>
+        
+        <div className="input-group">
+          <label className="input-label">Sarlavha</label>
+          <input
+            type="text"
+            className="input"
+            placeholder="Yangilik sarlavhasini yozing..."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="input-group">
+          <label className="input-label">Batafsil matn</label>
+          <textarea
+            className="input"
+            rows={4}
+            placeholder="Yangilik matnini yozing..."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            required
+            style={{ resize: 'none' }}
+          />
+        </div>
+
+        <div className="input-group">
+          <label className="input-label">Rasm (ixtiyoriy)</label>
+          <input
+            type="file"
+            accept="image/*"
+            className="input"
+            onChange={handleFileChange}
+            style={{ padding: '8px 12px' }}
+          />
+        </div>
+
+        {image && (
+          <div className="mb-3" style={{ textAlign: 'center' }}>
+            <img src={image} alt="Preview" style={{ maxHeight: 120, borderRadius: 8, objectFit: 'contain' }} />
+          </div>
+        )}
+
+        <button type="submit" className="btn btn-gold btn-full btn-lg" disabled={submitting}>
+          {submitting ? '⏳ ...' : '📢 Nashr qilish'}
+        </button>
+      </form>
+
+      {/* List */}
+      <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>E'lon qilingan yangiliklar</h3>
+      {newsList.length === 0 ? (
+        <div className="empty-state">Hali hech qanday yangilik yo'q</div>
+      ) : (
+        newsList.map(item => (
+          <div key={item.id} className="card mb-3">
+            {item.image_url && (
+              <img src={item.image_url} alt="News" style={{ width: '100%', maxHeight: 160, objectFit: 'contain', borderRadius: 8, marginBottom: 12 }} />
+            )}
+            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{item.title}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.5, marginBottom: 12 }}>
+              {item.content}
+            </div>
+            <div className="flex justify-between items-center">
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                {new Date(item.created_at).toLocaleString()}
+              </span>
+              <button
+                className="btn btn-danger btn-sm"
+                onClick={() => handleDelete(item.id)}
+                disabled={processingId === item.id}
+              >
+                🗑 O'chirish
+              </button>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  )
+}
+

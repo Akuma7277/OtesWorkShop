@@ -7,19 +7,41 @@ import HomePage from './pages/HomePage'
 import ShopPage from './pages/ShopPage'
 import ProductDetailPage from './pages/ProductDetailPage'
 import CartPage from './pages/CartPage'
-import OrdersPage from './pages/OrdersPage'
 import OrderDetailPage from './pages/OrderDetailPage'
 import ProfilePage from './pages/ProfilePage'
 import AdminPage from './pages/AdminPage'
+import RegisterPage from './pages/RegisterPage'
+import AwaitingApprovalPage from './pages/AwaitingApprovalPage'
+import NewsPage from './pages/NewsPage'
 
 function AppShell() {
-  const { loading, error, toast } = useApp()
+  const { loading, registrationStatus, toast } = useApp()
 
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', flexDirection: 'column', gap: 20 }}>
         <div style={{ fontSize: 48 }}>🛍️</div>
-        <Spinner text="Shopim yuklanmoqda..." />
+        <Spinner text="NexШоп yuklanmoqda..." />
+      </div>
+    )
+  }
+
+  // 1. Force registration if not registered
+  if (!registrationStatus.registered) {
+    return (
+      <div className="app-container">
+        <RegisterPage />
+        {toast && <div className="toast">{toast}</div>}
+      </div>
+    )
+  }
+
+  // 2. Force awaiting approval screen if status is PENDING
+  if (registrationStatus.status === 'PENDING') {
+    return (
+      <div className="app-container">
+        <AwaitingApprovalPage />
+        {toast && <div className="toast">{toast}</div>}
       </div>
     )
   }
@@ -33,10 +55,11 @@ function AppShell() {
           <Route path="/shop"       element={<ShopPage />} />
           <Route path="/shop/:id"   element={<ProductDetailPage />} />
           <Route path="/cart"       element={<CartPage />} />
-          <Route path="/orders"     element={<OrdersPage />} />
+          <Route path="/news"       element={<NewsPage />} />
+          <Route path="/orders"     element={<ProfilePage initialTab="orders" />} />
           <Route path="/orders/:id" element={<OrderDetailPage />} />
-          <Route path="/profile"    element={<ProfilePage />} />
-          <Route path="/reviews"    element={<ProfilePage />} />
+          <Route path="/profile"    element={<ProfilePage initialTab="info" />} />
+          <Route path="/reviews"    element={<ProfilePage initialTab="review" />} />
           <Route path="/admin"      element={<AdminPage />} />
         </Routes>
       </main>

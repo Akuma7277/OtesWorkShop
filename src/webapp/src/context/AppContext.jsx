@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { getMe, getBalance } from '../api'
+import api from '../api'
 import { tgUser } from '../tg'
 
 const AppContext = createContext(null)
@@ -12,6 +13,7 @@ export function AppProvider({ children }) {
   const [error, setError] = useState(null)
   const [toast, setToast] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [registrationStatus, setRegistrationStatus] = useState({ registered: false, status: null, is_admin: false })
 
   const [lang, setLangState] = useState(localStorage.getItem('shopim_lang') || 'uz')
 
@@ -26,21 +28,28 @@ export function AppProvider({ children }) {
 
   const loadUser = async () => {
     try {
-      const me = await getMe()
-      setUser(me)
-      setIsAdmin(me?.is_admin || false)
-      if (me?.language_code && !localStorage.getItem('shopim_lang')) {
-        localStorage.setItem('shopim_lang', me.language_code)
-        setLangState(me.language_code)
+      const statusRes = await api.get('/users/status')
+      setRegistrationStatus(statusRes)
+      setIsAdmin(statusRes?.is_admin || false)
+
+      if (statusRes?.registered && statusRes?.status === 'APPROVED') {
+        const me = await getMe()
+        setUser(me)
+        setIsAdmin(me?.is_admin || false)
+        if (me?.language_code && !localStorage.getItem('shopim_lang')) {
+          localStorage.setItem('shopim_lang', me.language_code)
+          setLangState(me.language_code)
+        }
+        await loadBalance()
+      } else {
+        setUser(null)
       }
-      await loadBalance()
     } catch (e) {
       setError(e.message)
     } finally {
       setLoading(false)
     }
   }
-
 
   const loadBalance = async () => {
     try {
@@ -101,8 +110,9 @@ export function AppProvider({ children }) {
         isAdmin,
         tgUser,
         lang,
+        registrationStatus,
+        loadUser,
       }}
-
     >
       {children}
     </AppContext.Provider>

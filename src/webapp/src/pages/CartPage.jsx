@@ -3,26 +3,52 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { placeOrder } from '../api'
 import { haptic } from '../tg'
+import Spinner from '../components/Spinner'
+import { t, getLanguage } from '../i18n'
 
 export default function CartPage() {
-  const { cart, updateCartGrams, removeFromCart, clearCart, cartTotal, user, showToast, loadBalance } = useApp()
-  const [address, setAddress] = useState(user?.address || '')
+  const { cart, removeFromCart, updateCartGrams, clearCart, cartTotal, loadBalance, showToast, lang } = useApp()
+  const [address, setAddress] = useState('')
   const [placing, setPlacing] = useState(false)
   const navigate = useNavigate()
 
+  if (cart.length === 0) {
+    return (
+      <div className="page-content fade-in">
+        <div className="empty-state">
+          <div className="empty-state-icon">🛒</div>
+          <div className="empty-state-title">{t('cart_empty')}</div>
+          <div className="empty-state-desc">{t('cart_empty_desc')}</div>
+          <button className="btn btn-primary mt-4" onClick={() => { haptic.light(); navigate('/shop') }}>
+            {t('go_to_shop')}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   const handlePlaceOrder = async () => {
-    if (cart.length === 0) return
-    if (!address.trim()) { showToast('❌ Yetkazib berish manzilini kiriting'); return }
+    if (!address.trim()) {
+      showToast(lang === 'ru' ? '❌ Введите адрес доставки' : '❌ Yetkazib berish manzilingizni kiriting')
+      return
+    }
+
     haptic.medium()
     setPlacing(true)
     try {
-      const items = cart.map(i => ({ product_id: i.product.id, grams: i.grams }))
-      const order = await placeOrder({ items, delivery_address: address })
+      const items = cart.map(i => ({
+        product_id: i.product.id,
+        grams: i.grams
+      }))
+      await placeOrder({
+        items,
+        delivery_address: address.trim()
+      })
+      haptic.success()
+      showToast(lang === 'ru' ? '✅ Заказ успешно оформлен!' : '✅ Buyurtma muvaffaqiyatli qabul qilindi!')
       clearCart()
       await loadBalance()
-      haptic.success()
-      showToast('✅ Buyurtma muvaffaqiyatli qabul qilindi!')
-      navigate(`/orders/${order.id}`)
+      navigate('/orders')
     } catch (e) {
       haptic.error()
       showToast(`❌ ${e.message}`)
@@ -31,27 +57,12 @@ export default function CartPage() {
     }
   }
 
-  if (cart.length === 0) {
-    return (
-      <div className="page-content fade-in">
-        <div className="empty-state">
-          <div className="empty-state-icon">🛒</div>
-          <div className="empty-state-title">Savat bo'sh</div>
-          <div className="empty-state-desc">Mahsulotlar qo'shish uchun do'konga o'ting</div>
-          <button className="btn btn-primary mt-4" onClick={() => navigate('/shop')}>
-            🛍️ Do'konga o'tish
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="page-content fade-in">
       <div className="section-header mb-4">
-        <h1 className="section-title">🛒 Savat</h1>
+        <h1 className="section-title">🛒 {t('cart')}</h1>
         <button className="section-link" style={{ color: 'var(--accent-red)' }} onClick={() => { haptic.light(); clearCart() }}>
-          Tozalash
+          {t('clear')}
         </button>
       </div>
 
@@ -66,9 +77,9 @@ export default function CartPage() {
               </div>
               <div className="cart-item-info">
                 <div className="cart-item-name">{product.name}</div>
-                <div className="cart-item-price">{Number(product.sale_price_per_gram).toFixed(0)} so'm/g</div>
+                <div className="cart-item-price">{Number(product.sale_price_per_gram).toFixed(1)} $/g</div>
                 <div style={{ fontSize: 13, fontWeight: 700, background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginTop: 2 }}>
-                  {subtotal.toFixed(0)} so'm
+                  {subtotal.toFixed(1)} $
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
@@ -91,11 +102,11 @@ export default function CartPage() {
 
       {/* Delivery address */}
       <div className="input-group">
-        <label className="input-label">📍 Yetkazib berish manzili</label>
+        <label className="input-label">📍 {t('delivery_address')}</label>
         <textarea
           className="input"
           rows={3}
-          placeholder="Aniq manzilni kiriting..."
+          placeholder={t('address_placeholder')}
           value={address}
           onChange={e => setAddress(e.target.value)}
           style={{ resize: 'none' }}
@@ -105,18 +116,18 @@ export default function CartPage() {
       {/* Order summary */}
       <div className="card mb-4">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-secondary">Mahsulotlar:</span>
-          <span className="font-bold">{cart.length} xil</span>
+          <span className="text-secondary">{lang === 'ru' ? 'Товары:' : 'Mahsulotlar:'}</span>
+          <span className="font-bold">{cart.length} {lang === 'ru' ? 'вид(а)' : 'xil'}</span>
         </div>
         <div className="flex justify-between items-center mb-2">
-          <span className="text-secondary">Jami gramm:</span>
+          <span className="text-secondary">{lang === 'ru' ? 'Общий вес:' : 'Jami gramm:'}</span>
           <span className="font-bold">{cart.reduce((s, i) => s + i.grams, 0)} g</span>
         </div>
         <div className="divider" />
         <div className="flex justify-between items-center">
-          <span style={{ fontWeight: 700, fontSize: 16 }}>Jami summa:</span>
+          <span style={{ fontWeight: 700, fontSize: 16 }}>{t('total_amount')}:</span>
           <span style={{ fontSize: 22, fontWeight: 900, background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-            {cartTotal.toFixed(0)} so'm
+            {cartTotal.toFixed(1)} $
           </span>
         </div>
       </div>
@@ -126,7 +137,7 @@ export default function CartPage() {
         onClick={handlePlaceOrder}
         disabled={placing}
       >
-        {placing ? '⏳ Joylashtirilmoqda...' : `✅ Buyurtma berish — ${cartTotal.toFixed(0)} so'm`}
+        {placing ? `⏳ ${t('placing_order')}` : `🛒 ${t('place_order')} — ${cartTotal.toFixed(1)} $`}
       </button>
     </div>
   )

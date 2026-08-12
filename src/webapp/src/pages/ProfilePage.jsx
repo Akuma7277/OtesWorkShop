@@ -1,19 +1,53 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { getMe, getBalance, createTopup, submitReview, updateMe } from '../api'
+import { getMe, getBalance, createTopup, submitReview, updateMe, getMyOrders } from '../api'
 import Spinner from '../components/Spinner'
 import { haptic } from '../tg'
 import { t, getLanguage, setLanguage } from '../i18n'
 
-export default function ProfilePage() {
+const STATUS_MAP = {
+  PENDING_ADMIN: { label: t('status_pending'), cls: 'status-pending', icon: '⏳' },
+  APPROVED:      { label: t('status_approved'), cls: 'status-approved', icon: '✅' },
+  PACKING:       { label: t('status_packing'), cls: 'status-packing', icon: '📦' },
+  OUT_FOR_DELIVERY: { label: t('status_delivery'), cls: 'status-delivery', icon: '🚚' },
+  DELIVERED:     { label: t('status_delivered'), cls: 'status-delivered', icon: '🏁' },
+  REJECTED:      { label: t('status_rejected'), cls: 'status-rejected', icon: '❌' },
+  CANCELLED:     { label: t('status_cancelled'), cls: 'status-cancelled', icon: '🚫' },
+  REFUNDED:      { label: t('status_refunded'), cls: 'status-cancelled', icon: '💰' },
+}
+
+export default function ProfilePage({ initialTab = 'info' }) {
   const { user, setUser, balance, showToast, loadBalance, tgUser, lang } = useApp()
-  const [tab, setTab] = useState('info')
+  const [tab, setTab] = useState(initialTab)
   const [topupAmount, setTopupAmount] = useState('')
   const [receiptImage, setReceiptImage] = useState('')
   const [submittingTopup, setSubmittingTopup] = useState(false)
   const [reviewText, setReviewText] = useState('')
   const [reviewRating, setReviewRating] = useState(5)
   const [submittingReview, setSubmittingReview] = useState(false)
+
+  const [orders, setOrders] = useState([])
+  const [loadingOrders, setLoadingOrders] = useState(false)
+
+  useEffect(() => {
+    setTab(initialTab)
+  }, [initialTab])
+
+  useEffect(() => {
+    if (tab === 'orders') {
+      loadOrders()
+    }
+  }, [tab])
+
+  const loadOrders = async () => {
+    setLoadingOrders(true)
+    try {
+      const res = await getMyOrders({ limit: 50 })
+      setOrders(res.items || res || [])
+    } catch {}
+    setLoadingOrders(false)
+  }
 
   if (!user) return <Spinner />
 
@@ -36,8 +70,8 @@ export default function ProfilePage() {
   }
 
   const handleTopup = async () => {
-    if (!topupAmount || Number(topupAmount) < 10000) {
-      showToast(lang === 'ru' ? '❌ Минимальная сумма: 10,000 сум' : '❌ Minimal miqdor: 10,000 so\'m')
+    if (!topupAmount || Number(topupAmount) < 5) {
+      showToast(lang === 'ru' ? '❌ Минимальная сумма: 5 $' : '❌ Minimal miqdor: 5 $')
       return
     }
     if (!receiptImage) {
@@ -103,7 +137,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="page-content fade-in">
+    <div className="page-content fade-in" style={{ paddingBottom: 'var(--nav-height)' }}>
       {/* Profile card */}
       <div className="hero-card mb-4">
         <div className="flex items-center gap-4 mb-4">
@@ -112,27 +146,28 @@ export default function ProfilePage() {
             <div className="profile-name">{displayName}</div>
             {user.username && <div className="profile-username">@{user.username}</div>}
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>
-              📍 {user.address || '—'}
+              📌 {lang === 'ru' ? 'Пользователь системы' : 'Foydalanuvchi'}
             </div>
           </div>
         </div>
         <div className="profile-balance" style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="balance-amount">{Number(balance).toLocaleString()}</div>
-          <div className="balance-label">{t('balance')}</div>
+          <div className="balance-label">$ — {t('balance')}</div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-4 scroll-x" style={{ paddingBottom: 4 }}>
         {[
           { key: 'info', label: `👤 ${t('profile')}` },
-          { key: 'topup', label: `💳 ${t('balance')}` },
+          { key: 'topup', label: `💳 ${lang === 'ru' ? 'Пополнить' : 'To\'ldirish'}` },
+          { key: 'orders', label: `📦 ${t('my_orders')}` },
           { key: 'review', label: `⭐ ${t('reviews')}` },
         ].map(tItem => (
           <button
             key={tItem.key}
             className="btn btn-sm"
-            style={{ flex: 1, ...(tab === tItem.key ? {} : { background: 'var(--bg-glass)', color: 'var(--text-secondary)' }) }}
+            style={{ flexShrink: 0, ...(tab === tItem.key ? {} : { background: 'var(--bg-glass)', color: 'var(--text-secondary)' }) }}
             onClick={() => { haptic.light(); setTab(tItem.key) }}
           >
             {tItem.label}
@@ -180,7 +215,7 @@ export default function ProfilePage() {
           {/* LTC Wallet Box */}
           <div className="card mb-4" style={{ background: 'rgba(255, 179, 0, 0.08)', borderColor: 'rgba(255, 179, 0, 0.2)' }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>
-              🪙 Litecoin (LTC) to'lov manzili:
+              🪙 {lang === 'ru' ? 'Адрес оплаты Litecoin (LTC):' : 'Litecoin (LTC) to\'lov manzili:'}
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: 'rgba(0,0,0,0.3)', padding: 8, borderRadius: 8 }}>
               <code style={{ fontSize: 12, wordBreak: 'break-all', flex: 1, color: '#ffb300' }}>
@@ -199,11 +234,11 @@ export default function ProfilePage() {
           </div>
 
           <div className="input-group">
-            <label className="input-label">{t('amount')} (so'm)</label>
+            <label className="input-label">{t('amount')}</label>
             <input
               type="number"
               className="input"
-              placeholder={lang === 'ru' ? 'Минимум 10,000 сум' : 'Minimum 10,000 so\'m'}
+              placeholder={lang === 'ru' ? 'Минимум 5 $' : 'Minimum 5 $'}
               value={topupAmount}
               onChange={e => setTopupAmount(e.target.value)}
             />
@@ -211,14 +246,14 @@ export default function ProfilePage() {
 
           {/* Quick amounts */}
           <div className="scroll-x mb-4">
-            {[50000, 100000, 200000, 500000].map(amt => (
+            {[5, 10, 20, 50, 100].map(amt => (
               <button
                 key={amt}
                 className="btn btn-sm"
                 style={{ flexShrink: 0, ...(topupAmount === String(amt) ? {} : { background: 'var(--bg-glass)', color: 'var(--text-secondary)' }) }}
                 onClick={() => { haptic.light(); setTopupAmount(String(amt)) }}
               >
-                {amt.toLocaleString()} so'm
+                {amt.toLocaleString()} $
               </button>
             ))}
           </div>
@@ -251,6 +286,43 @@ export default function ProfilePage() {
           >
             {submittingTopup ? '⏳ ...' : t('topup_balance')}
           </button>
+        </div>
+      )}
+
+      {tab === 'orders' && (
+        <div className="stagger">
+          {loadingOrders ? (
+            <Spinner />
+          ) : orders.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">📦</div>
+              <div className="empty-state-title">{lang === 'ru' ? 'Заказы не найдены' : 'Buyurtmalar topilmadi'}</div>
+            </div>
+          ) : (
+            orders.map(order => {
+              const sMap = STATUS_MAP[order.status] || { label: order.status, cls: 'status-pending', icon: '⏳' }
+              const date = new Date(order.created_at).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'uz-Latn', {
+                day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+              })
+              return (
+                <Link key={order.id} to={`/orders/${order.id}`} className="order-card" style={{ textDecoration: 'none', display: 'block', marginBottom: 12 }}>
+                  <div className="order-header">
+                    <div>
+                      <div className="order-number">№{order.order_number}</div>
+                      <div className="order-date">{date}</div>
+                    </div>
+                    <span className={`status-badge ${sMap.cls}`}>{sMap.icon} {sMap.label}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                      {order.items?.length || '—'} {lang === 'ru' ? 'товар(ов)' : 'mahsulot'}
+                    </div>
+                    <div className="order-total">{Number(order.total_amount).toLocaleString()} $</div>
+                  </div>
+                </Link>
+              )
+            })
+          )}
         </div>
       )}
 

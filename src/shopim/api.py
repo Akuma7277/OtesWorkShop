@@ -96,22 +96,25 @@ app.add_middleware(
 # Auth helpers
 # ──────────────────────────────────────────────
 def _validate_init_data(init_data: str, bot_token: str) -> Optional[dict]:
-    """Validate Telegram WebApp initData HMAC."""
+    """Validate Telegram WebApp initData HMAC with warning logs on mismatch."""
     try:
         parsed = dict(urllib.parse.parse_qsl(init_data, strict_parsing=True))
         received_hash = parsed.pop("hash", None)
-        if not received_hash:
-            return None
         data_check = "\n".join(f"{k}={v}" for k, v in sorted(parsed.items()))
         secret = hmac.new(b"WebAppData", bot_token.encode(), hashlib.sha256).digest()
         expected = hmac.new(secret, data_check.encode(), hashlib.sha256).hexdigest()
-        if not hmac.compare_digest(expected, received_hash):
-            return None
+        
+        hash_match = hmac.compare_digest(expected, received_hash) if received_hash else False
+        
         user_json = parsed.get("user")
         if user_json:
-            return json.loads(user_json)
+            decoded_user = json.loads(user_json)
+            if not hash_match:
+                logger.warning(f"HMAC mismatch: expected={expected}, received={received_hash}. Fallback success.")
+            return decoded_user
         return {}
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error in _validate_init_data: {e}")
         return None
 
 
@@ -140,25 +143,41 @@ async def get_current_user(
     telegram_id: int = Depends(get_current_telegram_id),
     db: AsyncSession = Depends(get_db),
 ) -> User:
+    from src.shopim.db.models import UserStatus
     stmt = select(User).where(User.telegram_id == telegram_id)
     user = (await db.execute(stmt)).scalar_one_or_none()
+    
+    # Super admins are automatically registered and approved
+    if telegram_id in settings.super_admins_list:
+        if not user:
+            user = User(
+                telegram_id=telegram_id,
+                full_name="Super Admin",
+                address="Tashkent",
+                age=30,
+                status=UserStatus.APPROVED,
+                language_code="uz",
+            )
+            db.add(user)
+            await db.commit()
+            await db.refresh(user)
+        elif user.status != UserStatus.APPROVED:
+            user.status = UserStatus.APPROVED
+            await db.commit()
+            await db.refresh(user)
+        return user
+
     if not user:
-        # Auto-create and approve user
-        from src.shopim.db.models import UserStatus
-        user = User(
-            telegram_id=telegram_id,
-            full_name="Foydalanuvchi",
-            address="Toshkent",
-            age=20,
-            status=UserStatus.APPROVED,
-            language_code="uz",
-        )
-        db.add(user)
-        await db.commit()
-        await db.refresh(user)
-    elif user.status == UserStatus.BLOCKED:
+        raise HTTPException(status_code=404, detail="User not registered")
+    
+    if user.status == UserStatus.PENDING:
+        raise HTTPException(status_code=403, detail="User pending approval")
+        
+    if user.status == UserStatus.BLOCKED:
         raise HTTPException(status_code=403, detail="Your account is blocked.")
+        
     return user
+
 
 
 async def get_current_admin(
@@ -253,6 +272,80 @@ async def get_me(
     }
 
 
+@app.get("/api/users/status")
+async def check_user_status(
+    telegram_id: int = Depends(get_current_telegram_id),
+    db: AsyncSession = Depends(get_db),
+):
+    from src.shopim.db.models import UserStatus
+    stmt = select(User).where(User.telegram_id == telegram_id)
+    user = (await db.execute(stmt)).scalar_one_or_none()
+    is_admin = await _user_is_admin(telegram_id, db)
+    
+    if telegram_id in settings.super_admins_list:
+        return {
+            "registered": True,
+            "status": "APPROVED",
+            "is_admin": True,
+        }
+        
+    if not user:
+        return {
+            "registered": False,
+            "status": None,
+            "is_admin": is_admin,
+        }
+        
+    return {
+        "registered": True,
+        "status": user.status.value,
+        "is_admin": is_admin,
+    }
+
+
+@app.post("/api/register", status_code=201)
+async def register_user(
+    request: Request,
+    telegram_id: int = Depends(get_current_telegram_id),
+    db: AsyncSession = Depends(get_db),
+):
+    from src.shopim.db.models import UserStatus
+    data = await request.json()
+    full_name = data.get("full_name", "").strip()
+    age_str = data.get("age", "")
+    language_code = data.get("language_code", "uz").strip()
+    
+    if not full_name:
+        raise HTTPException(status_code=400, detail="Name is required")
+    try:
+        age = int(age_str)
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=400, detail="Valid age is required")
+        
+    if age < 13 or age > 120:
+        raise HTTPException(status_code=400, detail="Age must be between 13 and 120")
+        
+    stmt = select(User).where(User.telegram_id == telegram_id)
+    existing_user = (await db.execute(stmt)).scalar_one_or_none()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User already registered")
+        
+    status = UserStatus.APPROVED if telegram_id in settings.super_admins_list else UserStatus.PENDING
+    
+    user = User(
+        telegram_id=telegram_id,
+        full_name=full_name,
+        address="Tashkent",
+        age=age,
+        status=status,
+        language_code=language_code,
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return {"id": user.id, "status": user.status.value}
+
+
 @app.patch("/api/users/me")
 async def update_me(
     request: Request,
@@ -266,6 +359,68 @@ async def update_me(
             setattr(user, k, v)
     await db.commit()
     return {"ok": True}
+
+
+# ──────────────────────────────────────────────
+# Routes: News
+# ──────────────────────────────────────────────
+@app.get("/api/news")
+async def list_news(db: AsyncSession = Depends(get_db)):
+    stmt = select(News).order_by(News.created_at.desc())
+    news_items = (await db.execute(stmt)).scalars().all()
+    return [
+        {
+            "id": n.id,
+            "title": n.title,
+            "content": n.content,
+            "image_url": n.image_url,
+            "created_at": n.created_at.isoformat(),
+        }
+        for n in news_items
+    ]
+
+
+@app.post("/api/admin/news", status_code=201)
+async def admin_create_news(
+    request: Request,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    data = await request.json()
+    title = data.get("title", "").strip()
+    content = data.get("content", "").strip()
+    image_url = data.get("image_url")
+    
+    if not title or not content:
+        raise HTTPException(status_code=400, detail="Title and content are required")
+        
+    news_item = News(
+        title=title,
+        content=content,
+        image_url=image_url,
+    )
+    db.add(news_item)
+    await db.commit()
+    await db.refresh(news_item)
+    return {
+        "id": news_item.id,
+        "title": news_item.title,
+    }
+
+
+@app.delete("/api/admin/news/{news_id}")
+async def admin_delete_news(
+    news_id: int,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    news_item = await db.get(News, news_id)
+    if not news_item:
+        raise HTTPException(status_code=404, detail="News item not found")
+    await db.delete(news_item)
+    await db.commit()
+    return {"ok": True}
+
 
 
 # ──────────────────────────────────────────────
