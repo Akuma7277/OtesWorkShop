@@ -143,8 +143,20 @@ async def get_current_user(
     stmt = select(User).where(User.telegram_id == telegram_id)
     user = (await db.execute(stmt)).scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found. Please register via bot first.")
-    if user.status == UserStatus.BLOCKED:
+        # Auto-create and approve user
+        from src.shopim.db.models import UserStatus
+        user = User(
+            telegram_id=telegram_id,
+            full_name="Foydalanuvchi",
+            address="Toshkent",
+            age=20,
+            status=UserStatus.APPROVED,
+            language_code="uz",
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    elif user.status == UserStatus.BLOCKED:
         raise HTTPException(status_code=403, detail="Your account is blocked.")
     return user
 
@@ -156,7 +168,19 @@ async def get_current_admin(
     stmt = select(Admin).where(Admin.telegram_id == telegram_id, Admin.is_active == True)
     admin = (await db.execute(stmt)).scalar_one_or_none()
     if not admin:
-        raise HTTPException(status_code=403, detail="Admin access required.")
+        if telegram_id in settings.super_admins_list:
+            from src.shopim.db.models import AdminRole
+            admin = Admin(
+                telegram_id=telegram_id,
+                full_name="Super Admin",
+                role=AdminRole.SUPER_ADMIN,
+                is_active=True,
+            )
+            db.add(admin)
+            await db.commit()
+            await db.refresh(admin)
+        else:
+            raise HTTPException(status_code=403, detail="Admin access required.")
     return admin
 
 
@@ -168,8 +192,24 @@ def _is_admin_telegram_id(telegram_id: int) -> bool:
 # Helper: check if user is admin (lightweight)
 # ──────────────────────────────────────────────
 async def _user_is_admin(telegram_id: int, db: AsyncSession) -> bool:
+    if telegram_id in settings.super_admins_list:
+        # Check if they are in database, if not, auto-create their admin record
+        stmt = select(Admin).where(Admin.telegram_id == telegram_id, Admin.is_active == True)
+        admin = (await db.execute(stmt)).scalar_one_or_none()
+        if not admin:
+            from src.shopim.db.models import AdminRole
+            admin = Admin(
+                telegram_id=telegram_id,
+                full_name="Super Admin",
+                role=AdminRole.SUPER_ADMIN,
+                is_active=True,
+            )
+            db.add(admin)
+            await db.commit()
+        return True
     stmt = select(Admin).where(Admin.telegram_id == telegram_id, Admin.is_active == True)
     return (await db.execute(stmt)).scalar_one_or_none() is not None
+
 
 
 # ──────────────────────────────────────────────

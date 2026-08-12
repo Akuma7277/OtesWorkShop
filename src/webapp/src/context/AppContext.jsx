@@ -13,8 +13,15 @@ export function AppProvider({ children }) {
   const [toast, setToast] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
 
+  const [lang, setLangState] = useState(localStorage.getItem('shopim_lang') || 'uz')
+
   useEffect(() => {
     loadUser()
+    const handleStorage = () => {
+      setLangState(localStorage.getItem('shopim_lang') || 'uz')
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
   }, [])
 
   const loadUser = async () => {
@@ -22,6 +29,10 @@ export function AppProvider({ children }) {
       const me = await getMe()
       setUser(me)
       setIsAdmin(me?.is_admin || false)
+      if (me?.language_code && !localStorage.getItem('shopim_lang')) {
+        localStorage.setItem('shopim_lang', me.language_code)
+        setLangState(me.language_code)
+      }
       await loadBalance()
     } catch (e) {
       setError(e.message)
@@ -29,6 +40,7 @@ export function AppProvider({ children }) {
       setLoading(false)
     }
   }
+
 
   const loadBalance = async () => {
     try {
@@ -88,7 +100,9 @@ export function AppProvider({ children }) {
         toast, showToast,
         isAdmin,
         tgUser,
+        lang,
       }}
+
     >
       {children}
     </AppContext.Provider>

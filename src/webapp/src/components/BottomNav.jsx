@@ -1,18 +1,19 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-
-const navItems = [
-  { path: '/',        icon: '🏠', label: 'Bosh sahifa' },
-  { path: '/shop',    icon: '🛍️', label: 'Do\'kon'    },
-  { path: '/cart',    icon: '🛒', label: 'Savat'      },
-  { path: '/orders',  icon: '📦', label: 'Buyurtmalar' },
-  { path: '/profile', icon: '👤', label: 'Profil'     },
-]
+import { t } from '../i18n'
 
 export default function BottomNav() {
   const { pathname } = useLocation()
   const { cart } = useApp()
   const cartCount = cart.length
+
+  const navItems = [
+    { path: '/',        icon: '🏠', label: t('welcome') },
+    { path: '/shop',    icon: '🛍️', label: t('products') },
+    { path: '/cart',    icon: '🛒', label: t('cart') },
+    { path: '/orders',  icon: '📦', label: t('my_orders') },
+    { path: '/profile', icon: '👤', label: t('profile') },
+  ]
 
   return (
     <nav className="bottom-nav">
@@ -37,3 +38,4 @@ export default function BottomNav() {
     </nav>
   )
 }
+

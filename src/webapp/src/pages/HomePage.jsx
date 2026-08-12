@@ -3,23 +3,25 @@ import { Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { getProducts, getMyOrders } from '../api'
 import Spinner from '../components/Spinner'
-
-const STATUS_MAP = {
-  PENDING_ADMIN: { label: 'Kutilmoqda', cls: 'status-pending', icon: '⏳' },
-  APPROVED:      { label: 'Tasdiqlangan', cls: 'status-approved', icon: '✅' },
-  PACKING:       { label: 'Qadoqlanmoqda', cls: 'status-packing', icon: '📦' },
-  OUT_FOR_DELIVERY: { label: 'Yetkazilmoqda', cls: 'status-delivery', icon: '🚚' },
-  DELIVERED:     { label: 'Yetkazildi', cls: 'status-delivered', icon: '🏁' },
-  REJECTED:      { label: 'Rad etildi', cls: 'status-rejected', icon: '❌' },
-  CANCELLED:     { label: 'Bekor qilindi', cls: 'status-cancelled', icon: '🚫' },
-}
+import { t } from '../i18n'
 
 export default function HomePage() {
-  const { user, balance, tgUser } = useApp()
+  const { user, balance, tgUser, lang } = useApp()
   const [products, setProducts] = useState([])
   const [recentOrders, setRecentOrders] = useState([])
   const [loadingProducts, setLoadingProducts] = useState(true)
   const [loadingOrders, setLoadingOrders] = useState(true)
+
+  const STATUS_MAP = {
+    PENDING_ADMIN: { label: t('status_pending'), cls: 'status-pending', icon: '⏳' },
+    APPROVED:      { label: t('status_approved'), cls: 'status-approved', icon: '✅' },
+    PACKING:       { label: t('status_packing'), cls: 'status-packing', icon: '📦' },
+    OUT_FOR_DELIVERY: { label: t('status_delivery'), cls: 'status-delivery', icon: '🚚' },
+    DELIVERED:     { label: t('status_delivered'), cls: 'status-delivered', icon: '🏁' },
+    REJECTED:      { label: t('status_rejected'), cls: 'status-rejected', icon: '❌' },
+    CANCELLED:     { label: t('status_cancelled'), cls: 'status-cancelled', icon: '🚫' },
+    REFUNDED:      { label: t('status_refunded'), cls: 'status-cancelled', icon: '💰' },
+  }
 
   useEffect(() => {
     getProducts({ limit: 6, is_active: true })
@@ -46,7 +48,7 @@ export default function HomePage() {
           </div>
           <div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 2 }}>
-              Xush kelibsiz 👋
+              {t('welcome')} 👋
             </div>
             <div style={{ fontSize: 18, fontWeight: 800 }}>{displayName}</div>
           </div>
@@ -54,58 +56,54 @@ export default function HomePage() {
 
         <div className="profile-balance" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="balance-amount">{Number(balance).toLocaleString()}</div>
-          <div className="balance-label">so'm — Hisobingiz balansi</div>
-          <Link to="/profile" className="btn btn-primary btn-sm mt-2" style={{ display: 'inline-flex', marginTop: 12 }}>
-            💳 Balans to'ldirish
+          <div className="balance-label">so'm — {t('balance')}</div>
+          <Link to="/profile" className="btn btn-primary btn-sm mt-2" style={{ display: 'inline-flex', marginTop: 12, textDecoration: 'none' }}>
+            💳 {t('topup_balance')}
           </Link>
         </div>
       </div>
 
       {/* Quick Actions */}
       <div className="section-header mb-4">
-        <h2 className="section-title">Tez harakatlar</h2>
+        <h2 className="section-title">{t('quick_actions')}</h2>
       </div>
       <div className="grid-2 mb-6 stagger">
         <Link to="/shop" className="card" style={{ textDecoration: 'none', textAlign: 'center', padding: '20px 12px' }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>🛍️</div>
-          <div style={{ fontWeight: 700, fontSize: 14 }}>Mahsulotlar</div>
-          <div className="text-xs text-muted mt-2">Barcha mahsulotlar</div>
+          <div style={{ fontWeight: 700, fontSize: 14 }}>{t('products')}</div>
         </Link>
         <Link to="/orders" className="card" style={{ textDecoration: 'none', textAlign: 'center', padding: '20px 12px' }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>📦</div>
-          <div style={{ fontWeight: 700, fontSize: 14 }}>Buyurtmalarim</div>
-          <div className="text-xs text-muted mt-2">Holat va tarix</div>
+          <div style={{ fontWeight: 700, fontSize: 14 }}>{t('my_orders')}</div>
         </Link>
         <Link to="/cart" className="card" style={{ textDecoration: 'none', textAlign: 'center', padding: '20px 12px' }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>🛒</div>
-          <div style={{ fontWeight: 700, fontSize: 14 }}>Savat</div>
-          <div className="text-xs text-muted mt-2">Tanlangan mahsulotlar</div>
+          <div style={{ fontWeight: 700, fontSize: 14 }}>{t('cart')}</div>
         </Link>
         <Link to="/reviews" className="card" style={{ textDecoration: 'none', textAlign: 'center', padding: '20px 12px' }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>⭐</div>
-          <div style={{ fontWeight: 700, fontSize: 14 }}>Sharhlar</div>
-          <div className="text-xs text-muted mt-2">Fikr qoldiring</div>
+          <div style={{ fontWeight: 700, fontSize: 14 }}>{t('reviews')}</div>
         </Link>
       </div>
 
       {/* Featured Products */}
       <div className="section-header">
-        <h2 className="section-title">🔥 Mashhur <span>mahsulotlar</span></h2>
-        <Link to="/shop" className="section-link">Barchasi →</Link>
+        <h2 className="section-title">🔥 {t('featured_products')}</h2>
+        <Link to="/shop" className="section-link">{t('all')} →</Link>
       </div>
 
       {loadingProducts ? (
-        <Spinner text="Mahsulotlar yuklanmoqda..." />
+        <Spinner text="..." />
       ) : products.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state-icon">🛒</div>
-          <div className="empty-state-title">Mahsulotlar topilmadi</div>
-          <div className="empty-state-desc">Hozircha mahsulotlar mavjud emas</div>
+          <div className="empty-state-title">{t('empty_products')}</div>
+          <div className="empty-state-desc">{t('no_products_desc')}</div>
         </div>
       ) : (
         <div className="grid-2 stagger mb-6">
           {products.slice(0, 4).map(p => (
-            <ProductMiniCard key={p.id} product={p} />
+            <ProductMiniCard key={p.id} product={p} lang={lang} />
           ))}
         </div>
       )}
@@ -114,12 +112,12 @@ export default function HomePage() {
       {recentOrders.length > 0 && (
         <>
           <div className="section-header">
-            <h2 className="section-title">📦 So'nggi <span>buyurtmalar</span></h2>
-            <Link to="/orders" className="section-link">Barchasi →</Link>
+            <h2 className="section-title">📦 {t('recent_orders')}</h2>
+            <Link to="/orders" className="section-link">{t('all')} →</Link>
           </div>
           <div className="stagger">
             {recentOrders.map(order => (
-              <RecentOrderRow key={order.id} order={order} />
+              <RecentOrderRow key={order.id} order={order} statusMap={STATUS_MAP} lang={lang} />
             ))}
           </div>
         </>
@@ -128,7 +126,7 @@ export default function HomePage() {
   )
 }
 
-function ProductMiniCard({ product }) {
+function ProductMiniCard({ product, lang }) {
   const hasImage = product.image_url || product.image_file_id
   const stock = Number(product.stock_grams)
   const stockCls = stock <= 0 ? 'out' : stock < 100 ? 'low' : 'ok'
@@ -146,15 +144,20 @@ function ProductMiniCard({ product }) {
         <div className="product-name">{product.name}</div>
         <div className="product-price">{Number(product.sale_price_per_gram).toFixed(0)} so'm/g</div>
         <div className={`product-stock ${stockCls}`}>
-          {stockCls === 'out' ? '❌ Tugagan' : stockCls === 'low' ? '⚠️ Kam qoldi' : `✅ ${stock.toFixed(0)} g`}
+          {stockCls === 'out'
+            ? `❌ ${t('stock_none')}`
+            : stockCls === 'low'
+              ? `⚠️ ${t('stock_low')}`
+              : `✅ ${stock.toFixed(0)} g`
+          }
         </div>
       </div>
     </Link>
   )
 }
 
-function RecentOrderRow({ order }) {
-  const s = STATUS_MAP[order.status] || { label: order.status, cls: 'status-pending', icon: '📋' }
+function RecentOrderRow({ order, statusMap, lang }) {
+  const s = statusMap[order.status] || { label: order.status, cls: 'status-pending', icon: '📋' }
   return (
     <Link to={`/orders/${order.id}`} className="order-card" style={{ textDecoration: 'none' }}>
       <div className="order-header">
@@ -162,7 +165,7 @@ function RecentOrderRow({ order }) {
         <span className={`status-badge ${s.cls}`}>{s.icon} {s.label}</span>
       </div>
       <div className="flex items-center justify-between">
-        <div className="order-date">{new Date(order.created_at).toLocaleDateString('uz-Latn')}</div>
+        <div className="order-date">{new Date(order.created_at).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'uz-Latn')}</div>
         <div className="order-total">{Number(order.total_amount).toLocaleString()} so'm</div>
       </div>
     </Link>
