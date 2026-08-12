@@ -1,5 +1,4 @@
 from aiogram import Bot, F, Router, types
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.shopim.db.models import ReviewStatus
@@ -19,10 +18,10 @@ async def approve_review_handler(
 ):
     review_id = int(callback.data.split(":")[1])
     repo = ReviewRepository(session)
-    review = await repo.get_by_id(review_id)
+    review = await repo.get_by_id_with_user(review_id)
 
     if not review:
-        await callback.answer("Отзыв не найден.", show_alert=True)
+        await callback.answer("Sharh topilmadi.", show_alert=True)
         return
 
     settings_service = SettingsService(session)
@@ -31,23 +30,25 @@ async def approve_review_handler(
     channel_msg_id = None
     channel_id = settings.reviews_channel_id.strip()
 
+    posted_to_channel = False
     if channel_id:
         try:
             user_label = (
                 f"@{review.user.username}"
-                if review.user.username
-                else review.user.full_name
+                if (review.user and review.user.username)
+                else (review.user.full_name if review.user else "Klient")
             )
             channel_text = (
-                f"💬 <b>Новый отзыв от клиента!</b>\n\n"
-                f"👤 Клиент: <b>{user_label}</b>\n"
-                f"⭐️ Оценка: ⭐️⭐️⭐️⭐️⭐️\n"
+                f"💬 <b>Mijozdan yangi sharh! / Новый отзыв от клиента!</b>\n\n"
+                f"👤 Mijoz: <b>{user_label}</b>\n"
+                f"⭐️ Baho: ⭐️⭐️⭐️⭐️⭐️\n"
                 f"📝 <i>\"{review.text}\"</i>"
             )
             posted_msg = await bot.send_message(
                 chat_id=channel_id, text=channel_text, parse_mode="HTML"
             )
             channel_msg_id = posted_msg.message_id
+            posted_to_channel = True
         except Exception as e:
             print(f"Error posting review to channel {channel_id}: {e}")
 
@@ -58,20 +59,27 @@ async def approve_review_handler(
     )
 
     # Notify user that their review was approved
-    try:
-        await bot.send_message(
-            chat_id=review.user.telegram_id,
-            text="🎉 <b>Ваш отзыв успешно одобрен и опубликован!</b> Спасибо за доверие.",
-            parse_mode="HTML",
-        )
-    except Exception:
-        pass
+    if review.user:
+        try:
+            await bot.send_message(
+                chat_id=review.user.telegram_id,
+                text="🎉 <b>Sharhingiz muvaffaqiyatli tasdiqlandi va e'lon qilindi!</b> Ishonchingiz uchun rahmat.",
+                parse_mode="HTML",
+            )
+        except Exception:
+            pass
+
+    status_text = (
+        f"✅ <b>Sharh №{review_id} tasdiqlandi va kanalga joylandi!</b>"
+        if posted_to_channel
+        else f"✅ <b>Sharh №{review_id} tasdiqlandi!</b>\n⚠️ <i>Otzivlar kanali sozlamalarda biriktirilmagan.</i>"
+    )
 
     await callback.message.edit_text(
-        f"✅ <b>Отзыв №{review_id} одобрен и опубликован!</b>",
+        status_text,
         parse_mode="HTML",
     )
-    await callback.answer("Отзыв одобрен!")
+    await callback.answer("Sharh tasdiqlandi!")
 
 
 @router.callback_query(F.data.startswith("reject_rev:"))
@@ -84,7 +92,7 @@ async def reject_review_handler(
     await repo.update_review_status(review_id=review_id, status=ReviewStatus.REJECTED)
 
     await callback.message.edit_text(
-        f"❌ <b>Отзыв №{review_id} отклонен.</b>",
+        f"❌ <b>Sharh №{review_id} rad etildi.</b>",
         parse_mode="HTML",
     )
-    await callback.answer("Отзыв отклонен.")
+    await callback.answer("Sharh rad etildi.")

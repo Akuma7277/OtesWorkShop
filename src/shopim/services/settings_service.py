@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,7 +31,18 @@ class SettingsService:
         Updates bot settings, validates them, and saves to the database.
         """
         current_settings = await self.get_bot_settings()
-        updated_settings_model = current_settings.model_copy(update=update_data)
+        current_dict = current_settings.model_dump()
+
+        for key, val in update_data.items():
+            if key in BotSettings.model_fields:
+                field_type = BotSettings.model_fields[key].annotation
+                if field_type == int:
+                    val = int(val)
+                elif field_type == Decimal:
+                    val = Decimal(str(val))
+                current_dict[key] = str(val) if isinstance(val, str) else val
+
+        updated_settings_model = BotSettings.model_validate(current_dict)
 
         await self.settings_repo.set_setting(
             key=BOT_SETTINGS_KEY,

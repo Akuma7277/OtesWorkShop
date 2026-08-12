@@ -2,28 +2,26 @@ from decimal import Decimal, InvalidOperation
 from typing import Optional
 
 from aiogram import F, Router, types
+from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from pydantic import ValidationError
-from aiogram.utils.i18n import gettext as _
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.shopim.core.settings_models import BotSettings
-from src.shopim.db.models import Admin, AdminRole
+from src.shopim.db.models import Admin
+from src.shopim.filters import IsAdminFilter
 from src.shopim.keyboards.inline.admin.settings_management import (
     SettingsCallback,
     get_back_to_settings_menu_keyboard,
     get_settings_menu_keyboard,
 )
+from src.shopim.keyboards.reply.admin import get_admin_main_keyboard
 from src.shopim.services.settings_service import SettingsService
 from src.shopim.states.admin import SettingsManagementState
 
-
-from src.shopim.filters import IsSuperAdminFilter
-
-
 router = Router(name="admin-settings-management-router")
-router.message.filter(IsSuperAdminFilter())
-router.callback_query.filter(IsSuperAdminFilter())
+router.message.filter(IsAdminFilter())
+router.callback_query.filter(IsAdminFilter())
 
 
 async def _show_settings_menu(
@@ -36,33 +34,50 @@ async def _show_settings_menu(
 
     settings_text = "\n".join(
         [
-            f"  - {field.description or name}: <b>{getattr(settings, name)}</b>"
+            f"• <b>{field.description or name}</b>: <code>{getattr(settings, name)}</code>"
             for name, field in BotSettings.model_fields.items()
         ]
     )
 
-    text = _("<b>⚙️ Joriy sozlamalar</b>\n\n{settings_text}\n\nO'zgartirish uchun maydonni tanlang:").format(settings_text=settings_text)
+    text = f"<b>⚙️ Tizim va Baza Sozlamalari</b>\n\n{settings_text}\n\n<i>O'zgartirmoqchi bo'lgan parametrni tanlang:</i>"
     if success_message:
-        text = _("✅ {success_message}\n\n{text}").format(success_message=success_message, text=text)
+        text = f"✅ <b>{success_message}</b>\n\n{text}"
 
     keyboard = get_settings_menu_keyboard()
 
     if isinstance(target, types.CallbackQuery):
-        await target.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")  # type: ignore
+        await target.message.edit_text(text, reply_markup=keyboard, parse_mode="HTML")
     else:
-        await target.answer(text, reply_markup=keyboard, parse_mode="HTML")  # type: ignore
+        await target.answer(text, reply_markup=keyboard, parse_mode="HTML")
 
 
-@router.message(F.text == "⚙️ Sozlamalar")
+@router.message(F.text.in_({"⚙️ Sozlamalar", "⚙️ Настройки", "Sozlamalar", "Настройки"}), StateFilter("*"))
 async def settings_menu_handler(message: types.Message, state: FSMContext, session: AsyncSession):
     await state.set_state(SettingsManagementState.choosing_setting)
     await _show_settings_menu(message, session)
 
 
-@router.callback_query(
-    SettingsCallback.filter(F.action == "back_to_menu"),
-    SettingsManagementState.getting_new_value,
-)
+@router.callback_query(SettingsCallback.filter(F.action == "toggle_admin_lang"))
+async def toggle_admin_lang_handler(
+    callback: types.CallbackQuery, admin: Admin, session: AsyncSession
+):
+    new_lang = "ru" if admin.language_code == "uz" else "uz"
+    admin.language_code = new_lang
+    await session.commit()
+
+    alert_text = (
+        "Admin tili O'zbekchaga o'zgartirildi!"
+        if new_lang == "uz"
+        else "Язык админки изменен на Русский!"
+    )
+    await callback.answer(alert_text, show_alert=True)
+    await callback.message.answer(
+        "Admin Paneli:" if new_lang == "uz" else "Панель администратора:",
+        reply_markup=get_admin_main_keyboard(),
+    )
+
+
+@router.callback_query(SettingsCallback.filter(F.action == "back_to_menu"), StateFilter("*"))
 async def back_to_settings_menu_handler(
     callback: types.CallbackQuery, state: FSMContext, session: AsyncSession
 ):
@@ -71,10 +86,7 @@ async def back_to_settings_menu_handler(
     await callback.answer()
 
 
-@router.callback_query(
-    SettingsCallback.filter(F.action == "choose_field"),
-    SettingsManagementState.choosing_setting,
-)
+@router.callback_query(SettingsCallback.filter(F.action == "choose_field"), StateFilter("*"))
 async def choose_setting_to_edit_handler(
     callback: types.CallbackQuery, callback_data: SettingsCallback, state: FSMContext
 ):
@@ -82,13 +94,14 @@ async def choose_setting_to_edit_handler(
     field_info = BotSettings.model_fields.get(field_name)
     if not field_info:
         await callback.answer("Noma'lum sozlama.", show_alert=True)
-        return  # type: ignore
+        return
 
     await state.set_state(SettingsManagementState.getting_new_value)
     await state.update_data(field_to_edit=field_name)
 
-    prompt = _("Iltimos, '{field_description}' uchun yangi qiymatni kiriting:").format(field_description=field_info.description or field_name)
-    await callback.message.edit_text(prompt, reply_markup=get_back_to_settings_menu_keyboard())
+    field_desc = field_info.description or field_name
+    prompt = f"✍️ Iltimos, <b>{field_desc}</b> uchun yangi qiymatni kiriting:"
+    await callback.message.edit_text(prompt, reply_markup=get_back_to_settings_menu_keyboard(), parse_mode="HTML")
     await callback.answer()
 
 
@@ -101,21 +114,21 @@ async def get_new_setting_value_handler(
     new_value_str = message.text
 
     if not field_name:
-        await state.clear()  # type: ignore
-        await message.answer(_("Xatolik yuz berdi. Iltimos, boshidan boshlang."))  # type: ignore
+        await state.clear()
+        await message.answer("Xatolik yuz berdi. Iltimos, boshidan boshlang.")
         return
 
     service = SettingsService(session)
-    
+
     try:
-        # Let the service handle validation and update
-        await service.update_bot_settings({field_name: new_value_str}, admin_id=admin.id)  # type: ignore
+        await service.update_bot_settings({field_name: new_value_str}, admin_id=admin.id)
         await state.set_state(SettingsManagementState.choosing_setting)
         field_info = BotSettings.model_fields[field_name]
+        field_desc = field_info.description or field_name
         await _show_settings_menu(
-            message, session, success_message=_("'{field_description}' yangilandi").format(field_description=field_info.description or field_name)
+            message, session, success_message=f"'{field_desc}' muvaffaqiyatli yangilandi!"
         )
     except (ValidationError, ValueError) as e:
-        await message.answer(_("Xato: Noto'g'ri format.\nIltimos, qiymatni to'g'ri kiriting.\n\n_{error_message}_").format(error_message=e))  # type: ignore
-    except Exception as e:  # type: ignore
-        await message.answer(_("Sozlamani yangilashda noma'lum xatolik yuz berdi: {error_message}").format(error_message=e))  # type: ignore
+        await message.answer(f"❌ Xato: Noto'g'ri format.\nIltimos, qiymatni to'g'ri kiriting.\n\n<i>{e}</i>", parse_mode="HTML")
+    except Exception as e:
+        await message.answer(f"❌ Sozlamani yangilashda xatolik: {e}")

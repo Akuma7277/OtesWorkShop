@@ -6,12 +6,17 @@ from src.shopim.core.settings_models import BotSettings
 
 
 class SettingsCallback(CallbackData, prefix="settings"):
-    action: str  # 'choose_field', 'back_to_menu'
+    action: str  # 'choose_field', 'back_to_menu', 'toggle_admin_lang'
     field: str | None = None
 
 
 def get_settings_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
+
+    builder.button(
+        text="🌐 Admin tilini o'zgartirish / Сменить язык",
+        callback_data=SettingsCallback(action="toggle_admin_lang").pack(),
+    )
 
     for name, field in BotSettings.model_fields.items():
         label = field.description or name
@@ -27,7 +32,7 @@ def get_settings_menu_keyboard() -> InlineKeyboardMarkup:
 def get_back_to_settings_menu_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(
-        text="⬅️ Orqaga",
+        text="⬅️ Orqaga / Назад",
         callback_data=SettingsCallback(action="back_to_menu").pack(),
     )
     return builder.as_markup()
