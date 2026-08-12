@@ -19,15 +19,14 @@ async def start_handler(
     settings = get_settings()
     url = settings.get_mini_app_url
 
-    bot_info = await bot.get_me()
-    bot_name = bot_info.first_name or "Shopim"
+    bot_name = "NexШоп"
     full_name = message.from_user.full_name or "Mijoz"
 
     welcome_text = (
         f"<b>{bot_name}</b> 👥 Xush kelibsiz!\n\n"
         f"Assalomu alaykum, <b>{full_name}</b>!\n"
         f"Mahsulotlarni tanlash, xarid qilish, balans to'ldirish va buyurtmalarni boshqarish "
-        f"uchun to'liq Mini App do'konimizdan foydalaning!"
+        f"uchun to'liq NexШоп Mini App do'konimizdan foydalaning!"
     )
 
     if not url:
@@ -43,11 +42,11 @@ async def start_handler(
     is_admin = bool(admin and admin.is_active) or (message.from_user.id in settings.super_admins_list)
 
     buttons = [
-        [InlineKeyboardButton(text="🛍️ Shopim Mini App'ni ochish", web_app=WebAppInfo(url=url))]
+        [InlineKeyboardButton(text="🛍️ NexШоп Mini App'ni ochish", web_app=WebAppInfo(url=url))]
     ]
     if is_admin:
         buttons.append([
-            InlineKeyboardButton(text="🛠️ Admin Mini App'ni ochish", web_app=WebAppInfo(url=f"{url}/admin"))
+            InlineKeyboardButton(text="🛠️ Admin Panel'ni ochish", web_app=WebAppInfo(url=f"{url}/admin"))
         ])
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
