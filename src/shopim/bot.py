@@ -21,15 +21,10 @@ from src.shopim.middlewares.user import UserAuthMiddleware
 async def setup_bot_commands(bot: Bot, settings=None):
     commands = [
         BotCommand(command="start", description="🚀 Botni boshlash / Restart bot"),
-        BotCommand(command="menu", description="📋 Asosiy menyu / Main menu"),
         BotCommand(command="app", description="🛍️ Mini App do'kon / Open Mini App"),
-        BotCommand(command="admin", description="🛠 Admin paneli / Admin panel"),
-        BotCommand(command="user", description="🏠 Foydalanuvchi rejimi / User mode"),
-        BotCommand(command="profile", description="👤 Profil / Profile"),
-        BotCommand(command="balance", description="💳 Balans to'ldirish / Top up balance"),
-        BotCommand(command="cancel", description="🚫 Bekor qilish / Cancel action"),
     ]
     await bot.set_my_commands(commands, scope=BotCommandScopeDefault())
+
 
 
 
@@ -84,7 +79,23 @@ async def main():
 
     await setup_bot_commands(bot, settings)
 
+    # Set native WebApp menu button
+    from aiogram.types import MenuButtonWebApp, WebAppInfo
+    url = settings.get_mini_app_url
+    if url:
+        try:
+            await bot.set_chat_menu_button(
+                menu_button=MenuButtonWebApp(
+                    text="🛍️ Shopim",
+                    web_app=WebAppInfo(url=url)
+                )
+            )
+            logger.info("Native Telegram WebApp menu button configured successfully.")
+        except Exception as e:
+            logger.warning(f"Failed to set native WebApp menu button: {e}")
+
     dp = Dispatcher(storage=storage)
+
 
 
     db_url = settings.db_url
@@ -156,7 +167,7 @@ async def main():
     async def auto_analytics_scheduler():
         while True:
             try:
-                await asyncio.sleep(1800)  # Every 30 minutes
+                await asyncio.sleep(3600)  # Every 1 hour
                 async with session_pool() as session:
                     from src.shopim.handlers.admin.dashboard import format_dashboard_message
                     from src.shopim.services.dashboard_service import DashboardService
@@ -164,7 +175,7 @@ async def main():
 
                     service = DashboardService(session)
                     stats = await service.get_stats()
-                    report_text = f"🔄 <b>[AVTO-ANALITIKA - HAR 30 MINUT]</b>\n\n" + format_dashboard_message(stats)
+                    report_text = f"🔄 <b>[AVTO-STATISTIKA - HAR 1 SOAT]</b>\n\n" + format_dashboard_message(stats)
 
                     notification_service = NotificationService(bot, session)
                     await notification_service.notify_admins(report_text)
@@ -172,6 +183,7 @@ async def main():
                 break
             except Exception as e:
                 logger.error(f"Error in auto_analytics_scheduler: {e}")
+
 
     analytics_task = asyncio.create_task(auto_analytics_scheduler())
 
