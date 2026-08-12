@@ -14,9 +14,7 @@ from src.shopim.keyboards.inline.order_history import (
 from src.shopim.services.order_history_service import OrderHistoryService
 
 
-class IsApprovedUserFilter:
-    def __call__(self, user: Optional[User]) -> bool:
-        return user is not None and user.status == UserStatus.APPROVED
+from src.shopim.filters import IsApprovedUserFilter
 
 
 router = Router(name="order-history-router")

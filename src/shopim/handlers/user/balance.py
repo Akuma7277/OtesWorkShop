@@ -11,9 +11,7 @@ from src.shopim.keyboards.inline.balance import (
 from src.shopim.services.balance_service import BalanceService
 
 
-class IsApprovedUserFilter:
-    def __call__(self, user: Optional[User]) -> bool:
-        return user is not None and user.status == UserStatus.APPROVED
+from src.shopim.filters import IsApprovedUserFilter
 
 
 router = Router(name="balance-router")

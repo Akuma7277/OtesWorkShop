@@ -16,9 +16,7 @@ from src.shopim.services.topup_service import TopupService
 from src.shopim.states.topup import TopupStates
 
 
-class IsApprovedUserFilter:
-    def __call__(self, user: Optional[User]) -> bool:
-        return user is not None and user.status == UserStatus.APPROVED
+from src.shopim.filters import IsApprovedUserFilter
 
 
 router = Router(name="user-topup-router")

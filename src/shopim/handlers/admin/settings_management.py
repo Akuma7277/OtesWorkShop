@@ -18,9 +18,7 @@ from src.shopim.services.settings_service import SettingsService
 from src.shopim.states.admin import SettingsManagementState
 
 
-class IsSuperAdminFilter:
-    def __call__(self, admin: Optional[Admin]) -> bool:
-        return admin is not None and admin.role == AdminRole.SUPER_ADMIN
+from src.shopim.filters import IsSuperAdminFilter
 
 
 router = Router(name="admin-settings-management-router")
