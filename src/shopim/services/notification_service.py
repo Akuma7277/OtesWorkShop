@@ -15,6 +15,19 @@ from src.shopim.keyboards.inline.admin.user_management import get_user_approval_
 from src.shopim.services.admin_service import AdminService
 
 
+ORDER_STATUS_MAP = {
+    OrderStatus.PENDING_ADMIN: "⏳ Admin tasdiqlashi kutilmoqda",
+    OrderStatus.APPROVED: "✅ Tasdiqlangan",
+    OrderStatus.PACKING: "📦 Qadoqlanmoqda",
+    OrderStatus.OUT_FOR_DELIVERY: "🚚 Yetkazib berilmoqda",
+    OrderStatus.DELIVERED: "🏁 Yetkazib berilgan",
+    OrderStatus.REJECTED: "❌ Rad etilgan",
+    OrderStatus.CANCELLED: "🚫 Bekor qilingan",
+    OrderStatus.REFUNDED: "💰 Qaytarilgan",
+    OrderStatus.DRAFT: "📝 Qoralama",
+}
+
+
 def get_status_text(status: OrderStatus, locale: str = "uz") -> str:
     status_map = {
         OrderStatus.PENDING_ADMIN: _("⏳ Admin tasdiqlashi kutilmoqda", locale=locale),
@@ -28,6 +41,7 @@ def get_status_text(status: OrderStatus, locale: str = "uz") -> str:
         OrderStatus.DRAFT: _("📝 Qoralama", locale=locale),
     }
     return status_map.get(status, _("Noma'lum", locale=locale))
+
 
 
 class NotificationService:
