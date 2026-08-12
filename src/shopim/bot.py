@@ -77,6 +77,12 @@ async def main():
         pool_pre_ping=True,
     )
 
+    if "sqlite" in db_url:
+        logger.info("Auto-creating SQLite tables...")
+        from src.shopim.db.models.all_models import Base
+        async with async_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
     session_pool = create_session_pool(async_engine)
 
     dp.update.middleware(
