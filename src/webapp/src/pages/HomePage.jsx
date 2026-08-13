@@ -70,6 +70,30 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Jobs Hiring Banner */}
+      <Link to="/jobs" style={{ textDecoration: 'none' }} onClick={() => haptic.light()}>
+        <div className="card mb-6" style={{
+          background: 'linear-gradient(135deg, rgba(124,92,252,0.15) 0%, rgba(99,102,241,0.05) 100%)',
+          border: '1px solid rgba(124,92,252,0.3)',
+          borderRadius: 16,
+          padding: '16px 20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          cursor: 'pointer'
+        }}>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--accent-primary)', marginBottom: 4 }}>
+              💼 {lang === 'ru' ? 'Ищем сотрудников!' : 'Ish o\'rinlari (Bo\'sh vakansiyalar)'}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              {lang === 'ru' ? 'Присоединяйтесь к нашей команде (HR, Склад, Курьер...)' : 'Bizning jamoamizga qo\'shiling! (HR, Sklad, Support, Operator, Kuryer)'}
+            </div>
+          </div>
+          <div style={{ fontSize: 24 }}>🚀</div>
+        </div>
+      </Link>
+
       {/* News / Announcements Widget */}
       {news.length > 0 && (
         <div className="mb-6">

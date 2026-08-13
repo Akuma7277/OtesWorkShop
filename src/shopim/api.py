@@ -41,7 +41,11 @@ from src.shopim.db.models import (
     DeliveryEvent,
     ChatMessage,
     News,
+    JobPosition,
+    JobApplication,
+    JobAppStatus,
 )
+
 from src.shopim.db.repositories.balance_repository import BalanceRepository
 from src.shopim.db.repositories.product_repository import ProductRepository
 from src.shopim.services.dashboard_service import DashboardService
@@ -72,11 +76,11 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 # ──────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Auto-create tables for SQLite
-    if "sqlite" in settings.db_url:
-        from src.shopim.db.models.all_models import Base
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+    # Auto-create missing tables for all dialects (SQLite & Postgres)
+    from src.shopim.db.models.all_models import Base
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
 
     # Run column migrations for PostgreSQL (idempotent - ignore if already exists)
     new_columns = [
@@ -1572,7 +1576,347 @@ async def admin_send_room_message(
 
 
 # ──────────────────────────────────────────────
+# Routes: Job Openings & Applications
+# ──────────────────────────────────────────────
+
+@app.get("/api/jobs")
+async def list_jobs(db: AsyncSession = Depends(get_db)):
+    stmt = select(JobPosition).where(JobPosition.is_active == True).order_by(JobPosition.created_at.desc())
+    positions = (await db.execute(stmt)).scalars().all()
+    return [
+        {
+            "id": p.id,
+            "title": p.title,
+            "description": p.description,
+            "salary_info": p.salary_info,
+            "created_at": p.created_at.isoformat(),
+        }
+        for p in positions
+    ]
+
+
+@app.post("/api/jobs/apply", status_code=201)
+async def apply_job(
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    data = await request.json()
+    position_id = data.get("position_id")
+    motivation_text = data.get("motivation_text", "").strip()
+
+    if not position_id:
+        raise HTTPException(status_code=400, detail="position_id is required")
+    if not motivation_text:
+        raise HTTPException(status_code=400, detail="motivation_text is required")
+
+    pos = await db.get(JobPosition, position_id)
+    if not pos or not pos.is_active:
+        raise HTTPException(status_code=404, detail="Job position not found")
+
+    stmt = select(JobApplication).where(
+        JobApplication.user_id == user.id,
+        JobApplication.position_id == position_id,
+        JobApplication.status.in_([JobAppStatus.PENDING, JobAppStatus.APPROVED])
+    )
+    existing = (await db.execute(stmt)).scalar_one_or_none()
+    if existing:
+        raise HTTPException(status_code=400, detail="You already have a pending or approved application for this position")
+
+    app = JobApplication(
+        user_id=user.id,
+        position_id=position_id,
+        motivation_text=motivation_text,
+        status=JobAppStatus.PENDING
+    )
+    db.add(app)
+    await db.commit()
+    await db.refresh(app)
+    return {"id": app.id, "status": app.status.value}
+
+
+@app.get("/api/jobs/my-applications")
+async def get_my_job_applications(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy.orm import selectinload
+    stmt = (
+        select(JobApplication)
+        .options(selectinload(JobApplication.position))
+        .where(JobApplication.user_id == user.id)
+        .order_by(JobApplication.created_at.desc())
+    )
+    apps = (await db.execute(stmt)).scalars().all()
+    return [
+        {
+            "id": a.id,
+            "position": {
+                "id": a.position.id,
+                "title": a.position.title,
+                "salary_info": a.position.salary_info,
+            },
+            "motivation_text": a.motivation_text,
+            "status": a.status.value,
+            "admin_note": a.admin_note,
+            "operator_telegram_link": a.position.operator_telegram_link if a.status == JobAppStatus.APPROVED else None,
+            "created_at": a.created_at.isoformat(),
+        }
+        for a in apps
+    ]
+
+
+# ──────────────────────────────────────────────
+# Admin Routes: Job Management
+# ──────────────────────────────────────────────
+
+@app.get("/api/admin/jobs")
+async def admin_list_jobs(
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(JobPosition).order_by(JobPosition.created_at.desc())
+    positions = (await db.execute(stmt)).scalars().all()
+    return [
+        {
+            "id": p.id,
+            "title": p.title,
+            "description": p.description,
+            "salary_info": p.salary_info,
+            "operator_telegram_link": p.operator_telegram_link,
+            "is_active": p.is_active,
+            "created_at": p.created_at.isoformat(),
+        }
+        for p in positions
+    ]
+
+
+@app.post("/api/admin/jobs", status_code=201)
+async def admin_create_job(
+    request: Request,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    data = await request.json()
+    title = data.get("title", "").strip()
+    description = data.get("description", "").strip()
+    salary_info = data.get("salary_info", "").strip()
+    operator_telegram_link = data.get("operator_telegram_link", "").strip()
+
+    if not title:
+        raise HTTPException(status_code=400, detail="title is required")
+
+    p = JobPosition(
+        title=title,
+        description=description or None,
+        salary_info=salary_info or None,
+        operator_telegram_link=operator_telegram_link or None,
+        is_active=True,
+    )
+    db.add(p)
+    await db.flush()
+
+    db.add(AuditLog(
+        actor_telegram_id=admin.telegram_id,
+        actor_role=admin.role.value,
+        action="CREATE_JOB",
+        entity_type="JobPosition",
+        entity_id=p.id,
+        new_data={"title": title, "salary_info": salary_info},
+    ))
+    
+    await db.commit()
+    await db.refresh(p)
+    return {
+        "id": p.id,
+        "title": p.title,
+        "description": p.description,
+        "salary_info": p.salary_info,
+        "operator_telegram_link": p.operator_telegram_link,
+        "is_active": p.is_active,
+    }
+
+
+@app.patch("/api/admin/jobs/{job_id}")
+async def admin_update_job(
+    job_id: int,
+    request: Request,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    p = await db.get(JobPosition, job_id)
+    if not p:
+        raise HTTPException(status_code=404, detail="Job position not found")
+
+    data = await request.json()
+    if "title" in data:
+        p.title = data["title"].strip()
+    if "description" in data:
+        p.description = data["description"].strip()
+    if "salary_info" in data:
+        p.salary_info = data["salary_info"].strip()
+    if "operator_telegram_link" in data:
+        p.operator_telegram_link = data["operator_telegram_link"].strip()
+    if "is_active" in data:
+        p.is_active = bool(data["is_active"])
+
+    db.add(AuditLog(
+        actor_telegram_id=admin.telegram_id,
+        actor_role=admin.role.value,
+        action="UPDATE_JOB",
+        entity_type="JobPosition",
+        entity_id=p.id,
+        new_data={"title": p.title, "salary_info": p.salary_info, "is_active": p.is_active},
+    ))
+    await db.commit()
+    await db.refresh(p)
+    return {
+        "id": p.id,
+        "title": p.title,
+        "description": p.description,
+        "salary_info": p.salary_info,
+        "operator_telegram_link": p.operator_telegram_link,
+        "is_active": p.is_active,
+    }
+
+
+@app.delete("/api/admin/jobs/{job_id}")
+async def admin_delete_job(
+    job_id: int,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    p = await db.get(JobPosition, job_id)
+    if not p:
+        raise HTTPException(status_code=404, detail="Job position not found")
+    
+    p.is_active = False
+    
+    db.add(AuditLog(
+        actor_telegram_id=admin.telegram_id,
+        actor_role=admin.role.value,
+        action="DEACTIVATE_JOB",
+        entity_type="JobPosition",
+        entity_id=p.id,
+        new_data={"title": p.title, "is_active": False},
+    ))
+    await db.commit()
+    return {"ok": True, "message": "Job position deactivated"}
+
+
+@app.get("/api/admin/jobs/applications")
+async def admin_list_job_applications(
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy.orm import selectinload
+    stmt = (
+        select(JobApplication)
+        .options(selectinload(JobApplication.user), selectinload(JobApplication.position))
+        .order_by(JobApplication.created_at.desc())
+    )
+    apps = (await db.execute(stmt)).scalars().all()
+    return [
+        {
+            "id": a.id,
+            "user": {
+                "id": a.user.id,
+                "full_name": a.user.full_name,
+                "username": a.user.username,
+            },
+            "position": {
+                "id": a.position.id,
+                "title": a.position.title,
+                "salary_info": a.position.salary_info,
+            },
+            "motivation_text": a.motivation_text,
+            "status": a.status.value,
+            "admin_note": a.admin_note,
+            "created_at": a.created_at.isoformat(),
+        }
+        for a in apps
+    ]
+
+
+@app.post("/api/admin/jobs/applications/{app_id}/approve")
+async def admin_approve_job_application(
+    app_id: int,
+    request: Request,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy.orm import selectinload
+    stmt = select(JobApplication).options(selectinload(JobApplication.position), selectinload(JobApplication.user)).where(JobApplication.id == app_id)
+    a = (await db.execute(stmt)).scalar_one_or_none()
+    if not a:
+        raise HTTPException(status_code=404, detail="Job application not found")
+        
+    data = await request.json()
+    a.status = JobAppStatus.APPROVED
+    a.admin_note = data.get("admin_note", "").strip() or None
+    
+    notify_msg = ChatMessage(
+        user_id=a.user_id,
+        sender_type="ADMIN",
+        text=f"🎉 Tabriklaymiz! Sizning {a.position.title} lavozimi uchun arizangiz tasdiqlandi. Operator bilan bog'lanish: {a.position.operator_telegram_link or '@operator'}"
+             if a.user.language_code == "uz" else
+             f"🎉 Поздравляем! Ваша заявка на вакансию {a.position.title} одобрена. Связаться с оператором: {a.position.operator_telegram_link or '@operator'}"
+    )
+    db.add(notify_msg)
+    
+    db.add(AuditLog(
+        actor_telegram_id=admin.telegram_id,
+        actor_role=admin.role.value,
+        action="APPROVE_JOB_APP",
+        entity_type="JobApplication",
+        entity_id=a.id,
+        new_data={"status": "APPROVED"},
+    ))
+    await db.commit()
+    return {"ok": True}
+
+
+@app.post("/api/admin/jobs/applications/{app_id}/reject")
+async def admin_reject_job_application(
+    app_id: int,
+    request: Request,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy.orm import selectinload
+    stmt = select(JobApplication).options(selectinload(JobApplication.position), selectinload(JobApplication.user)).where(JobApplication.id == app_id)
+    a = (await db.execute(stmt)).scalar_one_or_none()
+    if not a:
+        raise HTTPException(status_code=404, detail="Job application not found")
+        
+    data = await request.json()
+    a.status = JobAppStatus.REJECTED
+    a.admin_note = data.get("admin_note", "").strip() or None
+    
+    notify_msg = ChatMessage(
+        user_id=a.user_id,
+        sender_type="ADMIN",
+        text=f"❌ Afsuski, sizning {a.position.title} lavozimi uchun arizangiz rad etildi."
+             if a.user.language_code == "uz" else
+             f"❌ К сожалению, ваша заявка на вакансию {a.position.title} была отклонена."
+    )
+    db.add(notify_msg)
+    
+    db.add(AuditLog(
+        actor_telegram_id=admin.telegram_id,
+        actor_role=admin.role.value,
+        action="REJECT_JOB_APP",
+        entity_type="JobApplication",
+        entity_id=a.id,
+        new_data={"status": "REJECTED"},
+    ))
+    await db.commit()
+    return {"ok": True}
+
+
+# ──────────────────────────────────────────────
 # Serve built Mini App static files
+
 # ──────────────────────────────────────────────
 # api.py is at src/shopim/api.py
 # webapp dist is at src/webapp/dist

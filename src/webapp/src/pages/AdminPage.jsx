@@ -9,7 +9,9 @@ import {
   adminGetSettings, adminUpdateSettings, getCategories,
   getNews, adminCreateNews, adminDeleteNews,
   adminGetChatRooms, adminGetRoomMessages, adminSendRoomMessage,
-  adminGetAuditLog
+  adminGetAuditLog,
+  adminGetJobs, adminCreateJob, adminUpdateJob, adminDeleteJob,
+  adminGetJobApplications, adminApproveJobApplication, adminRejectJobApplication
 } from '../api'
 import { useApp } from '../context/AppContext'
 import Spinner from '../components/Spinner'
@@ -50,6 +52,8 @@ export default function AdminPage() {
   const [settings, setSettings] = useState(null)
   const [chatRooms, setChatRooms] = useState([])
   const [auditLog, setAuditLog] = useState([])
+  const [adminJobs, setAdminJobs] = useState([])
+  const [adminJobApps, setAdminJobApps] = useState([])
   const [loading, setLoading] = useState(false)
 
   if (!isAdmin) {
@@ -71,6 +75,7 @@ export default function AdminPage() {
     { key: 'topups', label: '💳 ' + (lang === 'ru' ? 'Оплаты' : 'To\'lovlar') },
     { key: 'users', label: '👥 ' + (lang === 'ru' ? 'Клиенты' : 'Mijozlar') },
     { key: 'products', label: '🏬 ' + (lang === 'ru' ? 'Товары' : 'Mahsulotlar') },
+    { key: 'jobs', label: '💼 ' + (lang === 'ru' ? 'Вакансии' : 'Ish o\'rinlari') },
     { key: 'reviews', label: '⭐ ' + (lang === 'ru' ? 'Отзывы' : 'Sharhlar') },
     { key: 'news', label: '📰 ' + (lang === 'ru' ? 'Новости' : 'E\'lonlar') },
     { key: 'settings', label: '⚙️ ' + (lang === 'ru' ? 'Настройки' : 'Sozlamalar') },
@@ -94,6 +99,10 @@ export default function AdminPage() {
         const catData = await getCategories()
         setProducts(prodData?.items || prodData || [])
         setCategories(catData || [])
+      }
+      if (tab === 'jobs') {
+        setAdminJobs(await adminGetJobs() || [])
+        setAdminJobApps(await adminGetJobApplications() || [])
       }
       if (tab === 'reviews') setReviews(await adminGetPendingReviews() || [])
       if (tab === 'news') setNewsList(await getNews() || [])
@@ -152,12 +161,14 @@ export default function AdminPage() {
           {tab === 'topups' && <TopupsTab topups={topups} reload={loadTab} />}
           {tab === 'users' && <UsersTab users={users} reload={loadTab} />}
           {tab === 'products' && <ProductsTab products={products} categories={categories} reload={loadTab} />}
+          {tab === 'jobs' && <JobsTab jobs={adminJobs} applications={adminJobApps} reload={loadTab} />}
           {tab === 'reviews' && <ReviewsTab reviews={reviews} reload={loadTab} />}
           {tab === 'news' && <NewsTab newsList={newsList} reload={loadTab} />}
           {tab === 'settings' && settings && <SettingsTab initialSettings={settings} reload={loadTab} />}
           {tab === 'audit' && <AuditLogTab logs={auditLog} />}
         </>
       )}
+
     </div>
   )
 }
@@ -1258,3 +1269,312 @@ function ChatTab({ rooms, reload }) {
     </div>
   )
 }
+
+
+function JobsTab({ jobs, applications, reload }) {
+  const { lang, showToast } = useApp()
+  const [subTab, setSubTab] = useState('apps') // 'apps' or 'jobs'
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [editingJob, setEditingJob] = useState(null)
+  
+  const defaultForm = {
+    title: '',
+    description: '',
+    salary_info: '',
+    operator_telegram_link: ''
+  }
+  const [formData, setFormData] = useState(defaultForm)
+  const [submitting, setSubmitting] = useState(false)
+  const [adminNotes, setAdminNotes] = useState({}) // { appId: 'note text' }
+  const [processingApps, setProcessingApps] = useState({})
+
+  const handleQuickTitle = (title) => {
+    setFormData(prev => ({ ...prev, title }))
+  }
+
+  const handleSubmitJob = async (e) => {
+    e.preventDefault()
+    if (!formData.title.trim()) {
+      showToast(lang === 'ru' ? '❌ Введите название вакансии' : '❌ Lavozim nomini kiriting')
+      return
+    }
+    haptic.medium()
+    setSubmitting(true)
+    try {
+      if (editingJob) {
+        await adminUpdateJob(editingJob.id, formData)
+        showToast(lang === 'ru' ? '✅ Вакансия обновлена' : '✅ Ish o\'rni yangilandi')
+      } else {
+        await adminCreateJob(formData)
+        showToast(lang === 'ru' ? '✅ Вакансия успешно добавлена' : '✅ Ish o\'rni muvaffaqiyatli qo\'shildi')
+      }
+      setShowAddForm(false)
+      setEditingJob(null)
+      setFormData(defaultForm)
+      reload()
+    } catch (err) {
+      showToast(`❌ ${err.message}`)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleEditJob = (job) => {
+    haptic.light()
+    setEditingJob(job)
+    setFormData({
+      title: job.title,
+      description: job.description || '',
+      salary_info: job.salary_info || '',
+      operator_telegram_link: job.operator_telegram_link || ''
+    })
+    setShowAddForm(true)
+  }
+
+  const handleDeleteJob = async (id) => {
+    if (!window.confirm(lang === 'ru' ? 'Деактивировать вакансию?' : 'Ish o\'rnini o\'chirishni (deaktiv qilishni) tasdiqlaysizmi?')) return
+    haptic.warning()
+    try {
+      await adminDeleteJob(id)
+      showToast(lang === 'ru' ? '✅ Вакансия деактивирована' : '✅ Ish o\'rni o\'chirildi')
+      reload()
+    } catch (err) {
+      showToast(`❌ ${err.message}`)
+    }
+  }
+
+  const handleAppAction = async (id, action, statusLabel) => {
+    haptic.medium()
+    setProcessingApps(prev => ({ ...prev, [id]: true }))
+    try {
+      const note = adminNotes[id] || ''
+      if (action === 'approve') {
+        await adminApproveJobApplication(id, { admin_note: note })
+      } else {
+        await adminRejectJobApplication(id, { admin_note: note })
+      }
+      haptic.success()
+      showToast(`✅ ${statusLabel}`)
+      reload()
+    } catch (err) {
+      haptic.error()
+      showToast(`❌ ${err.message}`)
+    } finally {
+      setProcessingApps(prev => ({ ...prev, [id]: false }))
+    }
+  }
+
+  return (
+    <div className="stagger">
+      {/* Sub Tabs */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+        <button 
+          className={`btn btn-sm ${subTab === 'apps' ? 'btn-primary' : 'btn-secondary'}`}
+          style={{ flex: 1 }}
+          onClick={() => { haptic.light(); setSubTab('apps') }}
+        >
+          📋 {lang === 'ru' ? `Заявки (${applications.filter(a => a.status === 'PENDING').length})` : `Arizalar (${applications.filter(a => a.status === 'PENDING').length})`}
+        </button>
+        <button 
+          className={`btn btn-sm ${subTab === 'jobs' ? 'btn-primary' : 'btn-secondary'}`}
+          style={{ flex: 1 }}
+          onClick={() => { haptic.light(); setSubTab('jobs') }}
+        >
+          💼 {lang === 'ru' ? 'Вакансии' : 'Lavozimlar'}
+        </button>
+      </div>
+
+      {subTab === 'jobs' ? (
+        <>
+          <button 
+            className="btn btn-primary btn-full mb-4" 
+            onClick={() => { 
+              haptic.light(); 
+              if (showAddForm) {
+                setShowAddForm(false);
+                setEditingJob(null);
+                setFormData(defaultForm);
+              } else {
+                setShowAddForm(true);
+              }
+            }}
+          >
+            {showAddForm ? (lang === 'ru' ? '❌ Закрыть форму' : '❌ Shaklni yopish') : (lang === 'ru' ? '➕ Добавить вакансию' : '➕ Yangi ish o\'rni qo\'shish')}
+          </button>
+
+          {showAddForm && (
+            <form onSubmit={handleSubmitJob} className="card mb-4 stagger">
+              <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 12 }}>
+                {editingJob ? (lang === 'ru' ? '✏️ Изменить вакансию' : '✏️ Ish o\'rnini tahrirlash') : (lang === 'ru' ? '➕ Создать вакансию' : '➕ Yangi ish o\'rni yaratish')}
+              </div>
+
+              {/* Quick Title Buttons */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+                {['HR', 'Sklad', 'Support', 'Operator', 'Kuryer'].map(t => (
+                  <button 
+                    key={t} 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ padding: '4px 10px', fontSize: 11, borderRadius: 6 }}
+                    onClick={() => handleQuickTitle(t)}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">{lang === 'ru' ? 'Название вакансии' : 'Lavozim nomi'} *</label>
+                <input 
+                  className="input" 
+                  value={formData.title} 
+                  onChange={e => setFormData({ ...formData, title: e.target.value })} 
+                  placeholder="e.g. HR, Sklad, Support..."
+                  required 
+                />
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">{lang === 'ru' ? 'Зарплата / Оплата' : 'Oylik maosh / To\'lov'}</label>
+                <input 
+                  className="input" 
+                  value={formData.salary_info} 
+                  onChange={e => setFormData({ ...formData, salary_info: e.target.value })} 
+                  placeholder="e.g. 500$ - 800$"
+                />
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">{lang === 'ru' ? 'Линк на оператора (Telegram @username)' : 'Operator Telegram profili (@username)'}</label>
+                <input 
+                  className="input" 
+                  value={formData.operator_telegram_link} 
+                  onChange={e => setFormData({ ...formData, operator_telegram_link: e.target.value })} 
+                  placeholder="e.g. @hr_manager"
+                />
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">{lang === 'ru' ? 'Обязанности и требования' : 'Ish vazifalari va talablar'}</label>
+                <textarea 
+                  className="input" 
+                  rows={4}
+                  value={formData.description} 
+                  onChange={e => setFormData({ ...formData, description: e.target.value })} 
+                  placeholder={lang === 'ru' ? 'Опишите задачи и требования к кандидату...' : 'Nomzodga qo\'yiladigan talablar va vazifalar tavsifi...'}
+                />
+              </div>
+
+              <button type="submit" className="btn btn-primary btn-full" disabled={submitting}>
+                {submitting ? '⏳ ...' : (lang === 'ru' ? 'Сохранить' : 'Saqlash')}
+              </button>
+            </form>
+          )}
+
+          {jobs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>
+              {lang === 'ru' ? 'Нет вакансий' : 'Ish o\'rinlari mavjud emas'}
+            </div>
+          ) : (
+            jobs.map(job => (
+              <div key={job.id} className="card mb-3" style={{ opacity: job.is_active ? 1 : 0.5 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div>
+                    <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0 }}>{job.title}</h3>
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                      💰 {job.salary_info || '—'} · 📞 {job.operator_telegram_link || '—'}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: job.is_active ? 'rgba(52,211,153,0.1)' : 'rgba(239,68,68,0.1)', color: job.is_active ? 'var(--accent-green)' : 'var(--accent-red)' }}>
+                    {job.is_active ? (lang === 'ru' ? 'Активно' : 'Faol') : (lang === 'ru' ? 'Неактивно' : 'Noaktiv')}
+                  </span>
+                </div>
+                {job.description && (
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.02)', padding: 8, borderRadius: 6, marginBottom: 12, whiteSpace: 'pre-wrap' }}>
+                    {job.description}
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => handleEditJob(job)}>
+                    ✏️ {lang === 'ru' ? 'Редактировать' : 'Tahrirlash'}
+                  </button>
+                  {job.is_active && (
+                    <button className="btn btn-danger btn-sm" onClick={() => handleDeleteJob(job.id)}>
+                      🗑️
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </>
+      ) : (
+        <>
+          {applications.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>
+              {lang === 'ru' ? 'Нет поданных заявок' : 'Hozircha arizalar mavjud emas'}
+            </div>
+          ) : (
+            applications.map(app => (
+              <div key={app.id} className="card mb-3" style={{ padding: '14px 18px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <div>
+                    <span style={{ fontWeight: 800, fontSize: 14 }}>{app.user.full_name}</span>
+                    {app.user.username && <span style={{ color: 'var(--text-secondary)', fontSize: 12, marginLeft: 6 }}>@{app.user.username}</span>}
+                  </div>
+                  <span style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: 'rgba(124,92,252,0.1)', color: 'var(--accent-primary)', fontWeight: 700 }}>
+                    {app.position.title}
+                  </span>
+                </div>
+
+                <div style={{ fontSize: 13, background: 'rgba(0,0,0,0.15)', padding: '10px 12px', borderRadius: 8, marginBottom: 12, color: 'var(--text-secondary)' }}>
+                  <strong>{lang === 'ru' ? 'Мотивация кандидата:' : 'Nomzod motivatsiyasi:'}</strong><br />
+                  {app.motivation_text}
+                </div>
+
+                {app.status === 'PENDING' ? (
+                  <div>
+                    <input 
+                      type="text"
+                      className="input mb-3"
+                      placeholder={lang === 'ru' ? 'Примечание/комментарий для кандидата...' : 'Nomzod uchun izoh/kommentariy...'}
+                      value={adminNotes[app.id] || ''}
+                      onChange={e => setAdminNotes({ ...adminNotes, [app.id]: e.target.value })}
+                      style={{ fontSize: 12, padding: '6px 10px', height: 32 }}
+                    />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button 
+                        className="btn btn-success btn-sm" 
+                        style={{ flex: 1 }}
+                        disabled={processingApps[app.id]}
+                        onClick={() => handleAppAction(app.id, 'approve', lang === 'ru' ? 'Одобрено' : 'Tasdiqlandi')}
+                      >
+                        ✅ {lang === 'ru' ? 'Одобрить' : 'Tasdiqlash'}
+                      </button>
+                      <button 
+                        className="btn btn-danger btn-sm" 
+                        style={{ flex: 1 }}
+                        disabled={processingApps[app.id]}
+                        onClick={() => handleAppAction(app.id, 'reject', lang === 'ru' ? 'Отклонить' : 'Rad etish')}
+                      >
+                        ❌ {lang === 'ru' ? 'Отклонить' : 'Rad etish'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12, marginTop: 8, borderTop: '1px solid var(--border)', paddingTop: 8 }}>
+                    <span style={{ color: app.status === 'APPROVED' ? 'var(--accent-green)' : 'var(--accent-red)', fontWeight: 700 }}>
+                      {app.status === 'APPROVED' ? (lang === 'ru' ? '✅ ОДОБРЕНО' : '✅ TASDIQLANDI') : (lang === 'ru' ? '❌ ОТКЛОНЕНО' : '❌ RAD ETILDI')}
+                    </span>
+                    {app.admin_note && <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>"{app.admin_note}"</span>}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+

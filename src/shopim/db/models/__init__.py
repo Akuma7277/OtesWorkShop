@@ -23,6 +23,10 @@ from .all_models import (
     User,
     UserStatus,
     ChatMessage,
+    News,
+    JobPosition,
+    JobApplication,
+    JobAppStatus,
 )
 
 __all__ = [
@@ -49,4 +53,8 @@ __all__ = [
     "StockMovementType",
     "BalanceTxType",
     "ChatMessage",
+    "News",
+    "JobPosition",
+    "JobApplication",
+    "JobAppStatus",
 ]

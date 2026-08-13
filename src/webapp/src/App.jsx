@@ -14,6 +14,7 @@ import RegisterPage from './pages/RegisterPage'
 import AwaitingApprovalPage from './pages/AwaitingApprovalPage'
 import NewsPage from './pages/NewsPage'
 import ChatPage from './pages/ChatPage'
+import JobsPage from './pages/JobsPage'
 
 function AppShell() {
   const { loading, registrationStatus, toast } = useApp()
@@ -58,6 +59,7 @@ function AppShell() {
           <Route path="/cart"       element={<CartPage />} />
           <Route path="/news"       element={<NewsPage />} />
           <Route path="/chat"       element={<ChatPage />} />
+          <Route path="/jobs"       element={<JobsPage />} />
           <Route path="/orders"     element={<ProfilePage initialTab="orders" />} />
           <Route path="/orders/:id" element={<OrderDetailPage />} />
           <Route path="/profile"    element={<ProfilePage initialTab="info" />} />
@@ -66,6 +68,7 @@ function AppShell() {
         </Routes>
       </main>
       <BottomNav />
+
 
       {/* Toast */}
       {toast && <div className="toast">{toast}</div>}

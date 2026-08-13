@@ -173,9 +173,12 @@ async def main():
                     from src.shopim.services.dashboard_service import DashboardService
                     from src.shopim.services.notification_service import NotificationService
 
+                    from src.shopim.db.models.i18n import i18n
+
                     service = DashboardService(session)
                     stats = await service.get_stats()
-                    report_text = f"🔄 <b>[AVTO-STATISTIKA - HAR 1 SOAT]</b>\n\n" + format_dashboard_message(stats)
+                    with i18n.context(locale="uz"):
+                        report_text = f"🔄 <b>[AVTO-STATISTIKA - HAR 1 SOAT]</b>\n\n" + format_dashboard_message(stats)
 
                     notification_service = NotificationService(bot, session)
                     await notification_service.notify_admins(report_text)

@@ -98,5 +98,20 @@ export const adminSendRoomMessage = (userId, data) => api.post(`/admin/chat/room
 // ---- Admin Audit Log ----
 export const adminGetAuditLog = (params = {}) => api.get('/admin/audit', { params })
 
+// ---- Jobs & Applications ----
+export const getJobs = () => api.get('/jobs')
+export const applyJob = (data) => api.post('/jobs/apply', data)
+export const getMyJobApplications = () => api.get('/jobs/my-applications')
+
+export const adminGetJobs = () => api.get('/admin/jobs')
+export const adminCreateJob = (data) => api.post('/admin/jobs', data)
+export const adminUpdateJob = (id, data) => api.patch(`/admin/jobs/${id}`, data)
+export const adminDeleteJob = (id) => api.delete(`/admin/jobs/${id}`)
+
+export const adminGetJobApplications = () => api.get('/admin/jobs/applications')
+export const adminApproveJobApplication = (id, data = {}) => api.post(`/admin/jobs/applications/${id}/approve`, data)
+export const adminRejectJobApplication = (id, data = {}) => api.post(`/admin/jobs/applications/${id}/reject`, data)
+
 export default api
+
 

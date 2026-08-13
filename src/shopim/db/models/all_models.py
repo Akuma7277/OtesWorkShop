@@ -479,6 +479,7 @@ class Review(Base):
     user: Mapped[User] = relationship("User")
 
 
+
 class News(Base):
     __tablename__ = "news"
 
@@ -506,3 +507,46 @@ class ChatMessage(Base):
     user: Mapped["User"] = relationship("User")
 
 
+class JobAppStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
+class JobPosition(Base):
+    """A job opening that users can apply to."""
+    __tablename__ = "job_positions"
+
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
+    title: Mapped[str] = mapped_column(VARCHAR(100), nullable=False)  # e.g. HR, Sklad, Kuryer
+    description: Mapped[str | None] = mapped_column(TEXT)   # Duties / vazifalar
+    salary_info: Mapped[str | None] = mapped_column(VARCHAR(255))  # e.g. "500–800 $"
+    operator_telegram_link: Mapped[str | None] = mapped_column(VARCHAR(255))  # @username or t.me/...
+    is_active: Mapped[bool] = mapped_column(BOOLEAN, nullable=False, server_default="true")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    applications: Mapped[list["JobApplication"]] = relationship(
+        "JobApplication", back_populates="position"
+    )
+
+
+class JobApplication(Base):
+    """A user's application to a job position."""
+    __tablename__ = "job_applications"
+
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BIGINT, ForeignKey("users.id"), nullable=False)
+    position_id: Mapped[int] = mapped_column(BIGINT, ForeignKey("job_positions.id"), nullable=False)
+    motivation_text: Mapped[str] = mapped_column(TEXT, nullable=False)
+    status: Mapped[JobAppStatus] = mapped_column(
+        Enum(JobAppStatus), nullable=False, server_default=JobAppStatus.PENDING.value
+    )
+    admin_note: Mapped[str | None] = mapped_column(TEXT)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    user: Mapped["User"] = relationship("User")
+    position: Mapped["JobPosition"] = relationship("JobPosition", back_populates="applications")

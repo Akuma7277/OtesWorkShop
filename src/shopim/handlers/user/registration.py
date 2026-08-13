@@ -20,17 +20,39 @@ async def start_handler(
     url = settings.get_mini_app_url
 
     bot_name = "NexШоп"
-    full_name = message.from_user.full_name or "Пользователь"
+    full_name = message.from_user.full_name or "Foydalanuvchi"
 
-    welcome_text = (
-        f"<b>{bot_name}</b> 👥 Добро пожаловать!\n\n"
-        f"Здравствуйте, <b>{full_name}</b>!\n"
-        f"Используйте наше официальное мини-приложение NexШоп для выбора товаров, совершения покупок, пополнения баланса и управления заказами!"
-    )
+    # Detect language
+    lang = "uz"
+    if user and user.language_code:
+        lang = user.language_code
+    elif message.from_user.language_code:
+        tg_lang = message.from_user.language_code.lower()
+        if tg_lang.startswith("ru"):
+            lang = "ru"
+
+    if lang == "ru":
+        welcome_text = (
+            f"<b>{bot_name}</b> 👥 Добро пожаловать!\n\n"
+            f"Здравствуйте, <b>{full_name}</b>!\n"
+            f"Используйте наше официальное мини-приложение NexШоп для выбора товаров, совершения покупок, пополнения баланса и управления заказами!"
+        )
+        warning_text = "\n\n⚠️ <i>Ссылка на Mini App еще не настроена.</i>"
+        btn_app_text = "🍀 Открыть NexШоп Mini App"
+        btn_admin_text = "🛠️ Открыть Панель Админа"
+    else:
+        welcome_text = (
+            f"<b>{bot_name}</b> 👥 Xush kelibsiz!\n\n"
+            f"Assalomu alaykum, <b>{full_name}</b>!\n"
+            f"Mahsulotlarni tanlash, xarid qilish, balansni to'ldirish va buyurtmalarni boshqarish uchun bizning rasmiy NexШоп mini-ilovamizdan foydalaning!"
+        )
+        warning_text = "\n\n⚠️ <i>Mini App havolasi hali sozlanmagan.</i>"
+        btn_app_text = "🍀 NexШоп Mini Appni ochish"
+        btn_admin_text = "🛠️ Admin panelni ochish"
 
     if not url:
         await message.answer(
-            welcome_text + "\n\n⚠️ <i>Ссылка на Mini App еще не настроена.</i>",
+            welcome_text + warning_text,
             reply_markup=ReplyKeyboardRemove(),
             parse_mode="HTML",
         )
@@ -41,11 +63,11 @@ async def start_handler(
     is_admin = bool(admin and admin.is_active) or (message.from_user.id in settings.super_admins_list)
 
     buttons = [
-        [InlineKeyboardButton(text="🍀 Открыть NexШоп Mini App", web_app=WebAppInfo(url=url))]
+        [InlineKeyboardButton(text=btn_app_text, web_app=WebAppInfo(url=url))]
     ]
     if is_admin:
         buttons.append([
-            InlineKeyboardButton(text="🛠️ Открыть Панель Админа", web_app=WebAppInfo(url=f"{url}/admin"))
+            InlineKeyboardButton(text=btn_admin_text, web_app=WebAppInfo(url=f"{url}/admin"))
         ])
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
@@ -55,6 +77,7 @@ async def start_handler(
         reply_markup=keyboard,
         parse_mode="HTML",
     )
+
     
     # Send a separate small empty message to clear any old ReplyKeyboard (reply_markup=ReplyKeyboardRemove())
     # but we can do it directly in message.answer

@@ -277,11 +277,20 @@ export default function ProfilePage({ initialTab = 'info' }) {
               } />
               
               <button
-                className="btn btn-secondary btn-full mt-4 mb-4"
+                className="btn btn-secondary btn-full mt-4 mb-3"
                 onClick={() => { haptic.light(); setIsEditing(true) }}
               >
                 ✍️ {lang === 'ru' ? 'Редактировать профиль' : 'Profilni tahrirlash'}
               </button>
+
+              <Link to="/jobs" style={{ textDecoration: 'none' }}>
+                <button
+                  className="btn btn-primary btn-full mb-4"
+                  onClick={() => haptic.light()}
+                >
+                  💼 {lang === 'ru' ? 'Вакансии и работа' : 'Ish o\'rinlari va vakansiyalar'}
+                </button>
+              </Link>
             </>
           )}
           
