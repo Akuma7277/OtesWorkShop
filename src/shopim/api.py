@@ -205,10 +205,9 @@ async def get_current_user(
             full_name=full_name,
             username=username,
             address="Tashkent",
-            age=None,  # Age is set to None by default
+            age=None,
             status=status,
             language_code=language_code,
-            balance=0.0
         )
         db.add(user)
         await db.commit()
@@ -329,10 +328,9 @@ async def check_user_status(
             full_name=full_name,
             username=username,
             address="Tashkent",
-            age=None,  # Age is set to None by default
+            age=None,
             status=status,
             language_code=language_code,
-            balance=0.0
         )
         db.add(user)
         await db.commit()
