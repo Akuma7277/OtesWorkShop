@@ -444,7 +444,7 @@ function ProductsTab({ products, categories, reload }) {
           stock_grams: Number(formData.initial_stock),
           low_stock_threshold_grams: Number(formData.low_stock_threshold),
           description: formData.description,
-          category_id: Number(formData.category_id),
+          category_id: formData.category_id ? Number(formData.category_id) : null,
           image_url: formData.image_url
         })
         showToast('✅ Mahsulot yangilandi')

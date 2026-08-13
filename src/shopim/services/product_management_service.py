@@ -35,6 +35,14 @@ class ProductManagementService:
             counter += 1
 
         category_id = product_data.get("category_id")
+        if category_id == "" or category_id == 0 or category_id == "0":
+            category_id = None
+        elif category_id:
+            try:
+                category_id = int(category_id)
+            except (ValueError, TypeError):
+                category_id = None
+
         if not category_id:
             from src.shopim.db.models import Category
             cat_stmt = select(Category).limit(1)
@@ -124,12 +132,23 @@ class ProductManagementService:
                         counter += 1
                     product.slug = slug
 
+                if key == "category_id":
+                    if value == "" or value == 0 or value == "0" or value is None:
+                        value = None
+                    else:
+                        try:
+                            value = int(value)
+                        except (ValueError, TypeError):
+                            value = None
+
                 if key in [
                     "cost_price_per_gram",
                     "sale_price_per_gram",
                     "low_stock_threshold_grams",
+                    "stock_grams",
                 ]:
-                    value = Decimal(value)
+                    if value is not None:
+                        value = Decimal(value)
 
                 setattr(product, key, value)
 

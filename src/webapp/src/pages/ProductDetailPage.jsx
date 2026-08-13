@@ -4,6 +4,7 @@ import { getProduct } from '../api'
 import { useApp } from '../context/AppContext'
 import Spinner from '../components/Spinner'
 import { haptic } from '../tg'
+import { t } from '../i18n'
 
 const GRAM_PRESETS = [10, 25, 50, 100, 250, 500]
 
