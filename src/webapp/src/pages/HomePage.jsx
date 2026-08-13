@@ -103,7 +103,7 @@ export default function HomePage() {
       </div>
       <div className="grid-2 mb-6 stagger">
         <Link to="/shop" className="card" style={{ textDecoration: 'none', textAlign: 'center', padding: '20px 12px' }}>
-          <div style={{ fontSize: 32, marginBottom: 8 }}>🛍️</div>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>🍀</div>
           <div style={{ fontWeight: 700, fontSize: 14 }}>{t('products')}</div>
         </Link>
         <Link to="/orders" className="card" style={{ textDecoration: 'none', textAlign: 'center', padding: '20px 12px' }}>

@@ -78,7 +78,7 @@ export default function OrdersPage() {
             </div>
             {!filter && (
               <Link className="btn btn-primary mt-4" to="/shop" style={{ textDecoration: 'none' }}>
-                🛍️ {lang === 'ru' ? 'В магазин' : 'Xarid qilish'}
+                🍀 {lang === 'ru' ? 'В магазин' : 'Xarid qilish'}
               </Link>
             )}
           </div>

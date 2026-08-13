@@ -41,7 +41,7 @@ async def start_handler(
     is_admin = bool(admin and admin.is_active) or (message.from_user.id in settings.super_admins_list)
 
     buttons = [
-        [InlineKeyboardButton(text="🛍️ Открыть NexШоп Mini App", web_app=WebAppInfo(url=url))]
+        [InlineKeyboardButton(text="🍀 Открыть NexШоп Mini App", web_app=WebAppInfo(url=url))]
     ]
     if is_admin:
         buttons.append([

@@ -7,7 +7,7 @@ export default function Header() {
   return (
     <header className="app-header">
       <div className="header-logo">
-        <div className="header-logo-icon">🛍️</div>
+        <div className="header-logo-icon">🍀</div>
         <span className="header-logo-text">NexШоп</span>
       </div>
       <div className="flex items-center gap-2">

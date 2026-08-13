@@ -30,8 +30,8 @@ async def send_miniapp_buttons(message: Message, session: AsyncSession, is_fallb
 
     if not url:
         await message.answer(
-            "🛍️ <b>Shopim Mini App</b>\n\n"
-            "Mini App hali sozlanmagan. Administrator bilan bog'laning.",
+            "🍀 <b>NexШоп Mini App</b>\n\n"
+            "Ссылка на Mini App еще не настроена. Пожалуйста, свяжитесь с администратором.",
             reply_markup=ReplyKeyboardRemove(),
             parse_mode="HTML",
         )
@@ -42,29 +42,29 @@ async def send_miniapp_buttons(message: Message, session: AsyncSession, is_fallb
     is_admin = bool(admin and admin.is_active) or (message.from_user.id in settings.super_admins_list)
 
     buttons = [
-        [InlineKeyboardButton(text="🛍️ Shopim Mini App'ni ochish", web_app=WebAppInfo(url=url))]
+        [InlineKeyboardButton(text="🍀 Открыть NexШоп Mini App", web_app=WebAppInfo(url=url))]
     ]
     if is_admin:
         buttons.append([
-            InlineKeyboardButton(text="🛠️ Admin Mini App'ni ochish", web_app=WebAppInfo(url=f"{url}/admin"))
+            InlineKeyboardButton(text="🛠️ Открыть Панель Админа", web_app=WebAppInfo(url=f"{url}/admin"))
         ])
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
 
     text = (
-        "🛍️ <b>Shopim Mini App</b>\n\n"
-        "Premium do'konimizni Telegram ichida to'liq ishlatish uchun quyidagi tugmani bosing!\n\n"
-        "✅ Mahsulotlarni ko'ring\n"
-        "🛒 Savatga qo'shing\n"
-        "📦 Buyurtmalarni kuzating\n"
-        "💳 Balans to'ldiring\n"
-        "⭐ Sharh qoldiring"
+        "🍀 <b>NexШоп Mini App</b>\n\n"
+        "Нажмите кнопку ниже, чтобы открыть наш премиум-магазин прямо в Telegram!\n\n"
+        "✅ Выбирайте товары\n"
+        "🛒 Добавляйте в корзину\n"
+        "📦 Отслеживайте заказы\n"
+        "💳 Пополняйте баланс\n"
+        "⭐ Оставляйте отзывы"
     )
 
     if is_fallback:
         text = (
-            "💬 Barcha bo'limlar <b>Mini App</b>ga o'tkazilgan!\n\n"
-            "Botdan foydalanish uchun pastdagi tugmalardan birini bosing:"
+            "💬 Все разделы перенесены в <b>Mini App</b>!\n\n"
+            "Чтобы воспользоваться функциями магазина, нажмите одну из кнопок ниже:"
         )
 
     await message.answer(

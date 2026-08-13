@@ -20,7 +20,7 @@ function AppShell() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', flexDirection: 'column', gap: 20 }}>
-        <div style={{ fontSize: 48 }}>🛍️</div>
+        <div style={{ fontSize: 48 }}>🍀</div>
         <Spinner text="NexШоп yuklanmoqda..." />
       </div>
     )

@@ -9,7 +9,7 @@ export default function BottomNav() {
 
   const navItems = [
     { path: '/',        icon: '🏠', label: t('welcome') },
-    { path: '/shop',    icon: '🛍️', label: t('products') },
+    { path: '/shop',    icon: '🍀', label: t('products') },
     { path: '/news',    icon: '📰', label: t('news') },
     { path: '/cart',    icon: '🛒', label: t('cart') },
     { path: '/profile', icon: '👤', label: t('profile') },
