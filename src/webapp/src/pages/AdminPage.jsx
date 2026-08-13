@@ -13,6 +13,7 @@ import {
 import { useApp } from '../context/AppContext'
 import Spinner from '../components/Spinner'
 import { haptic } from '../tg'
+import { setLanguage } from '../i18n'
 
 
 const STATUS_MAP = {
@@ -35,7 +36,7 @@ const DELIVERY_NEXT_LABEL = {
 }
 
 export default function AdminPage() {
-  const { isAdmin } = useApp()
+  const { isAdmin, lang } = useApp()
   const [tab, setTab] = useState('dashboard')
   const [dashboard, setDashboard] = useState(null)
   const [orders, setOrders] = useState([])
@@ -54,23 +55,23 @@ export default function AdminPage() {
       <div className="page-content fade-in">
         <div className="empty-state">
           <div className="empty-state-icon">🔒</div>
-          <div className="empty-state-title">Kirish taqiqlangan</div>
-          <div className="empty-state-desc">Bu sahifa faqat adminlar uchun</div>
+          <div className="empty-state-title">{lang === 'ru' ? 'Доступ запрещен' : 'Kirish taqiqlangan'}</div>
+          <div className="empty-state-desc">{lang === 'ru' ? 'Эта страница только для администраторов' : 'Bu sahifa faqat adminlar uchun'}</div>
         </div>
       </div>
     )
   }
 
   const tabs = [
-    { key: 'dashboard', label: '📊' },
-    { key: 'orders', label: '📦' },
-    { key: 'chat', label: '💬' },
-    { key: 'topups', label: '💳' },
-    { key: 'users', label: '👥' },
-    { key: 'products', label: '🏬' },
-    { key: 'reviews', label: '⭐' },
-    { key: 'news', label: '📰' },
-    { key: 'settings', label: '⚙️' },
+    { key: 'dashboard', label: '📊 ' + (lang === 'ru' ? 'Панель' : 'Panel') },
+    { key: 'orders', label: '📦 ' + (lang === 'ru' ? 'Заказы' : 'Buyurtmalar') },
+    { key: 'chat', label: '💬 ' + (lang === 'ru' ? 'Чат' : 'Chat') },
+    { key: 'topups', label: '💳 ' + (lang === 'ru' ? 'Оплаты' : 'To\'lovlar') },
+    { key: 'users', label: '👥 ' + (lang === 'ru' ? 'Клиенты' : 'Mijozlar') },
+    { key: 'products', label: '🏬 ' + (lang === 'ru' ? 'Товары' : 'Mahsulotlar') },
+    { key: 'reviews', label: '⭐ ' + (lang === 'ru' ? 'Отзывы' : 'Sharhlar') },
+    { key: 'news', label: '📰 ' + (lang === 'ru' ? 'Новости' : 'E\'lonlar') },
+    { key: 'settings', label: '⚙️ ' + (lang === 'ru' ? 'Настройки' : 'Sozlamalar') },
   ]
 
   useEffect(() => {
@@ -100,8 +101,26 @@ export default function AdminPage() {
 
   return (
     <div className="page-content fade-in">
-      <div className="section-header mb-4">
-        <h1 className="section-title">🛠 Admin <span>Panel</span></h1>
+      <div className="section-header mb-4" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 className="section-title">🛠 Admin <span>{lang === 'ru' ? 'Панель' : 'Panel'}</span></h1>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button
+            type="button"
+            className={`btn btn-sm ${lang === 'uz' ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ padding: '4px 10px', minWidth: 40, borderRadius: 8, fontSize: 12, fontWeight: 700 }}
+            onClick={() => { haptic.light(); setLanguage('uz') }}
+          >
+            UZ
+          </button>
+          <button
+            type="button"
+            className={`btn btn-sm ${lang === 'ru' ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ padding: '4px 10px', minWidth: 40, borderRadius: 8, fontSize: 12, fontWeight: 700 }}
+            onClick={() => { haptic.light(); setLanguage('ru') }}
+          >
+            RU
+          </button>
+        </div>
       </div>
 
       {/* Tab bar */}
@@ -136,17 +155,18 @@ export default function AdminPage() {
 }
 
 function DashboardTab({ d }) {
+  const { lang } = useApp()
   return (
     <div className="stagger">
       <div className="stats-grid mb-4">
-        <StatCard icon="📦" value={d.orders_today_count} label="Bugungi buyurtmalar" />
-        <StatCard icon="💰" value={`${Number(d.revenue_today || 0).toLocaleString()} s`} label="Bugungi daromad" />
-        <StatCard icon="⏳" value={d.pending_orders_count} label="Kutilayotgan" />
-        <StatCard icon="👥" value={d.active_users_count} label="Faol foydalanuvchilar" />
-        <StatCard icon="📋" value={d.pending_registrations_count} label="Yangi arizalar" />
-        <StatCard icon="💳" value={d.pending_topups_count} label="To'ldirish so'rovlari" />
-        <StatCard icon="📈" value={d.total_orders_count} label="Jami buyurtmalar" />
-        <StatCard icon="⚠️" value={d.low_stock_products_count} label="Kam qolgan mahsulotlar" />
+        <StatCard icon="📦" value={d.orders_today_count} label={lang === 'ru' ? 'Заказы сегодня' : 'Bugungi buyurtmalar'} />
+        <StatCard icon="💰" value={`${Number(d.revenue_today || 0).toFixed(1)} $`} label={lang === 'ru' ? 'Доход сегодня' : 'Bugungi daromad'} />
+        <StatCard icon="⏳" value={d.pending_orders_count} label={lang === 'ru' ? 'Ожидают' : 'Kutilayotgan'} />
+        <StatCard icon="👥" value={d.active_users_count} label={lang === 'ru' ? 'Активные юзеры' : 'Faol foydalanuvchilar'} />
+        <StatCard icon="📋" value={d.pending_registrations_count} label={lang === 'ru' ? 'Новые заявки' : 'Yangi arizalar'} />
+        <StatCard icon="💳" value={d.pending_topups_count} label={lang === 'ru' ? 'Запросы оплат' : 'To\'ldirish so\'rovlari'} />
+        <StatCard icon="📈" value={d.total_orders_count} label={lang === 'ru' ? 'Всего заказано' : 'Jami buyurtmalar'} />
+        <StatCard icon="⚠️" value={d.low_stock_products_count} label={lang === 'ru' ? 'Мало товара' : 'Kam qolgan mahsulotlar'} />
       </div>
     </div>
   )
@@ -162,8 +182,30 @@ function StatCard({ icon, value, label }) {
   )
 }
 
+const getStatusLabel = (status, lang) => {
+  const labels = {
+    PENDING_ADMIN:    { uz: 'Kutilmoqda', ru: 'Ожидает' },
+    APPROVED:         { uz: 'Tasdiqlangan', ru: 'Подтвержден' },
+    PACKING:          { uz: 'Qadoqlanmoqda', ru: 'Собирается' },
+    OUT_FOR_DELIVERY: { uz: 'Yetkazilmoqda', ru: 'В пути' },
+    DELIVERED:        { uz: 'Yetkazildi', ru: 'Доставлен' },
+    REJECTED:         { uz: 'Rad etildi', ru: 'Отклонен' },
+    CANCELLED:        { uz: 'Bekor qilindi', ru: 'Отменен' },
+  }
+  return labels[status]?.[lang] || labels[status]?.['uz'] || status
+}
+
+const getDeliveryNextLabel = (status, lang) => {
+  const labels = {
+    APPROVED: { uz: '📦 Qadoqlashga o\'tkazish', ru: '📦 Начать сборку' },
+    PACKING: { uz: '🚚 Yetkazishga yuborish', ru: '🚚 Отправить доставку' },
+    OUT_FOR_DELIVERY: { uz: '🏁 Yetkazildi deb belgilash', ru: '🏁 Отметить как доставлен' },
+  }
+  return labels[status]?.[lang] || labels[status]?.['uz'] || status
+}
+
 function OrdersTab({ orders, reload }) {
-  const { showToast } = useApp()
+  const { showToast, lang } = useApp()
   const [processing, setProcessing] = useState({})
 
   const action = async (fn, id, label) => {
@@ -182,7 +224,10 @@ function OrdersTab({ orders, reload }) {
   }
 
   if (orders.length === 0) return (
-    <div className="empty-state"><div className="empty-state-icon">✅</div><div className="empty-state-title">Buyurtmalar yo'q</div></div>
+    <div className="empty-state">
+      <div className="empty-state-icon">✅</div>
+      <div className="empty-state-title">{lang === 'ru' ? 'Нет заказов' : 'Buyurtmalar yo\'q'}</div>
+    </div>
   )
 
   return (
@@ -195,13 +240,13 @@ function OrdersTab({ orders, reload }) {
           <div key={order.id} className="card mb-3">
             <div className="flex justify-between items-center mb-2">
               <div className="order-number">№{order.order_number}</div>
-              <span className={`status-badge ${s.cls}`}>{s.icon} {s.label}</span>
+              <span className={`status-badge ${s.cls}`}>{s.icon} {getStatusLabel(order.status, lang)}</span>
             </div>
             <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>
-              👤 {order.user?.full_name || '—'} · {Number(order.total_amount).toLocaleString()} so'm
+              👤 {order.user?.full_name || '—'} · {Number(order.total_amount).toFixed(1)} $
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
-              📍 {order.delivery_address}
+              📍 {lang === 'ru' ? 'Район получения' : 'Olib ketish tumani'}: {order.delivery_address}
             </div>
             <div className="flex gap-2">
               {order.status === 'PENDING_ADMIN' && (
@@ -210,17 +255,17 @@ function OrdersTab({ orders, reload }) {
                     className="btn btn-success btn-sm"
                     style={{ flex: 1 }}
                     disabled={busy}
-                    onClick={() => action(() => adminApproveOrder(order.id), order.id, 'Buyurtma tasdiqlandi')}
+                    onClick={() => action(() => adminApproveOrder(order.id), order.id, lang === 'ru' ? 'Заказ подтвержден' : 'Buyurtma tasdiqlandi')}
                   >
-                    ✅ Tasdiqlash
+                    ✅ {lang === 'ru' ? 'Одобрить' : 'Tasdiqlash'}
                   </button>
                   <button
                     className="btn btn-danger btn-sm"
                     style={{ flex: 1 }}
                     disabled={busy}
-                    onClick={() => action(() => adminRejectOrder(order.id, 'Admin tomonidan rad etildi'), order.id, 'Rad etildi')}
+                    onClick={() => action(() => adminRejectOrder(order.id, 'Admin tomonidan rad etildi'), order.id, lang === 'ru' ? 'Отклонено' : 'Rad etildi')}
                   >
-                    ❌ Rad
+                    ❌ {lang === 'ru' ? 'Отклонить' : 'Rad etish'}
                   </button>
                 </>
               )}
@@ -228,9 +273,9 @@ function OrdersTab({ orders, reload }) {
                 <button
                   className="btn btn-primary btn-sm btn-full"
                   disabled={busy}
-                  onClick={() => action(() => adminSetDeliveryStatus(order.id, nextStatus), order.id, 'Holat yangilandi')}
+                  onClick={() => action(() => adminSetDeliveryStatus(order.id, nextStatus), order.id, lang === 'ru' ? 'Статус обновлен' : 'Holat yangilandi')}
                 >
-                  {DELIVERY_NEXT_LABEL[order.status] || 'Keyingi holat'}
+                  {getDeliveryNextLabel(order.status, lang)}
                 </button>
               )}
             </div>
@@ -242,7 +287,7 @@ function OrdersTab({ orders, reload }) {
 }
 
 function TopupsTab({ topups, reload }) {
-  const { showToast } = useApp()
+  const { showToast, lang } = useApp()
   const [processing, setProcessing] = useState({})
   const [zoomedImage, setZoomedImage] = useState(null)
 
@@ -262,7 +307,10 @@ function TopupsTab({ topups, reload }) {
   }
 
   if (topups.length === 0) return (
-    <div className="empty-state"><div className="empty-state-icon">✅</div><div className="empty-state-title">To'ldirish so'rovlari yo'q</div></div>
+    <div className="empty-state">
+      <div className="empty-state-icon">✅</div>
+      <div className="empty-state-title">{lang === 'ru' ? 'Нет запросов на пополнение' : 'To\'ldirish so\'rovlari yo\'q'}</div>
+    </div>
   )
 
   return (
@@ -270,11 +318,11 @@ function TopupsTab({ topups, reload }) {
       {topups.map(t => (
         <div key={t.id} className="card mb-3">
           <div className="flex justify-between items-center mb-2">
-            <div style={{ fontWeight: 700, fontSize: 16 }}>{Number(t.amount).toLocaleString()} so'm</div>
-            <span className="status-badge status-pending">⏳ Kutilmoqda</span>
+            <div style={{ fontWeight: 700, fontSize: 16 }}>{Number(t.amount).toFixed(1)} $</div>
+            <span className="status-badge status-pending">{lang === 'ru' ? '⏳ Ожидает' : '⏳ Kutilmoqda'}</span>
           </div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>
-            👤 {t.user_name || 'Foydalanuvchi'} (ID: {t.user_id}) · {t.payment_method}
+            👤 {t.user_name || (lang === 'ru' ? 'Пользователь' : 'Foydalanuvchi')} (ID: {t.user_id}) · {t.payment_method}
           </div>
 
           {/* Receipt image preview */}
@@ -294,14 +342,14 @@ function TopupsTab({ topups, reload }) {
               className="btn btn-success btn-sm"
               style={{ flex: 1 }}
               disabled={processing[t.id]}
-              onClick={() => action(() => adminApproveTopup(t.id), t.id, 'To\'ldirish tasdiqlandi')}
-            >✅ Tasdiqlash</button>
+              onClick={() => action(() => adminApproveTopup(t.id), t.id, lang === 'ru' ? 'Пополнение одобрено' : 'To\'ldirish tasdiqlandi')}
+            >✅ {lang === 'ru' ? 'Одобрить' : 'Tasdiqlash'}</button>
             <button
               className="btn btn-danger btn-sm"
               style={{ flex: 1 }}
               disabled={processing[t.id]}
-              onClick={() => action(() => adminRejectTopup(t.id, 'Admin tomonidan rad etildi'), t.id, 'Rad etildi')}
-            >❌ Rad</button>
+              onClick={() => action(() => adminRejectTopup(t.id, 'Admin tomonidan rad etildi'), t.id, lang === 'ru' ? 'Отклонено' : 'Rad etildi')}
+            >❌ {lang === 'ru' ? 'Отклонить' : 'Rad etish'}</button>
           </div>
         </div>
       ))}
