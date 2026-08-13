@@ -21,7 +21,7 @@ from src.shopim.middlewares.user import UserAuthMiddleware
 async def setup_bot_commands(bot: Bot, settings=None):
     commands = [
         BotCommand(command="start", description="🚀 Botni boshlash / Restart bot"),
-        BotCommand(command="app", description="🛍️ Mini App do'kon / Open Mini App"),
+        BotCommand(command="app", description="🍀 Mini App do'kon / Open Mini App"),
     ]
     await bot.set_my_commands(commands, scope=BotCommandScopeDefault())
 
