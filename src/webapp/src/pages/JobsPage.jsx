@@ -4,7 +4,9 @@ import { haptic } from '../tg'
 import Spinner from '../components/Spinner'
 import { useApp } from '../context/AppContext'
 
+// JobsPage handles job openings display and user application submissions
 export default function JobsPage() {
+
   const { lang, showToast } = useApp()
   const [positions, setPositions] = useState([])
   const [applications, setApplications] = useState([])
