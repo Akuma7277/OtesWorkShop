@@ -8,7 +8,8 @@ import {
   adminGetPendingReviews, adminApproveReview, adminRejectReview,
   adminGetSettings, adminUpdateSettings, getCategories,
   getNews, adminCreateNews, adminDeleteNews,
-  adminGetChatRooms, adminGetRoomMessages, adminSendRoomMessage
+  adminGetChatRooms, adminGetRoomMessages, adminSendRoomMessage,
+  adminGetAuditLog
 } from '../api'
 import { useApp } from '../context/AppContext'
 import Spinner from '../components/Spinner'
@@ -48,6 +49,7 @@ export default function AdminPage() {
   const [newsList, setNewsList] = useState([])
   const [settings, setSettings] = useState(null)
   const [chatRooms, setChatRooms] = useState([])
+  const [auditLog, setAuditLog] = useState([])
   const [loading, setLoading] = useState(false)
 
   if (!isAdmin) {
@@ -72,6 +74,7 @@ export default function AdminPage() {
     { key: 'reviews', label: '⭐ ' + (lang === 'ru' ? 'Отзывы' : 'Sharhlar') },
     { key: 'news', label: '📰 ' + (lang === 'ru' ? 'Новости' : 'E\'lonlar') },
     { key: 'settings', label: '⚙️ ' + (lang === 'ru' ? 'Настройки' : 'Sozlamalar') },
+    { key: 'audit', label: '🕵️ ' + (lang === 'ru' ? 'История' : 'Tarix') },
   ]
 
   useEffect(() => {
@@ -95,6 +98,10 @@ export default function AdminPage() {
       if (tab === 'reviews') setReviews(await adminGetPendingReviews() || [])
       if (tab === 'news') setNewsList(await getNews() || [])
       if (tab === 'settings') setSettings(await adminGetSettings() || null)
+      if (tab === 'audit') {
+        const res = await adminGetAuditLog({ page: 1, per_page: 50 })
+        setAuditLog(res?.items || [])
+      }
     } catch {}
     setLoading(false)
   }
@@ -148,6 +155,7 @@ export default function AdminPage() {
           {tab === 'reviews' && <ReviewsTab reviews={reviews} reload={loadTab} />}
           {tab === 'news' && <NewsTab newsList={newsList} reload={loadTab} />}
           {tab === 'settings' && settings && <SettingsTab initialSettings={settings} reload={loadTab} />}
+          {tab === 'audit' && <AuditLogTab logs={auditLog} />}
         </>
       )}
     </div>
@@ -453,25 +461,30 @@ function UsersTab({ users, reload }) {
 }
 
 function ProductsTab({ products, categories, reload }) {
-  const { showToast } = useApp()
+  const { showToast, lang } = useApp()
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
-  const [formData, setFormData] = useState({
-    name: '', sale_price: '', cost_price: '', initial_stock: '', low_stock_threshold: '10', description: '', category_id: '', image_url: ''
-  })
   const [submitting, setSubmitting] = useState(false)
 
-  const handleImageChange = (e) => {
+  const emptyForm = {
+    name: '', sale_price: '', cost_price: '', initial_stock: '', low_stock_threshold: '10',
+    category_id: '',
+    public_description: '', public_image_url: '',
+    secret_description: '', secret_image_url: ''
+  }
+  const [formData, setFormData] = useState(emptyForm)
+
+  const handleImageChange = (field) => (e) => {
     const file = e.target.files[0]
     if (!file) return
     if (file.size > 8 * 1024 * 1024) {
-      showToast('❌ Rasm hajmi 8MB dan oshmasligi kerak')
+      showToast(lang === 'ru' ? '❌ Размер изображения не должен превышать 8МБ' : '❌ Rasm hajmi 8MB dan oshmasligi kerak')
       return
     }
     const reader = new FileReader()
     reader.onloadend = () => {
-      setFormData(prev => ({ ...prev, image_url: reader.result }))
-      showToast('✅ Rasm muvaffaqiyatli yuklandi!')
+      setFormData(prev => ({ ...prev, [field]: reader.result }))
+      showToast(lang === 'ru' ? '✅ Изображение загружено!' : '✅ Rasm yuklandi!')
     }
     reader.readAsDataURL(file)
   }
@@ -479,35 +492,59 @@ function ProductsTab({ products, categories, reload }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!formData.name || !formData.sale_price) {
-      showToast('❌ Nom va sotuv narxi majburiy!')
+      showToast(lang === 'ru' ? '❌ Название и цена обязательны!' : '❌ Nom va sotuv narxi majburiy!')
       return
     }
-    if (!editingProduct && !formData.image_url) {
-      showToast('❌ Mahsulot rasmini yuklash majburiy!')
+    // All 4 content fields mandatory
+    const requiredFields = ['public_description', 'public_image_url', 'secret_description', 'secret_image_url']
+    const missingField = requiredFields.find(f => !formData[f])
+    if (!editingProduct && missingField) {
+      const labels = {
+        public_description: lang === 'ru' ? 'Публичное описание' : 'Ochiq tavsif',
+        public_image_url: lang === 'ru' ? 'Публичное фото' : 'Ochiq rasm',
+        secret_description: lang === 'ru' ? 'Секретное описание' : 'Maxfiy tavsif',
+        secret_image_url: lang === 'ru' ? 'Секретное фото' : 'Maxfiy rasm',
+      }
+      showToast(`❌ ${labels[missingField]} ${lang === 'ru' ? 'обязательно!' : 'majburiy!'}`)
       return
     }
     haptic.medium()
     setSubmitting(true)
     try {
+      const payload = {
+        name: formData.name,
+        sale_price: formData.sale_price,
+        cost_price: formData.cost_price,
+        initial_stock: formData.initial_stock,
+        low_stock_threshold: formData.low_stock_threshold,
+        category_id: formData.category_id || null,
+        public_description: formData.public_description,
+        public_image_url: formData.public_image_url,
+        secret_description: formData.secret_description,
+        secret_image_url: formData.secret_image_url,
+      }
       if (editingProduct) {
+        // For update, send PATCH-friendly keys
         await adminUpdateProduct(editingProduct.id, {
           name: formData.name,
           sale_price_per_gram: Number(formData.sale_price),
-          cost_price_per_gram: Number(formData.cost_price),
-          stock_grams: Number(formData.initial_stock),
-          low_stock_threshold_grams: Number(formData.low_stock_threshold),
-          description: formData.description,
+          cost_price_per_gram: Number(formData.cost_price) || undefined,
+          stock_grams: Number(formData.initial_stock) || undefined,
+          low_stock_threshold_grams: Number(formData.low_stock_threshold) || 10,
           category_id: formData.category_id ? Number(formData.category_id) : null,
-          image_url: formData.image_url
+          public_description: formData.public_description,
+          public_image_url: formData.public_image_url,
+          secret_description: formData.secret_description,
+          secret_image_url: formData.secret_image_url,
         })
-        showToast('✅ Mahsulot yangilandi')
+        showToast(lang === 'ru' ? '✅ Товар обновлён' : '✅ Mahsulot yangilandi')
       } else {
-        await adminCreateProduct(formData)
-        showToast('✅ Mahsulot yaratildi')
+        await adminCreateProduct(payload)
+        showToast(lang === 'ru' ? '✅ Товар создан' : '✅ Mahsulot yaratildi')
       }
       setShowAddForm(false)
       setEditingProduct(null)
-      setFormData({ name: '', sale_price: '', cost_price: '', initial_stock: '', low_stock_threshold: '10', description: '', category_id: '', image_url: '' })
+      setFormData(emptyForm)
       reload()
     } catch (err) {
       showToast(`❌ ${err.message}`)
@@ -517,73 +554,147 @@ function ProductsTab({ products, categories, reload }) {
   }
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Mahsulotni o'chirishni tasdiqlaysizmi?")) return
+    if (!window.confirm(lang === 'ru' ? "Удалить товар?" : "Mahsulotni o'chirishni tasdiqlaysizmi?")) return
     haptic.warning()
     try {
       await adminDeleteProduct(id)
-      showToast("✅ Mahsulot o'chirildi / deaktiv qilindi")
+      showToast(lang === 'ru' ? "✅ Товар удалён / деактивирован" : "✅ Mahsulot o'chirildi / deaktiv qilindi")
       reload()
     } catch (err) {
       showToast(`❌ ${err.message}`)
     }
   }
 
+  const openEdit = (p) => {
+    haptic.light()
+    setEditingProduct(p)
+    setFormData({
+      name: p.name,
+      sale_price: String(p.sale_price_per_gram),
+      cost_price: String(p.cost_price_per_gram || ''),
+      initial_stock: String(p.stock_grams),
+      low_stock_threshold: String(p.low_stock_threshold_grams || '10'),
+      category_id: String(p.category_id || ''),
+      public_description: p.public_description || p.description || '',
+      public_image_url: p.public_image_url || p.image_url || '',
+      secret_description: p.secret_description || '',
+      secret_image_url: p.secret_image_url || '',
+    })
+    setShowAddForm(true)
+  }
+
+  const resetForm = () => {
+    setShowAddForm(false)
+    setEditingProduct(null)
+    setFormData(emptyForm)
+  }
+
+  const ImageUploadField = ({ label, field, required, isSecret }) => (
+    <div className="input-group">
+      <label className="input-label" style={{ color: isSecret ? 'var(--accent-primary)' : undefined }}>
+        {label} {required && <span style={{ color: 'var(--accent-red)' }}>*</span>}
+        {isSecret && <span style={{ fontSize: 11, marginLeft: 4, opacity: 0.7 }}>🔒 {lang === 'ru' ? '(только для покупателей)' : "(faqat xaridorlarga ko'rinadi)"}</span>}
+      </label>
+      <input type="file" accept="image/*" className="input" onChange={handleImageChange(field)}
+        required={required && !editingProduct && !formData[field]}
+        style={{ padding: '8px 12px' }} />
+      {formData[field] && (
+        <div style={{ textAlign: 'center', marginTop: 8, position: 'relative' }}>
+          <img src={formData[field]} alt="Preview"
+            style={{ maxHeight: 100, borderRadius: 8, objectFit: 'contain',
+              border: `2px solid ${isSecret ? 'var(--accent-primary)' : 'var(--border)'}` }} />
+          <button type="button"
+            style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.6)', border: 'none', color: '#fff', borderRadius: 4, padding: '1px 5px', cursor: 'pointer', fontSize: 12 }}
+            onClick={() => setFormData(prev => ({ ...prev, [field]: '' }))}>✕</button>
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <div className="stagger">
-      <button className="btn btn-primary btn-full mb-4" onClick={() => { haptic.light(); setShowAddForm(!showAddForm); setEditingProduct(null); setFormData({ name: '', sale_price: '', cost_price: '', initial_stock: '', low_stock_threshold: '10', description: '', category_id: '', image_url: '' }) }}>
-        {showAddForm ? '❌ Shaklni yopish' : '➕ Yangi mahsulot qo\'shish'}
+      <button className="btn btn-primary btn-full mb-4" onClick={() => { haptic.light(); showAddForm ? resetForm() : setShowAddForm(true) }}>
+        {showAddForm ? (lang === 'ru' ? '❌ Закрыть форму' : '❌ Shaklni yopish') : (lang === 'ru' ? '➕ Добавить товар' : '➕ Yangi mahsulot qo\'shish')}
       </button>
 
       {showAddForm && (
         <form onSubmit={handleSubmit} className="card mb-4 stagger">
-          <div className="input-group">
-            <label className="input-label">Nomi</label>
-            <input className="input" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
-          </div>
-          <div className="grid-2">
-            <div className="input-group">
-              <label className="input-label">Sotuv narxi (1g uchun)</label>
-              <input type="number" className="input" value={formData.sale_price} onChange={e => setFormData({...formData, sale_price: e.target.value})} required />
-            </div>
-            <div className="input-group">
-              <label className="input-label">Tannarxi (1g uchun)</label>
-              <input type="number" className="input" value={formData.cost_price} onChange={e => setFormData({...formData, cost_price: e.target.value})} />
-            </div>
-          </div>
-          <div className="grid-2">
-            <div className="input-group">
-              <label className="input-label">Zaxira (gramm)</label>
-              <input type="number" className="input" value={formData.initial_stock} onChange={e => setFormData({...formData, initial_stock: e.target.value})} />
-            </div>
-            <div className="input-group">
-              <label className="input-label">Minimal chegara (g)</label>
-              <input type="number" className="input" value={formData.low_stock_threshold} onChange={e => setFormData({...formData, low_stock_threshold: e.target.value})} />
-            </div>
-          </div>
-          <div className="input-group">
-            <label className="input-label">Kategoriya</label>
-            <select className="input" value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})}>
-              <option value="">Tanlang...</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-          
-          <div className="input-group">
-            <label className="input-label">Rasm (Majburiy)</label>
-            <input type="file" accept="image/*" className="input" onChange={handleImageChange} required={!editingProduct} style={{ padding: '8px 12px' }} />
-            {formData.image_url && (
-              <div style={{ textAlign: 'center', marginTop: 12 }}>
-                <img src={formData.image_url} alt="Preview" style={{ maxHeight: 120, borderRadius: 8, objectFit: 'contain', border: '1px solid var(--border)' }} />
-              </div>
-            )}
+          <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 16, color: 'var(--text-primary)' }}>
+            {editingProduct ? (lang === 'ru' ? '✏️ Редактировать товар' : '✏️ Mahsulotni tahrirlash') : (lang === 'ru' ? '➕ Новый товар' : '➕ Yangi mahsulot')}
           </div>
 
           <div className="input-group">
-            <label className="input-label">Tavsif</label>
-            <textarea className="input" rows={3} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+            <label className="input-label">{lang === 'ru' ? 'Название' : 'Nomi'} <span style={{ color: 'var(--accent-red)' }}>*</span></label>
+            <input className="input" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required />
           </div>
+
+          <div className="grid-2">
+            <div className="input-group">
+              <label className="input-label">{lang === 'ru' ? 'Цена продажи (за 1г)' : 'Sotuv narxi (1g)'} <span style={{ color: 'var(--accent-red)' }}>*</span></label>
+              <input type="number" className="input" value={formData.sale_price} onChange={e => setFormData({...formData, sale_price: e.target.value})} required />
+            </div>
+            <div className="input-group">
+              <label className="input-label">{lang === 'ru' ? 'Себестоимость (1г)' : 'Tannarxi (1g)'}</label>
+              <input type="number" className="input" value={formData.cost_price} onChange={e => setFormData({...formData, cost_price: e.target.value})} />
+            </div>
+          </div>
+
+          <div className="grid-2">
+            <div className="input-group">
+              <label className="input-label">{lang === 'ru' ? 'Запас (граммы)' : 'Zaxira (gramm)'}</label>
+              <input type="number" className="input" value={formData.initial_stock} onChange={e => setFormData({...formData, initial_stock: e.target.value})} />
+            </div>
+            <div className="input-group">
+              <label className="input-label">{lang === 'ru' ? 'Мин. порог (г)' : 'Minimal chegara (g)'}</label>
+              <input type="number" className="input" value={formData.low_stock_threshold} onChange={e => setFormData({...formData, low_stock_threshold: e.target.value})} />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">{lang === 'ru' ? 'Категория' : 'Kategoriya'}</label>
+            <select className="input" value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})}>
+              <option value="">{lang === 'ru' ? 'Выберите...' : 'Tanlang...'}</option>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+
+          {/* ─── PUBLIC INFO ─── */}
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
+            <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: 'var(--accent-green)' }}>
+              🌍 {lang === 'ru' ? 'ПУБЛИЧНАЯ ИНФОРМАЦИЯ (все видят)' : 'OCHIQ MA\'LUMOT (hammaga ko\'rinadi)'}
+            </div>
+            <div className="input-group">
+              <label className="input-label">{lang === 'ru' ? 'Публичное описание' : 'Ochiq tavsif'} <span style={{ color: 'var(--accent-red)' }}>*</span></label>
+              <textarea className="input" rows={3} value={formData.public_description}
+                onChange={e => setFormData({...formData, public_description: e.target.value})}
+                required placeholder={lang === 'ru' ? 'Описание товара для всех пользователей...' : 'Barcha foydalanuvchilar uchun mahsulot tavsifi...'} />
+            </div>
+            <ImageUploadField
+              label={lang === 'ru' ? 'Публичное фото' : 'Ochiq rasm'}
+              field="public_image_url" required={!editingProduct} isSecret={false} />
+          </div>
+
+          {/* ─── SECRET INFO ─── */}
+          <div style={{ background: 'rgba(124,92,252,0.05)', border: '1px solid rgba(124,92,252,0.3)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
+            <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: 'var(--accent-primary)' }}>
+              🔒 {lang === 'ru' ? 'СЕКРЕТНАЯ ИНФОРМАЦИЯ (только покупателю после оплаты)' : 'MAXFIY MA\'LUMOT (faqat xaridorga to\'lovdan keyin)'}
+            </div>
+            <div className="input-group">
+              <label className="input-label" style={{ color: 'var(--accent-primary)' }}>
+                {lang === 'ru' ? 'Секретное описание' : 'Maxfiy tavsif'} <span style={{ color: 'var(--accent-red)' }}>*</span>
+              </label>
+              <textarea className="input" rows={3} value={formData.secret_description}
+                onChange={e => setFormData({...formData, secret_description: e.target.value})}
+                required placeholder={lang === 'ru' ? 'Координаты, инструкции получения — только для покупателя...' : 'Koordinatalar, olish ko\'rsatmalari — faqat xaridorga...'}
+                style={{ borderColor: 'rgba(124,92,252,0.3)' }} />
+            </div>
+            <ImageUploadField
+              label={lang === 'ru' ? 'Секретное фото' : 'Maxfiy rasm'}
+              field="secret_image_url" required={!editingProduct} isSecret={true} />
+          </div>
+
           <button type="submit" className="btn btn-primary btn-full" disabled={submitting}>
-            {submitting ? '⏳ Saqlanmoqda...' : '💾 Saqlash'}
+            {submitting ? (lang === 'ru' ? '⏳ Сохраняется...' : '⏳ Saqlanmoqda...') : (lang === 'ru' ? '💾 Сохранить' : '💾 Saqlash')}
           </button>
         </form>
       )}
@@ -591,38 +702,77 @@ function ProductsTab({ products, categories, reload }) {
       {products.map(p => (
         <div key={p.id} className="card mb-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {p.image_url ? (
-              <img src={p.image_url} alt={p.name} style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border)' }} />
+            {(p.public_image_url || p.image_url) ? (
+              <img src={p.public_image_url || p.image_url} alt={p.name} style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border)' }} />
             ) : (
               <div style={{ width: 44, height: 44, borderRadius: 8, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🍃</div>
             )}
             <div>
               <div style={{ fontWeight: 700 }}>{p.name}</div>
               <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                Sotuv: {Number(p.sale_price_per_gram).toFixed(0)} $ · Zaxira: {Number(p.stock_grams).toFixed(0)} g
+                {lang === 'ru' ? 'Цена:' : 'Narx:'} {Number(p.sale_price_per_gram).toFixed(0)} $ · {lang === 'ru' ? 'Запас:' : 'Zaxira:'} {Number(p.stock_grams).toFixed(0)} g
+              </div>
+              <div style={{ fontSize: 11, color: p.secret_description ? 'var(--accent-primary)' : 'var(--accent-red)', marginTop: 2 }}>
+                {p.secret_description ? '🔒 Maxfiy ma\'lumot bor' : '⚠️ Maxfiy ma\'lumot yo\'q'}
               </div>
             </div>
           </div>
           <div className="flex gap-2">
-            <button className="btn btn-secondary btn-sm" onClick={() => {
-              haptic.light()
-              setEditingProduct(p)
-              setFormData({
-                name: p.name,
-                sale_price: String(p.sale_price_per_gram),
-                cost_price: String(p.cost_price_per_gram || ''),
-                initial_stock: String(p.stock_grams),
-                low_stock_threshold: String(p.low_stock_threshold_grams || '10'),
-                description: p.description || '',
-                category_id: String(p.category_id || ''),
-                image_url: p.image_url || ''
-              })
-              setShowAddForm(true)
-            }}>✏️</button>
+            <button className="btn btn-secondary btn-sm" onClick={() => openEdit(p)}>✏️</button>
             <button className="btn btn-danger btn-sm" onClick={() => handleDelete(p.id)}>🗑️</button>
           </div>
         </div>
       ))}
+    </div>
+  )
+}
+
+function AuditLogTab({ logs }) {
+  const { lang } = useApp()
+
+  const ACTION_LABELS = {
+    CREATE_PRODUCT: { uz: 'Mahsulot qo\'shildi', ru: 'Добавлен товар' },
+    UPDATE_PRODUCT: { uz: 'Mahsulot yangilandi', ru: 'Товар обновлён' },
+    DELETE_PRODUCT: { uz: 'Mahsulot o\'chirildi', ru: 'Товар удалён' },
+    DEACTIVATE_PRODUCT: { uz: 'Mahsulot deaktiv qilindi', ru: 'Товар деактивирован' },
+  }
+
+  if (logs.length === 0) return (
+    <div className="empty-state">
+      <div className="empty-state-icon">🕵️</div>
+      <div className="empty-state-title">{lang === 'ru' ? 'История пустая' : 'Tarix bo\'sh'}</div>
+    </div>
+  )
+
+  return (
+    <div className="stagger">
+      <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 16 }}>
+        🕵️ {lang === 'ru' ? 'История действий администратора' : 'Admin harakatlari tarixi'}
+      </div>
+      {logs.map(log => {
+        const actionLabel = ACTION_LABELS[log.action]?.[lang] || ACTION_LABELS[log.action]?.uz || log.action
+        const date = new Date(log.created_at).toLocaleString(lang === 'ru' ? 'ru-RU' : 'uz-Latn')
+        return (
+          <div key={log.id} className="card mb-2" style={{ padding: '10px 14px' }}>
+            <div className="flex justify-between items-center">
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 13 }}>{actionLabel}</div>
+                {log.entity_type && (
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                    {log.entity_type} #{log.entity_id}
+                    {log.new_data?.name && ` — ${log.new_data.name}`}
+                  </div>
+                )}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'right' }}>
+                <div>Admin ID</div>
+                <div style={{ fontWeight: 600 }}>{log.actor_telegram_id}</div>
+              </div>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>🕐 {date}</div>
+          </div>
+        )
+      })}
     </div>
   )
 }

@@ -163,10 +163,16 @@ class Product(Base):
     )
     name: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
     slug: Mapped[str] = mapped_column(VARCHAR(300), unique=True, nullable=False)
-    description: Mapped[str | None] = mapped_column(TEXT)
+    # Public info — visible to all users
+    description: Mapped[str | None] = mapped_column(TEXT)  # legacy field kept for compat
+    public_description: Mapped[str | None] = mapped_column(TEXT)
     pickup_address: Mapped[str | None] = mapped_column(TEXT)
     image_file_id: Mapped[str | None] = mapped_column(TEXT)
-    image_url: Mapped[str | None] = mapped_column(TEXT)
+    image_url: Mapped[str | None] = mapped_column(TEXT)  # legacy / public image
+    public_image_url: Mapped[str | None] = mapped_column(TEXT)
+    # Secret info — only shown to the user who purchased, after payment approved
+    secret_description: Mapped[str | None] = mapped_column(TEXT)
+    secret_image_url: Mapped[str | None] = mapped_column(TEXT)
     cost_price_per_gram: Mapped[float] = mapped_column(
         Numeric(18, 2), nullable=False
     )
@@ -282,6 +288,9 @@ class Order(Base):
     admin_note: Mapped[str | None] = mapped_column(TEXT)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Post-purchase receipt tracking
+    receipt_confirmed: Mapped[bool] = mapped_column(BOOLEAN, nullable=False, default=False)
+    receipt_issue_reported: Mapped[bool] = mapped_column(BOOLEAN, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

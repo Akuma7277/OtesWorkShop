@@ -14,12 +14,15 @@ from typing import AsyncGenerator, Optional
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import select
+from sqlalchemy import func, select
+import sqlalchemy as sa
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.shopim.core.config import get_settings
 from src.shopim.db.models import (
     Admin,
+    AuditLog,
     Category,
     Order,
     OrderItem,
@@ -37,6 +40,7 @@ from src.shopim.db.models import (
     StockMovementType,
     DeliveryEvent,
     ChatMessage,
+    News,
 )
 from src.shopim.db.repositories.balance_repository import BalanceRepository
 from src.shopim.db.repositories.product_repository import ProductRepository
@@ -73,6 +77,26 @@ async def lifespan(app: FastAPI):
         from src.shopim.db.models.all_models import Base
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+
+    # Run column migrations for PostgreSQL (idempotent - ignore if already exists)
+    new_columns = [
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS public_description TEXT",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS public_image_url TEXT",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS secret_description TEXT",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS secret_image_url TEXT",
+        "ALTER TABLE orders ADD COLUMN IF NOT EXISTS receipt_confirmed BOOLEAN NOT NULL DEFAULT false",
+        "ALTER TABLE orders ADD COLUMN IF NOT EXISTS receipt_issue_reported BOOLEAN NOT NULL DEFAULT false",
+    ]
+    try:
+        async with engine.begin() as conn:
+            for stmt in new_columns:
+                try:
+                    await conn.execute(sa.text(stmt))
+                except Exception:
+                    pass  # Column likely already exists
+    except Exception:
+        pass  # Not PostgreSQL or migration not needed
+
     yield
     await engine.dispose()
 
@@ -535,20 +559,26 @@ async def debug_auth(request: Request, db: AsyncSession = Depends(get_db)):
         return {"error": str(e)}
 
 
-def _product_dict(p: Product) -> dict:
-
-    return {
+def _product_dict(p: Product, include_admin_fields: bool = False) -> dict:
+    data = {
         "id": p.id,
         "name": p.name,
         "slug": p.slug,
-        "description": p.description,
-        "image_url": p.image_url,
+        "description": p.public_description or p.description,
+        "image_url": p.public_image_url or p.image_url,
+        "public_description": p.public_description,
+        "public_image_url": p.public_image_url,
         "sale_price_per_gram": float(p.sale_price_per_gram),
-        "cost_price_per_gram": float(p.cost_price_per_gram),
         "stock_grams": float(p.stock_grams),
         "is_active": p.is_active,
         "category_id": p.category_id,
     }
+    if include_admin_fields:
+        data["cost_price_per_gram"] = float(p.cost_price_per_gram)
+        data["secret_description"] = p.secret_description
+        data["secret_image_url"] = p.secret_image_url
+        data["pickup_address"] = p.pickup_address
+    return data
 
 
 @app.get("/api/products")
@@ -578,9 +608,87 @@ async def get_product(product_id: int, db: AsyncSession = Depends(get_db)):
     return _product_dict(p)
 
 
-# ──────────────────────────────────────────────
-# Routes: Orders
-# ──────────────────────────────────────────────
+@app.get("/api/orders/{order_id}/secret")
+async def get_order_secret_info(
+    order_id: int,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return secret product info only to the buyer, only after admin approval."""
+    from sqlalchemy.orm import selectinload
+    stmt = (
+        select(Order)
+        .options(selectinload(Order.items))
+        .where(Order.id == order_id)
+    )
+    order = (await db.execute(stmt)).scalar_one_or_none()
+    if not order or order.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Order not found")
+    approved_statuses = {OrderStatus.APPROVED, OrderStatus.PACKING, OrderStatus.OUT_FOR_DELIVERY, OrderStatus.DELIVERED}
+    if order.status not in approved_statuses:
+        raise HTTPException(status_code=403, detail="Secret info not available yet")
+
+    secrets = []
+    for item in order.items:
+        product = await db.get(Product, item.product_id)
+        if product:
+            secrets.append({
+                "product_id": product.id,
+                "product_name": product.name,
+                "secret_description": product.secret_description,
+                "secret_image_url": product.secret_image_url,
+            })
+    return {"items": secrets}
+
+
+@app.post("/api/orders/{order_id}/confirm-receipt")
+async def confirm_order_receipt(
+    order_id: int,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """User confirms they received the product. Triggers review prompt."""
+    order = await db.get(Order, order_id)
+    if not order or order.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Order not found")
+    approved_statuses = {OrderStatus.APPROVED, OrderStatus.PACKING, OrderStatus.OUT_FOR_DELIVERY, OrderStatus.DELIVERED}
+    if order.status not in approved_statuses:
+        raise HTTPException(status_code=400, detail="Order not in a deliverable state")
+    order.receipt_confirmed = True
+    order.status = OrderStatus.DELIVERED
+    await db.commit()
+    return {"ok": True, "prompt_review": True}
+
+
+@app.post("/api/orders/{order_id}/report-issue")
+async def report_order_issue(
+    order_id: int,
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """User reports missing product. Notifies admin and marks issue on order."""
+    order = await db.get(Order, order_id)
+    if not order or order.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Order not found")
+    approved_statuses = {OrderStatus.APPROVED, OrderStatus.PACKING, OrderStatus.OUT_FOR_DELIVERY, OrderStatus.DELIVERED}
+    if order.status not in approved_statuses:
+        raise HTTPException(status_code=400, detail="Order not in a deliverable state")
+
+    data = await request.json()
+    issue_text = data.get("description", "Tovar topilmadi")
+    order.receipt_issue_reported = True
+
+    # Create admin notification via ChatMessage from SYSTEM
+    notification_msg = ChatMessage(
+        user_id=user.id,
+        sender_type="USER",
+        text=f"🚨 MUAMMO: Buyurtma #{order.order_number} - {user.full_name} tovar topilmadi deb xabar berdi. Sabab: {issue_text}",
+    )
+    db.add(notification_msg)
+    await db.commit()
+    return {"ok": True}
+
 def _order_dict(order: Order) -> dict:
     items = []
     for item in (order.items or []):
@@ -612,6 +720,8 @@ def _order_dict(order: Order) -> dict:
         "admin_note": order.admin_note,
         "items": items,
         "delivery_events": events,
+        "receipt_confirmed": getattr(order, 'receipt_confirmed', False),
+        "receipt_issue_reported": getattr(order, 'receipt_issue_reported', False),
     }
 
 
@@ -1126,9 +1236,26 @@ async def admin_create_product(
 ):
     from src.shopim.services.product_management_service import ProductManagementService
     data = await request.json()
+
+    # Validate required secret & public fields
+    missing = [f for f in ("public_description", "public_image_url", "secret_description", "secret_image_url") if not data.get(f)]
+    if missing:
+        raise HTTPException(status_code=400, detail=f"Required fields missing: {', '.join(missing)}")
+
     service = ProductManagementService(db)
     product = await service.create_product(data, admin.id)
-    return _product_dict(product)
+
+    # Audit log
+    db.add(AuditLog(
+        actor_telegram_id=admin.telegram_id,
+        actor_role=admin.role.value,
+        action="CREATE_PRODUCT",
+        entity_type="Product",
+        entity_id=product.id,
+        new_data={"name": product.name, "sale_price_per_gram": float(product.sale_price_per_gram)},
+    ))
+    await db.commit()
+    return _product_dict(product, include_admin_fields=True)
 
 
 @app.patch("/api/admin/products/{product_id}")
@@ -1144,7 +1271,18 @@ async def admin_update_product(
     product = await service.update_product(product_id, data)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    return _product_dict(product)
+
+    # Audit log
+    db.add(AuditLog(
+        actor_telegram_id=admin.telegram_id,
+        actor_role=admin.role.value,
+        action="UPDATE_PRODUCT",
+        entity_type="Product",
+        entity_id=product.id,
+        new_data={k: v for k, v in data.items() if k not in ("secret_description", "secret_image_url")},
+    ))
+    await db.commit()
+    return _product_dict(product, include_admin_fields=True)
 
 
 @app.delete("/api/admin/products/{product_id}")
@@ -1155,15 +1293,35 @@ async def admin_delete_product(
 ):
     from src.shopim.services.product_management_service import ProductManagementService
     service = ProductManagementService(db)
+    product = await db.get(Product, product_id)
+    product_name = product.name if product else str(product_id)
     success = await service.delete_product(product_id)
     if not success:
         # If product cannot be hard deleted, deactivate it instead
         product = await db.get(Product, product_id)
         if product:
             product.is_active = False
+            db.add(AuditLog(
+                actor_telegram_id=admin.telegram_id,
+                actor_role=admin.role.value,
+                action="DEACTIVATE_PRODUCT",
+                entity_type="Product",
+                entity_id=product_id,
+                old_data={"name": product_name},
+            ))
             await db.commit()
             return {"ok": True, "message": "Product deactivated"}
         raise HTTPException(status_code=400, detail="Cannot delete or deactivate product")
+
+    db.add(AuditLog(
+        actor_telegram_id=admin.telegram_id,
+        actor_role=admin.role.value,
+        action="DELETE_PRODUCT",
+        entity_type="Product",
+        entity_id=product_id,
+        old_data={"name": product_name},
+    ))
+    await db.commit()
     return {"ok": True, "message": "Product deleted"}
 
 
@@ -1252,6 +1410,46 @@ async def admin_update_settings(
     updated = await service.update_bot_settings(data, admin.id)
     await db.commit()
     return updated.model_dump(mode="json")
+
+
+# ──────────────────────────────────────────────
+# Admin Audit Log
+# ──────────────────────────────────────────────
+@app.get("/api/admin/audit")
+async def admin_get_audit_log(
+    page: int = 1,
+    per_page: int = 30,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = (
+        select(AuditLog)
+        .order_by(AuditLog.created_at.desc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+    )
+    logs = (await db.execute(stmt)).scalars().all()
+    total_stmt = select(func.count(AuditLog.id))
+    total = (await db.execute(total_stmt)).scalar_one()
+    return {
+        "items": [
+            {
+                "id": l.id,
+                "actor_telegram_id": l.actor_telegram_id,
+                "actor_role": l.actor_role,
+                "action": l.action,
+                "entity_type": l.entity_type,
+                "entity_id": l.entity_id,
+                "old_data": l.old_data,
+                "new_data": l.new_data,
+                "created_at": l.created_at.isoformat(),
+            }
+            for l in logs
+        ],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+    }
 
 
 # ──────────────────────────────────────────────

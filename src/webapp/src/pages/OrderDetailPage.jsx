@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getOrderDetail, cancelOrder } from '../api'
+import { getOrderDetail, cancelOrder, getOrderSecretInfo, confirmOrderReceipt, reportOrderIssue, submitReview } from '../api'
 import Spinner from '../components/Spinner'
 import { haptic } from '../tg'
 import { t, getLanguage } from '../i18n'
@@ -24,6 +24,17 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
   const [cancelling, setCancelling] = useState(false)
+  const [secretInfo, setSecretInfo] = useState(null)
+  const [secretLoading, setSecretLoading] = useState(false)
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  const [showIssueForm, setShowIssueForm] = useState(false)
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewText, setReviewText] = useState('')
+  const [issueText, setIssueText] = useState('')
+  const [actionDone, setActionDone] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+
+  const APPROVED_STATUSES = ['APPROVED', 'PACKING', 'OUT_FOR_DELIVERY', 'DELIVERED']
 
   const STEPS = [
     t('status_pending'),
@@ -40,6 +51,18 @@ export default function OrderDetailPage() {
       .finally(() => setLoading(false))
   }, [id])
 
+  useEffect(() => {
+    if (!order) return
+    const isApproved = APPROVED_STATUSES.includes(order.status)
+    if (isApproved && !secretInfo && !secretLoading) {
+      setSecretLoading(true)
+      getOrderSecretInfo(id)
+        .then(data => setSecretInfo(data))
+        .catch(() => {})
+        .finally(() => setSecretLoading(false))
+    }
+  }, [order])
+
   const handleCancel = async () => {
     if (!confirm(lang === 'ru' ? 'Вы уверены, что хотите отменить этот заказ?' : 'Haqiqatan ham ushbu buyurtmani bekor qilmoqchimisiz?')) return
     haptic.medium()
@@ -51,6 +74,45 @@ export default function OrderDetailPage() {
       setOrder(data)
     } catch {}
     setCancelling(false)
+  }
+
+  const handleConfirmReceipt = async () => {
+    haptic.medium()
+    setSubmitting(true)
+    try {
+      await confirmOrderReceipt(id)
+      haptic.success()
+      setActionDone('confirmed')
+      setShowReviewModal(true)
+      const data = await getOrderDetail(id)
+      setOrder(data)
+    } catch {}
+    setSubmitting(false)
+  }
+
+  const handleReportIssue = async () => {
+    if (!issueText.trim()) return
+    haptic.medium()
+    setSubmitting(true)
+    try {
+      await reportOrderIssue(id, { description: issueText })
+      haptic.success()
+      setActionDone('reported')
+      setShowIssueForm(false)
+    } catch {}
+    setSubmitting(false)
+  }
+
+  const handleSubmitReview = async () => {
+    if (!reviewText.trim()) return
+    haptic.medium()
+    setSubmitting(true)
+    try {
+      await submitReview({ rating: reviewRating, text: reviewText })
+      haptic.success()
+      setShowReviewModal(false)
+    } catch {}
+    setSubmitting(false)
   }
 
   if (loading) return <Spinner />
@@ -126,6 +188,87 @@ export default function OrderDetailPage() {
         <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8 }}>📍 {lang === 'ru' ? 'РАЙОН ПОЛУЧЕНИЯ' : 'OLIB KETISH TUMANI'}</div>
         <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{order.delivery_address}</div>
       </div>
+
+      {/* Secret info card (after order approved) */}
+      {APPROVED_STATUSES.includes(order.status) && (
+        <div className="card mb-4" style={{ borderColor: 'rgba(124,92,252,0.4)', background: 'rgba(124,92,252,0.05)' }}>
+          <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--accent-primary)', marginBottom: 12 }}>
+            🔒 {lang === 'ru' ? 'Секретная информация о товаре' : 'Mahsulot haqida maxfiy ma\'lumot'}
+          </div>
+          {secretLoading ? (
+            <div style={{ textAlign: 'center', padding: '12px 0', color: 'var(--text-muted)' }}>⏳ {lang === 'ru' ? 'Загрузка...' : 'Yuklanmoqda...'}</div>
+          ) : secretInfo?.items?.length > 0 ? (
+            secretInfo.items.map((item, i) => (
+              <div key={i} style={{ marginBottom: i < secretInfo.items.length - 1 ? 16 : 0 }}>
+                {item.secret_image_url && (
+                  <div style={{ borderRadius: 10, overflow: 'hidden', marginBottom: 10, border: '2px solid rgba(124,92,252,0.3)' }}>
+                    <img src={item.secret_image_url} alt="Secret" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', display: 'block' }} />
+                  </div>
+                )}
+                {item.secret_description && (
+                  <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, background: 'rgba(0,0,0,0.2)', borderRadius: 8, padding: '10px 12px' }}>
+                    {item.secret_description}
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{lang === 'ru' ? 'Секретная информация скоро появится.' : 'Maxfiy ma\'lumot tez orada ko\'rinadi.'}</div>
+          )}
+
+          {/* Post-purchase action buttons */}
+          {!order.receipt_confirmed && !order.receipt_issue_reported && !actionDone && (
+            <div style={{ marginTop: 16 }}>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 10 }}>
+                {lang === 'ru' ? 'Вы получили товар?' : 'Tovarni oldingizmi?'}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  className="btn btn-success btn-sm"
+                  style={{ flex: 1 }}
+                  disabled={submitting}
+                  onClick={handleConfirmReceipt}
+                >
+                  ✅ {lang === 'ru' ? 'Получил(а)' : 'Oldim'}
+                </button>
+                <button
+                  className="btn btn-danger btn-sm"
+                  style={{ flex: 1 }}
+                  disabled={submitting}
+                  onClick={() => { haptic.light(); setShowIssueForm(!showIssueForm) }}
+                >
+                  ⚠️ {lang === 'ru' ? 'Товара нет' : 'Tovar yo\'q'}
+                </button>
+              </div>
+              {showIssueForm && (
+                <div style={{ marginTop: 12 }}>
+                  <textarea
+                    className="input"
+                    rows={3}
+                    value={issueText}
+                    onChange={e => setIssueText(e.target.value)}
+                    placeholder={lang === 'ru' ? 'Опишите проблему...' : 'Muammoni tavsiflang...'}
+                    style={{ marginBottom: 8 }}
+                  />
+                  <button className="btn btn-danger btn-full" onClick={handleReportIssue} disabled={submitting || !issueText.trim()}>
+                    🚨 {lang === 'ru' ? 'Отправить жалобу' : 'Muammoni yuborish'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          {(order.receipt_confirmed || actionDone === 'confirmed') && (
+            <div style={{ marginTop: 12, textAlign: 'center', fontSize: 13, color: 'var(--accent-green)' }}>
+              ✅ {lang === 'ru' ? 'Получение подтверждено!' : 'Olish tasdiqlandi!'}
+            </div>
+          )}
+          {(order.receipt_issue_reported || actionDone === 'reported') && (
+            <div style={{ marginTop: 12, textAlign: 'center', fontSize: 13, color: 'var(--accent-red)' }}>
+              🚨 {lang === 'ru' ? 'Жалоба отправлена! Администратор свяжется с вами.' : 'Shikoyat yuborildi! Admin siz bilan bog\'lanadi.'}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Contact Admin Card when Order is Approved */}
       {(order.status === 'APPROVED' || order.status === 'PACKING' || order.status === 'OUT_FOR_DELIVERY') && (
@@ -206,6 +349,41 @@ export default function OrderDetailPage() {
         >
           {cancelling ? `⏳ ${lang === 'ru' ? 'Отмена...' : 'Bekor qilinmoqda...'}` : `🚫 ${t('cancel_order')}`}
         </button>
+      )}
+
+      {/* Review Modal */}
+      {showReviewModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', zIndex: 9999 }}>
+          <div style={{ background: 'var(--bg-secondary)', width: '100%', borderRadius: '20px 20px 0 0', padding: '24px 20px', maxHeight: '80vh', overflowY: 'auto' }}>
+            <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 16, textAlign: 'center' }}>
+              ⭐ {lang === 'ru' ? 'Оставить отзыв' : 'Sharh qoldirish'}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
+              {[1,2,3,4,5].map(n => (
+                <button key={n} type="button"
+                  style={{ background: 'none', border: 'none', fontSize: 32, cursor: 'pointer', opacity: n <= reviewRating ? 1 : 0.3, transition: 'opacity 0.2s' }}
+                  onClick={() => { haptic.light(); setReviewRating(n) }}>
+                  ⭐
+                </button>
+              ))}
+            </div>
+            <textarea
+              className="input"
+              rows={4}
+              value={reviewText}
+              onChange={e => setReviewText(e.target.value)}
+              placeholder={lang === 'ru' ? 'Ваш отзыв о товаре...' : 'Mahsulot haqida fikringiz...'}
+              style={{ marginBottom: 12 }}
+            />
+            <button className="btn btn-primary btn-full" onClick={handleSubmitReview} disabled={submitting || !reviewText.trim()}>
+              ✅ {lang === 'ru' ? 'Отправить отзыв' : 'Sharh yuborish'}
+            </button>
+            <button className="btn btn-secondary btn-full" style={{ marginTop: 8 }}
+              onClick={() => setShowReviewModal(false)}>
+              {lang === 'ru' ? 'Пропустить' : 'O\'tkazib yuborish'}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )

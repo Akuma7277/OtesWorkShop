@@ -37,6 +37,9 @@ export const getMyOrders = (params = {}) => api.get('/orders/me', { params })
 export const getOrderDetail = (id) => api.get(`/orders/${id}`)
 export const placeOrder = (data) => api.post('/orders', data)
 export const cancelOrder = (id) => api.post(`/orders/${id}/cancel`)
+export const getOrderSecretInfo = (id) => api.get(`/orders/${id}/secret`)
+export const confirmOrderReceipt = (id) => api.post(`/orders/${id}/confirm-receipt`)
+export const reportOrderIssue = (id, data) => api.post(`/orders/${id}/report-issue`, data)
 
 // ---- Profile ----
 export const getMe = () => api.get('/users/me')
@@ -91,6 +94,9 @@ export const sendChatMessage = (data) => api.post('/chat/messages', data)
 export const adminGetChatRooms = () => api.get('/admin/chat/rooms')
 export const adminGetRoomMessages = (userId) => api.get(`/admin/chat/rooms/${userId}/messages`)
 export const adminSendRoomMessage = (userId, data) => api.post(`/admin/chat/rooms/${userId}/messages`, data)
+
+// ---- Admin Audit Log ----
+export const adminGetAuditLog = (params = {}) => api.get('/admin/audit', { params })
 
 export default api
 

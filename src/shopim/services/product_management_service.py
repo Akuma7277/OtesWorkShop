@@ -60,10 +60,14 @@ class ProductManagementService:
             name=product_data["name"],
             slug=slug,
             category_id=category_id,
-            description=product_data.get("description"),
+            description=product_data.get("public_description") or product_data.get("description"),
+            public_description=product_data.get("public_description"),
             pickup_address=product_data.get("pickup_address"),
             image_file_id=product_data.get("image_file_id"),
-            image_url=product_data.get("image_url"),
+            image_url=product_data.get("public_image_url") or product_data.get("image_url"),
+            public_image_url=product_data.get("public_image_url"),
+            secret_description=product_data.get("secret_description"),
+            secret_image_url=product_data.get("secret_image_url"),
             cost_price_per_gram=cost_price,
             sale_price_per_gram=Decimal(product_data["sale_price"]),
             stock_grams=initial_stock,
@@ -157,6 +161,12 @@ class ProductManagementService:
                         value = Decimal(value)
 
                 setattr(product, key, value)
+
+        # Keep legacy fields in sync
+        if update_data.get("public_description"):
+            product.description = update_data["public_description"]
+        if update_data.get("public_image_url"):
+            product.image_url = update_data["public_image_url"]
 
         await self.session.commit()
         await self.session.refresh(product)
