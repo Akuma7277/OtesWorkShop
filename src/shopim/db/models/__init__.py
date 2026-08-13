@@ -22,6 +22,7 @@ from .all_models import (
     TopupStatus,
     User,
     UserStatus,
+    ChatMessage,
 )
 
 __all__ = [
@@ -47,4 +48,5 @@ __all__ = [
     "OrderStatus",
     "StockMovementType",
     "BalanceTxType",
+    "ChatMessage",
 ]

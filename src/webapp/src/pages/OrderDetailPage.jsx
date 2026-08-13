@@ -123,9 +123,32 @@ export default function OrderDetailPage() {
 
       {/* Delivery address */}
       <div className="card mb-4">
-        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8 }}>📍 {t('delivery_address').toUpperCase()}</div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8 }}>📍 {lang === 'ru' ? 'РАЙОН ПОЛУЧЕНИЯ' : 'OLIB KETISH TUMANI'}</div>
         <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{order.delivery_address}</div>
       </div>
+
+      {/* Contact Admin Card when Order is Approved */}
+      {(order.status === 'APPROVED' || order.status === 'PACKING' || order.status === 'OUT_FOR_DELIVERY') && (
+        <div className="card mb-4" style={{ borderColor: 'var(--accent-green)', background: 'rgba(52,211,153,0.05)', textAlign: 'center', padding: '20px 16px' }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--accent-green)', marginBottom: 6 }}>
+            {lang === 'ru' ? 'Оплата подтверждена!' : 'To\'lov tasdiqlandi!'}
+          </div>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 16 }}>
+            {lang === 'ru'
+              ? 'Нажмите кнопку ниже, чтобы написать админу в чат. Админ отправит вам фото и координаты (локацию) клада!'
+              : 'Admin bilan bog\'lanish tugmasini bosing va chatga yozing. Admin sizga yukning rasmi va koordinatasini (lokatsiyasini) yuboradi!'
+            }
+          </p>
+          <button
+            className="btn btn-primary"
+            onClick={() => { haptic.light(); navigate('/chat') }}
+            style={{ width: '100%', borderRadius: 12, height: 44, fontWeight: 700 }}
+          >
+            💬 {lang === 'ru' ? 'Написать Админу (Чат)' : 'Admin bilan bog\'lanish'}
+          </button>
+        </div>
+      )}
 
       {/* Order items */}
       <div className="card mb-4">

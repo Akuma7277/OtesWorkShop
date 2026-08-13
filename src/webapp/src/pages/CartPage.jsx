@@ -8,7 +8,6 @@ import { t, getLanguage } from '../i18n'
 
 export default function CartPage() {
   const { cart, removeFromCart, updateCartGrams, clearCart, cartTotal, loadBalance, showToast, lang, getProductPriceForGrams } = useApp()
-  const [address, setAddress] = useState('')
   const [placing, setPlacing] = useState(false)
   const navigate = useNavigate()
 
@@ -28,11 +27,6 @@ export default function CartPage() {
   }
 
   const handlePlaceOrder = async () => {
-    if (!address.trim()) {
-      showToast(lang === 'ru' ? '❌ Введите адрес доставки' : '❌ Yetkazib berish manzilingizni kiriting')
-      return
-    }
-
     haptic.medium()
     setPlacing(true)
     try {
@@ -41,8 +35,7 @@ export default function CartPage() {
         grams: i.grams
       }))
       await placeOrder({
-        items,
-        delivery_address: address.trim()
+        items
       })
       haptic.success()
       showToast(lang === 'ru' ? '✅ Заказ успешно оформлен!' : '✅ Buyurtma muvaffaqiyatli qabul qilindi!')
@@ -94,19 +87,6 @@ export default function CartPage() {
             </div>
           )
         })}
-      </div>
-
-      {/* Delivery address */}
-      <div className="input-group">
-        <label className="input-label">📍 {t('delivery_address')}</label>
-        <textarea
-          className="input"
-          rows={3}
-          placeholder={t('address_placeholder')}
-          value={address}
-          onChange={e => setAddress(e.target.value)}
-          style={{ resize: 'none' }}
-        />
       </div>
 
       {/* Order summary */}

@@ -85,5 +85,12 @@ export const adminRejectReview = (id) => api.post(`/admin/reviews/${id}/reject`)
 export const adminGetSettings = () => api.get('/admin/settings')
 export const adminUpdateSettings = (data) => api.patch('/admin/settings', data)
 
+// ---- Chat API ----
+export const getChatMessages = () => api.get('/chat/messages')
+export const sendChatMessage = (data) => api.post('/chat/messages', data)
+export const adminGetChatRooms = () => api.get('/admin/chat/rooms')
+export const adminGetRoomMessages = (userId) => api.get(`/admin/chat/rooms/${userId}/messages`)
+export const adminSendRoomMessage = (userId, data) => api.post(`/admin/chat/rooms/${userId}/messages`, data)
+
 export default api
 

@@ -36,6 +36,7 @@ from src.shopim.db.models import (
     StockMovement,
     StockMovementType,
     DeliveryEvent,
+    ChatMessage,
 )
 from src.shopim.db.repositories.balance_repository import BalanceRepository
 from src.shopim.db.repositories.product_repository import ProductRepository
@@ -676,12 +677,9 @@ async def place_order(
 
     data = await request.json()
     items_data = data.get("items", [])
-    delivery_address = data.get("delivery_address", "").strip()
 
     if not items_data:
         raise HTTPException(status_code=400, detail="No items in order")
-    if not delivery_address:
-        raise HTTPException(status_code=400, detail="Delivery address required")
 
     # Check balance
     bal_repo = BalanceRepository(db)
@@ -704,14 +702,23 @@ async def place_order(
     if balance < total:
         raise HTTPException(status_code=400, detail=f"Insufficient balance. Need {total:.0f}, have {float(balance):.0f}")
 
-    import uuid, datetime as dt
+    # Resolve category name for address
+    category_name = "Self-pickup"
+    if order_items:
+        first_prod = order_items[0][0]
+        if first_prod.category_id:
+            cat_obj = await db.get(Category, first_prod.category_id)
+            if cat_obj:
+                category_name = cat_obj.name
+
+    import uuid
     order_number = f"ORD-{uuid.uuid4().hex[:8].upper()}"
     order = Order(
         order_number=order_number,
         user_id=user.id,
         status=OrderStatus.PENDING_ADMIN,
         total_amount=total,
-        delivery_address=delivery_address,
+        delivery_address=category_name,
     )
     db.add(order)
     await db.flush()
@@ -1240,6 +1247,126 @@ async def admin_update_settings(
     await db.commit()
     return updated.model_dump(mode="json")
 
+
+# ──────────────────────────────────────────────
+# Chat API Endpoints
+# ──────────────────────────────────────────────
+@app.get("/api/chat/messages")
+async def list_chat_messages(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(ChatMessage).where(ChatMessage.user_id == user.id).order_by(ChatMessage.created_at.asc())
+    messages = (await db.execute(stmt)).scalars().all()
+    return [
+        {
+            "id": m.id,
+            "sender_type": m.sender_type,
+            "text": m.text,
+            "image_url": m.image_url,
+            "created_at": m.created_at.isoformat(),
+        }
+        for m in messages
+    ]
+
+
+@app.post("/api/chat/messages", status_code=201)
+async def send_chat_message(
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    data = await request.json()
+    text = data.get("text", "").strip()
+    image_url = data.get("image_url")
+    
+    if not text and not image_url:
+        raise HTTPException(status_code=400, detail="Message text or image required")
+        
+    msg = ChatMessage(
+        user_id=user.id,
+        sender_type="USER",
+        text=text or None,
+        image_url=image_url or None,
+    )
+    db.add(msg)
+    await db.commit()
+    await db.refresh(msg)
+    return {"id": msg.id, "sender_type": "USER", "created_at": msg.created_at.isoformat()}
+
+
+@app.get("/api/admin/chat/rooms")
+async def admin_list_chat_rooms(
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(ChatMessage.user_id).distinct()
+    user_ids = (await db.execute(stmt)).scalars().all()
+    
+    rooms = []
+    for uid in user_ids:
+        u = await db.get(User, uid)
+        if not u:
+            continue
+        last_msg_stmt = select(ChatMessage).where(ChatMessage.user_id == uid).order_by(ChatMessage.created_at.desc()).limit(1)
+        last_msg = (await db.execute(last_msg_stmt)).scalar_one_or_none()
+        rooms.append({
+            "user_id": u.id,
+            "full_name": u.full_name,
+            "username": u.username,
+            "last_message_text": last_msg.text if last_msg else "",
+            "last_message_time": last_msg.created_at.isoformat() if last_msg else None,
+            "sender_type": last_msg.sender_type if last_msg else "USER",
+        })
+    
+    rooms.sort(key=lambda r: r["last_message_time"] or "", reverse=True)
+    return rooms
+
+
+@app.get("/api/admin/chat/rooms/{user_id}/messages")
+async def admin_get_room_messages(
+    user_id: int,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(ChatMessage).where(ChatMessage.user_id == user_id).order_by(ChatMessage.created_at.asc())
+    messages = (await db.execute(stmt)).scalars().all()
+    return [
+        {
+            "id": m.id,
+            "sender_type": m.sender_type,
+            "text": m.text,
+            "image_url": m.image_url,
+            "created_at": m.created_at.isoformat(),
+        }
+        for m in messages
+    ]
+
+
+@app.post("/api/admin/chat/rooms/{user_id}/messages", status_code=201)
+async def admin_send_room_message(
+    user_id: int,
+    request: Request,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    data = await request.json()
+    text = data.get("text", "").strip()
+    image_url = data.get("image_url")
+    
+    if not text and not image_url:
+        raise HTTPException(status_code=400, detail="Message text or image required")
+        
+    msg = ChatMessage(
+        user_id=user_id,
+        sender_type="ADMIN",
+        text=text or None,
+        image_url=image_url or None,
+    )
+    db.add(msg)
+    await db.commit()
+    await db.refresh(msg)
+    return {"id": msg.id, "sender_type": "ADMIN", "created_at": msg.created_at.isoformat()}
 
 
 # ──────────────────────────────────────────────

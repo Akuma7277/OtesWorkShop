@@ -4,13 +4,13 @@ import { t } from '../i18n'
 
 export default function BottomNav() {
   const { pathname } = useLocation()
-  const { cart } = useApp()
+  const { cart, lang } = useApp()
   const cartCount = cart.length
 
   const navItems = [
     { path: '/',        icon: '🏠', label: t('welcome') },
     { path: '/shop',    icon: '🍀', label: t('products') },
-    { path: '/news',    icon: '📰', label: t('news') },
+    { path: '/chat',    icon: '💬', label: lang === 'ru' ? 'Чат' : 'Chat' },
     { path: '/cart',    icon: '🛒', label: t('cart') },
     { path: '/profile', icon: '👤', label: t('profile') },
   ]

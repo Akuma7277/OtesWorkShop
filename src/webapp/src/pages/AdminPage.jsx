@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
   adminGetDashboard, adminGetOrders, adminApproveOrder, adminRejectOrder,
@@ -7,7 +7,8 @@ import {
   adminCreateProduct, adminUpdateProduct, adminDeleteProduct, getProducts,
   adminGetPendingReviews, adminApproveReview, adminRejectReview,
   adminGetSettings, adminUpdateSettings, getCategories,
-  getNews, adminCreateNews, adminDeleteNews
+  getNews, adminCreateNews, adminDeleteNews,
+  adminGetChatRooms, adminGetRoomMessages, adminSendRoomMessage
 } from '../api'
 import { useApp } from '../context/AppContext'
 import Spinner from '../components/Spinner'
@@ -45,6 +46,7 @@ export default function AdminPage() {
   const [reviews, setReviews] = useState([])
   const [newsList, setNewsList] = useState([])
   const [settings, setSettings] = useState(null)
+  const [chatRooms, setChatRooms] = useState([])
   const [loading, setLoading] = useState(false)
 
   if (!isAdmin) {
@@ -62,6 +64,7 @@ export default function AdminPage() {
   const tabs = [
     { key: 'dashboard', label: '📊' },
     { key: 'orders', label: '📦' },
+    { key: 'chat', label: '💬' },
     { key: 'topups', label: '💳' },
     { key: 'users', label: '👥' },
     { key: 'products', label: '🏬' },
@@ -79,6 +82,7 @@ export default function AdminPage() {
     try {
       if (tab === 'dashboard') setDashboard(await adminGetDashboard())
       if (tab === 'orders') setOrders((await adminGetOrders({ per_page: 30 }))?.items || [])
+      if (tab === 'chat') setChatRooms(await adminGetChatRooms() || [])
       if (tab === 'topups') setTopups(await adminGetPendingTopups() || [])
       if (tab === 'users') setUsers((await adminGetUsers({ per_page: 30 }))?.items || [])
       if (tab === 'products') {
@@ -118,6 +122,7 @@ export default function AdminPage() {
         <>
           {tab === 'dashboard' && dashboard && <DashboardTab d={dashboard} />}
           {tab === 'orders' && <OrdersTab orders={orders} reload={loadTab} />}
+          {tab === 'chat' && <ChatTab rooms={chatRooms} reload={loadTab} />}
           {tab === 'topups' && <TopupsTab topups={topups} reload={loadTab} />}
           {tab === 'users' && <UsersTab users={users} reload={loadTab} />}
           {tab === 'products' && <ProductsTab products={products} categories={categories} reload={loadTab} />}
@@ -837,3 +842,221 @@ function NewsTab({ newsList, reload }) {
   )
 }
 
+
+function ChatTab({ rooms, reload }) {
+  const [activeUserId, setActiveUserId] = useState(null)
+  const [messages, setMessages] = useState([])
+  const [inputText, setInputText] = useState('')
+  const [sendImage, setSendImage] = useState('')
+  const [sending, setSending] = useState(false)
+  const [activeUser, setActiveUser] = useState(null)
+  const messagesEndRef = useRef(null)
+
+  useEffect(() => {
+    if (!activeUserId) return
+    loadRoomMessages()
+    const interval = setInterval(loadRoomMessages, 4000)
+    return () => clearInterval(interval)
+  }, [activeUserId])
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  const loadRoomMessages = async () => {
+    try {
+      const res = await adminGetRoomMessages(activeUserId)
+      setMessages(res || [])
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleSelectRoom = (room) => {
+    haptic.light()
+    setActiveUserId(room.user_id)
+    setActiveUser(room)
+    setMessages([])
+  }
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (file.size > 8 * 1024 * 1024) {
+      alert('Maksimal hajm: 8MB')
+      return
+    }
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setSendImage(reader.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleSend = async (e) => {
+    e.preventDefault()
+    if (!inputText.trim() && !sendImage) return
+
+    haptic.medium()
+    setSending(true)
+    const textToSend = inputText.trim()
+    const imgToSend = sendImage
+
+    setInputText('')
+    setSendImage('')
+
+    try {
+      await adminSendRoomMessage(activeUserId, { text: textToSend, image_url: imgToSend || null })
+      await loadRoomMessages()
+      reload() // refresh rooms list too
+    } catch (err) {
+      alert(`Xato: ${err.message}`)
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className="stagger" style={{ display: 'flex', gap: 16, height: '65vh' }}>
+      {/* Sidebar: Chat rooms list */}
+      <div className="card scroll-y" style={{ width: '35%', display: 'flex', flexDirection: 'column', padding: 8, gap: 8, background: 'var(--bg-glass)' }}>
+        <div style={{ padding: '8px 12px', fontSize: 13, fontWeight: 700, color: 'var(--text-muted)' }}>Muloqotlar ({rooms.length})</div>
+        {rooms.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 24, fontSize: 13, color: 'var(--text-muted)' }}>Faol chatlar mavjud emas</div>
+        ) : (
+          rooms.map(room => {
+            const active = room.user_id === activeUserId
+            const date = room.last_message_time ? new Date(room.last_message_time).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''
+            return (
+              <div
+                key={room.user_id}
+                onClick={() => handleSelectRoom(room)}
+                style={{
+                  padding: '12px 10px',
+                  borderRadius: 12,
+                  cursor: 'pointer',
+                  background: active ? 'rgba(124,92,252,0.15)' : 'rgba(255,255,255,0.02)',
+                  border: `1px solid ${active ? 'var(--accent-primary)' : 'var(--border)'}`,
+                  transition: 'all 0.2s ease',
+                  position: 'relative'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '70%' }}>
+                    {room.full_name || 'Noma\'lum'}
+                  </div>
+                  <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>{date}</div>
+                </div>
+                {room.username && <div style={{ fontSize: 10, color: 'var(--accent-primary)', marginBottom: 4 }}>@{room.username}</div>}
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {room.sender_type === 'ADMIN' ? '💬 Siz: ' : ''}{room.last_message_text}
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {/* Main chat window */}
+      <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 12, background: 'var(--bg-glass)' }}>
+        {activeUserId ? (
+          <>
+            {/* Active User Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 10, borderBottom: '1px solid var(--border)', marginBottom: 12 }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 800 }}>{activeUser?.full_name}</div>
+                {activeUser?.username && <div style={{ fontSize: 11, color: 'var(--accent-primary)' }}>@{activeUser.username}</div>}
+              </div>
+              <button className="btn btn-sm btn-secondary" onClick={() => setActiveUserId(null)}>Yopish ✕</button>
+            </div>
+
+            {/* Messages container */}
+            <div className="scroll-y" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, paddingRight: 4, marginBottom: 12 }}>
+              {messages.map(m => {
+                const isAdminMsg = m.sender_type === 'ADMIN'
+                const date = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                return (
+                  <div
+                    key={m.id}
+                    style={{
+                      alignSelf: isAdminMsg ? 'flex-end' : 'flex-start',
+                      maxWidth: '85%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: isAdminMsg ? 'flex-end' : 'flex-start'
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: isAdminMsg ? 'var(--gradient-primary)' : 'rgba(255,255,255,0.06)',
+                        color: isAdminMsg ? '#fff' : 'var(--text-primary)',
+                        border: isAdminMsg ? 'none' : '1px solid var(--border)',
+                        borderRadius: isAdminMsg ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                        padding: '8px 12px',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      {m.image_url && (
+                        <div style={{ marginBottom: 6 }}>
+                          <a href={m.image_url} target="_blank" rel="noreferrer">
+                            <img src={m.image_url} alt="Admin attachment" style={{ maxWidth: '100%', maxHeight: 150, borderRadius: 8, objectFit: 'contain' }} />
+                          </a>
+                        </div>
+                      )}
+                      {m.text && <div style={{ fontSize: 13, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{m.text}</div>}
+                    </div>
+                    <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 2 }}>{date}</div>
+                  </div>
+                )
+              })}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input panel */}
+            <form onSubmit={handleSend} style={{ padding: 6, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 12 }}>
+              {sendImage && (
+                <div style={{ position: 'relative', display: 'inline-block', margin: '4px 0 8px 4px' }}>
+                  <img src={sendImage} alt="Attachment Preview" style={{ height: 50, borderRadius: 6, objectFit: 'cover' }} />
+                  <button
+                    type="button"
+                    onClick={() => setSendImage('')}
+                    style={{
+                      position: 'absolute', top: -5, right: -5,
+                      background: '#ef4444', color: '#fff', border: 'none',
+                      borderRadius: '50%', width: 16, height: 16, fontSize: 8,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <label style={{ cursor: 'pointer', padding: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, background: 'rgba(255,255,255,0.04)' }}>
+                  <span style={{ fontSize: 16 }}>📸</span>
+                  <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+                </label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="Xabar yozing / rasm yuklang..."
+                  value={inputText}
+                  onChange={e => setInputText(e.target.value)}
+                  style={{ flex: 1, padding: '8px 12px', borderRadius: 8, height: 36, fontSize: 13 }}
+                />
+                <button type="submit" className="btn btn-primary" style={{ padding: '0 12px', height: 36, borderRadius: 8, fontSize: 13 }} disabled={sending || (!inputText.trim() && !sendImage)}>
+                  Yuborish
+                </button>
+              </div>
+            </form>
+          </>
+        ) : (
+          <div style={{ margin: 'auto', textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>💬</div>
+            <div style={{ fontSize: 13 }}>Muloqot qilish uchun chap tomondan mijozni tanlang</div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

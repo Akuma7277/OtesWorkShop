@@ -482,3 +482,18 @@ class News(Base):
     )
 
 
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BIGINT, ForeignKey("users.id"), nullable=False)
+    sender_type: Mapped[str] = mapped_column(VARCHAR(20), nullable=False)  # "USER" or "ADMIN"
+    text: Mapped[str | None] = mapped_column(TEXT)
+    image_url: Mapped[str | None] = mapped_column(TEXT)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    user: Mapped["User"] = relationship("User")
+
+
