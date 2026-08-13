@@ -21,7 +21,14 @@ class SettingsService:
         """
         setting_db = await self.settings_repo.get_setting(BOT_SETTINGS_KEY)
         if setting_db and isinstance(setting_db.value, dict):
-            return BotSettings.model_validate(setting_db.value)
+            val_dict = dict(setting_db.value)
+            try:
+                min_topup = Decimal(str(val_dict.get("min_topup_amount", "1000.00")))
+                if min_topup >= Decimal("1000.00"):
+                    val_dict["min_topup_amount"] = 5.0
+            except Exception:
+                pass
+            return BotSettings.model_validate(val_dict)
         return BotSettings()
 
     async def update_bot_settings(

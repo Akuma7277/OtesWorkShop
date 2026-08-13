@@ -806,8 +806,14 @@ async def create_topup(
 ):
     data = await request.json()
     amount = float(data.get("amount", 0))
-    if amount < settings.min_topup_amount:
-        raise HTTPException(status_code=400, detail=f"Minimum topup: {settings.min_topup_amount:.0f}")
+
+    from src.shopim.services.settings_service import SettingsService
+    settings_service = SettingsService(db)
+    bot_settings = await settings_service.get_bot_settings()
+    min_amount = float(bot_settings.min_topup_amount)
+
+    if amount < min_amount:
+        raise HTTPException(status_code=400, detail=f"Minimum topup: {min_amount:.0f}")
     topup = Topup(
         user_id=user.id,
         amount=amount,
