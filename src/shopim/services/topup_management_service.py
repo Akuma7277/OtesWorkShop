@@ -36,7 +36,7 @@ class TopupManagementService:
         return PaginatedTopups(topups, total_pages, page)
 
     async def approve_topup(self, topup_id: int, admin: Admin) -> Topup | None:
-        topup = await self.topup_repo.get_by_id(topup_id)
+        topup = await self.topup_repo.get(topup_id)
         if not topup or topup.status != TopupStatus.PENDING:
             return None
 
