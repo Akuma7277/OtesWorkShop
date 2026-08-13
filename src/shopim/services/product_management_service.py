@@ -104,7 +104,13 @@ class ProductManagementService:
         if not await self.can_delete_product(product_id):
             return False
 
-        product = await self.product_repo.get_by_id(product_id)
+        # Delete related stock movements first to avoid foreign key errors!
+        from src.shopim.db.models import StockMovement
+        from sqlalchemy import delete
+        stmt = delete(StockMovement).where(StockMovement.product_id == product_id)
+        await self.session.execute(stmt)
+
+        product = await self.product_repo.get(product_id)
         if product:
             await self.session.delete(product)
             await self.session.commit()
@@ -114,7 +120,7 @@ class ProductManagementService:
     async def update_product(
         self, product_id: int, update_data: dict[str, Any]
     ) -> Product | None:
-        product = await self.product_repo.get_by_id(product_id)
+        product = await self.product_repo.get(product_id)
         if not product:
             return None
 
