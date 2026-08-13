@@ -651,6 +651,20 @@ async def get_order(
     return _order_dict(order)
 
 
+def get_product_price_for_grams(product_sale_price_per_gram: float, grams: float) -> float:
+    base_price = float(product_sale_price_per_gram)
+    g_int = round(grams, 2)
+    if abs(g_int - 1.0) < 0.05:
+        return base_price
+    elif abs(g_int - 3.0) < 0.05:
+        return base_price * 2.0
+    elif abs(g_int - 5.0) < 0.05:
+        return base_price * 3.0
+    elif abs(g_int - 10.0) < 0.05:
+        return base_price * 5.6
+    return base_price * grams
+
+
 @app.post("/api/orders", status_code=201)
 async def place_order(
     request: Request,
@@ -683,7 +697,7 @@ async def place_order(
         grams = float(item["grams"])
         if product.stock_grams < grams:
             raise HTTPException(status_code=400, detail=f"Not enough stock for {product.name}")
-        subtotal = grams * float(product.sale_price_per_gram)
+        subtotal = get_product_price_for_grams(product.sale_price_per_gram, grams)
         total += subtotal
         order_items.append((product, grams, subtotal))
 

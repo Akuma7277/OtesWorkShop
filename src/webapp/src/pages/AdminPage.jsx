@@ -404,14 +404,33 @@ function ProductsTab({ products, categories, reload }) {
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
   const [formData, setFormData] = useState({
-    name: '', sale_price: '', cost_price: '', initial_stock: '', low_stock_threshold: '10', description: '', category_id: ''
+    name: '', sale_price: '', cost_price: '', initial_stock: '', low_stock_threshold: '10', description: '', category_id: '', image_url: ''
   })
   const [submitting, setSubmitting] = useState(false)
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    if (file.size > 8 * 1024 * 1024) {
+      showToast('❌ Rasm hajmi 8MB dan oshmasligi kerak')
+      return
+    }
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setFormData(prev => ({ ...prev, image_url: reader.result }))
+      showToast('✅ Rasm muvaffaqiyatli yuklandi!')
+    }
+    reader.readAsDataURL(file)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!formData.name || !formData.sale_price) {
       showToast('❌ Nom va sotuv narxi majburiy!')
+      return
+    }
+    if (!editingProduct && !formData.image_url) {
+      showToast('❌ Mahsulot rasmini yuklash majburiy!')
       return
     }
     haptic.medium()
@@ -425,7 +444,8 @@ function ProductsTab({ products, categories, reload }) {
           stock_grams: Number(formData.initial_stock),
           low_stock_threshold_grams: Number(formData.low_stock_threshold),
           description: formData.description,
-          category_id: Number(formData.category_id)
+          category_id: Number(formData.category_id),
+          image_url: formData.image_url
         })
         showToast('✅ Mahsulot yangilandi')
       } else {
@@ -434,7 +454,7 @@ function ProductsTab({ products, categories, reload }) {
       }
       setShowAddForm(false)
       setEditingProduct(null)
-      setFormData({ name: '', sale_price: '', cost_price: '', initial_stock: '', low_stock_threshold: '10', description: '', category_id: '' })
+      setFormData({ name: '', sale_price: '', cost_price: '', initial_stock: '', low_stock_threshold: '10', description: '', category_id: '', image_url: '' })
       reload()
     } catch (err) {
       showToast(`❌ ${err.message}`)
@@ -457,7 +477,7 @@ function ProductsTab({ products, categories, reload }) {
 
   return (
     <div className="stagger">
-      <button className="btn btn-primary btn-full mb-4" onClick={() => { haptic.light(); setShowAddForm(!showAddForm); setEditingProduct(null) }}>
+      <button className="btn btn-primary btn-full mb-4" onClick={() => { haptic.light(); setShowAddForm(!showAddForm); setEditingProduct(null); setFormData({ name: '', sale_price: '', cost_price: '', initial_stock: '', low_stock_threshold: '10', description: '', category_id: '', image_url: '' }) }}>
         {showAddForm ? '❌ Shaklni yopish' : '➕ Yangi mahsulot qo\'shish'}
       </button>
 
@@ -494,6 +514,17 @@ function ProductsTab({ products, categories, reload }) {
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
+          
+          <div className="input-group">
+            <label className="input-label">Rasm (Majburiy)</label>
+            <input type="file" accept="image/*" className="input" onChange={handleImageChange} required={!editingProduct} style={{ padding: '8px 12px' }} />
+            {formData.image_url && (
+              <div style={{ textAlign: 'center', marginTop: 12 }}>
+                <img src={formData.image_url} alt="Preview" style={{ maxHeight: 120, borderRadius: 8, objectFit: 'contain', border: '1px solid var(--border)' }} />
+              </div>
+            )}
+          </div>
+
           <div className="input-group">
             <label className="input-label">Tavsif</label>
             <textarea className="input" rows={3} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
@@ -506,10 +537,17 @@ function ProductsTab({ products, categories, reload }) {
 
       {products.map(p => (
         <div key={p.id} className="card mb-3 flex items-center justify-between">
-          <div>
-            <div style={{ fontWeight: 700 }}>{p.name}</div>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-              Sotuv: {Number(p.sale_price_per_gram).toFixed(0)} so'm · Zaxira: {Number(p.stock_grams).toFixed(0)} g
+          <div className="flex items-center gap-3">
+            {p.image_url ? (
+              <img src={p.image_url} alt={p.name} style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border)' }} />
+            ) : (
+              <div style={{ width: 44, height: 44, borderRadius: 8, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🍃</div>
+            )}
+            <div>
+              <div style={{ fontWeight: 700 }}>{p.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                Sotuv: {Number(p.sale_price_per_gram).toFixed(0)} $ · Zaxira: {Number(p.stock_grams).toFixed(0)} g
+              </div>
             </div>
           </div>
           <div className="flex gap-2">
@@ -523,7 +561,8 @@ function ProductsTab({ products, categories, reload }) {
                 initial_stock: String(p.stock_grams),
                 low_stock_threshold: String(p.low_stock_threshold_grams || '10'),
                 description: p.description || '',
-                category_id: String(p.category_id || '')
+                category_id: String(p.category_id || ''),
+                image_url: p.image_url || ''
               })
               setShowAddForm(true)
             }}>✏️</button>

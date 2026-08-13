@@ -10,10 +10,10 @@ const GRAM_PRESETS = [10, 25, 50, 100, 250, 500]
 export default function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { addToCart, showToast } = useApp()
+  const { addToCart, showToast, getProductPriceForGrams, lang } = useApp()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [grams, setGrams] = useState(50)
+  const [grams, setGrams] = useState(1)
   const [adding, setAdding] = useState(false)
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function ProductDetailPage() {
 
   const stock = Number(product.stock_grams)
   const maxGrams = Math.min(stock, 5000)
-  const subtotal = grams * Number(product.sale_price_per_gram)
+  const subtotal = getProductPriceForGrams(product, grams)
   const isOut = stock <= 0
 
   const handleAdd = () => {
@@ -96,44 +96,58 @@ export default function ProductDetailPage() {
 
         {!isOut && (
           <>
-            {/* Gram presets */}
-            <div style={{ marginBottom: 16 }}>
-              <div className="input-label">Gramm miqdorini tanlang</div>
-              <div className="scroll-x" style={{ paddingBottom: 0 }}>
-                {GRAM_PRESETS.filter(g => g <= maxGrams).map(g => (
-                  <button
-                    key={g}
-                    className="btn btn-sm"
-                    style={{ flexShrink: 0, ...(grams === g ? {} : { background: 'var(--bg-glass)', color: 'var(--text-secondary)' }) }}
-                    onClick={() => { haptic.light(); setGrams(g) }}
-                  >
-                    {g} g
-                  </button>
-                ))}
+            {/* Package selector */}
+            <div style={{ marginBottom: 20 }}>
+              <div className="input-label" style={{ marginBottom: 12 }}>
+                {lang === 'ru' ? 'Выберите количество грамм' : 'Gramm miqdorini tanlang'}
               </div>
-            </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} className="stagger">
+                {[
+                  { grams: 1, label: lang === 'ru' ? '1 грамм' : '1 gram', factor: 1.0 },
+                  { grams: 3, label: lang === 'ru' ? '3 грамма' : '3 gram', factor: 2.0 },
+                  { grams: 5, label: lang === 'ru' ? '5 грамм' : '5 gram', factor: 3.0 },
+                  { grams: 10, label: lang === 'ru' ? '10 грамм' : '10 gram', factor: 5.6 }
+                ].map(pkg => {
+                  const basePrice = Number(product.sale_price_per_gram)
+                  const pkgPrice = basePrice * pkg.factor
+                  const isDisabled = stock < pkg.grams
+                  const isSelected = grams === pkg.grams
 
-            {/* Custom input */}
-            <div className="input-group">
-              <label className="input-label">Yoki o'zingiz kiriting (g)</label>
-              <div className="flex items-center gap-2">
-                <button
-                  className="qty-btn"
-                  onClick={() => { haptic.light(); setGrams(g => Math.max(1, g - 5)) }}
-                >−</button>
-                <input
-                  type="number"
-                  className="input"
-                  style={{ flex: 1, textAlign: 'center' }}
-                  value={grams}
-                  min={1}
-                  max={maxGrams}
-                  onChange={e => setGrams(Math.min(maxGrams, Math.max(1, Number(e.target.value) || 1)))}
-                />
-                <button
-                  className="qty-btn"
-                  onClick={() => { haptic.light(); setGrams(g => Math.min(maxGrams, g + 5)) }}
-                >+</button>
+                  return (
+                    <div
+                      key={pkg.grams}
+                      onClick={() => { if (!isDisabled) { haptic.light(); setGrams(pkg.grams) } }}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '14px 16px',
+                        borderRadius: 12,
+                        border: isSelected ? '2px solid var(--accent-primary)' : '1px solid var(--border)',
+                        background: isSelected ? 'rgba(124, 92, 252, 0.12)' : 'var(--bg-glass)',
+                        cursor: isDisabled ? 'not-allowed' : 'pointer',
+                        opacity: isDisabled ? 0.5 : 1,
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{
+                          width: 20, height: 20, borderRadius: '50%',
+                          border: '2px solid ' + (isSelected ? 'var(--accent-primary)' : 'var(--text-muted)'),
+                          display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}>
+                          {isSelected && <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--accent-primary)' }} />}
+                        </div>
+                        <div style={{ fontWeight: 700, fontSize: 15, color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                          {pkg.label}
+                        </div>
+                      </div>
+                      <div style={{ fontWeight: 800, fontSize: 16, color: isSelected ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
+                        {isDisabled ? (lang === 'ru' ? 'Нет в наличии' : 'Mavjud emas') : `${pkgPrice.toFixed(0)} $`}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
 
@@ -141,7 +155,9 @@ export default function ProductDetailPage() {
             <div className="card mb-6" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div className="text-xs text-muted">{t('subtotal')}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{grams} g × {Number(product.sale_price_per_gram).toFixed(1)} $</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                  {grams} g
+                </div>
               </div>
               <div style={{ fontSize: 24, fontWeight: 900, background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 {subtotal.toFixed(1)} $

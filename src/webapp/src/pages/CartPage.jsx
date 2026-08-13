@@ -7,7 +7,7 @@ import Spinner from '../components/Spinner'
 import { t, getLanguage } from '../i18n'
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateCartGrams, clearCart, cartTotal, loadBalance, showToast, lang } = useApp()
+  const { cart, removeFromCart, updateCartGrams, clearCart, cartTotal, loadBalance, showToast, lang, getProductPriceForGrams } = useApp()
   const [address, setAddress] = useState('')
   const [placing, setPlacing] = useState(false)
   const navigate = useNavigate()
@@ -69,30 +69,26 @@ export default function CartPage() {
       {/* Cart Items */}
       <div className="stagger mb-4">
         {cart.map(({ product, grams }) => {
-          const subtotal = grams * Number(product.sale_price_per_gram)
+          const subtotal = getProductPriceForGrams(product, grams)
           return (
-            <div key={product.id} className="cart-item">
+            <div key={product.id} className="cart-item" style={{ padding: '12px 16px' }}>
               <div className="cart-item-image">
                 {product.image_url ? <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🍃'}
               </div>
               <div className="cart-item-info">
                 <div className="cart-item-name">{product.name}</div>
-                <div className="cart-item-price">{Number(product.sale_price_per_gram).toFixed(1)} $/g</div>
+                <div className="cart-item-price">{grams} g</div>
                 <div style={{ fontSize: 13, fontWeight: 700, background: 'var(--gradient-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginTop: 2 }}>
                   {subtotal.toFixed(1)} $
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                <div className="qty-control">
-                  <button className="qty-btn" onClick={() => { haptic.light(); updateCartGrams(product.id, grams - 10) }}>−</button>
-                  <span className="qty-value">{grams}g</span>
-                  <button className="qty-btn" onClick={() => { haptic.light(); updateCartGrams(product.id, grams + 10) }}>+</button>
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <button
+                  className="btn btn-danger btn-sm"
                   onClick={() => { haptic.light(); removeFromCart(product.id) }}
-                  style={{ background: 'none', border: 'none', color: 'var(--accent-red)', cursor: 'pointer', fontSize: 18 }}
+                  style={{ padding: '8px 12px', fontSize: 13 }}
                 >
-                  🗑
+                  {lang === 'ru' ? 'Удалить' : 'O\'chirish'}
                 </button>
               </div>
             </div>

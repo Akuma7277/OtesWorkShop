@@ -93,8 +93,17 @@ export function AppProvider({ children }) {
 
   const clearCart = () => setCart([])
 
+  const getProductPriceForGrams = (product, grams) => {
+    const basePrice = Number(product.sale_price_per_gram)
+    if (grams === 1) return basePrice
+    if (grams === 3) return basePrice * 2.0
+    if (grams === 5) return basePrice * 3.0
+    if (grams === 10) return basePrice * 5.6
+    return basePrice * grams
+  }
+
   const cartTotal = cart.reduce(
-    (sum, i) => sum + i.product.sale_price_per_gram * i.grams,
+    (sum, i) => sum + getProductPriceForGrams(i.product, i.grams),
     0
   )
   const cartCount = cart.reduce((sum, i) => sum + i.grams, 0)
@@ -104,7 +113,7 @@ export function AppProvider({ children }) {
       value={{
         user, setUser, balance, setBalance, loadBalance,
         cart, addToCart, removeFromCart, updateCartGrams, clearCart,
-        cartTotal, cartCount,
+        cartTotal, cartCount, getProductPriceForGrams,
         loading, error,
         toast, showToast,
         isAdmin,

@@ -55,6 +55,7 @@ class ProductManagementService:
             description=product_data.get("description"),
             pickup_address=product_data.get("pickup_address"),
             image_file_id=product_data.get("image_file_id"),
+            image_url=product_data.get("image_url"),
             cost_price_per_gram=cost_price,
             sale_price_per_gram=Decimal(product_data["sale_price"]),
             stock_grams=initial_stock,
