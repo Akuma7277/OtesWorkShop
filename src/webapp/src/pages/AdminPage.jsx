@@ -354,11 +354,11 @@ function UsersTab({ users, reload }) {
             <div>
               <div style={{ fontWeight: 700 }}>{u.full_name}</div>
               <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                {u.username ? `@${u.username}` : 'username yo\'q'} · {u.age} yosh
+                {u.username ? `@${u.username}` : 'username yo\'q'} · {u.age ? `${u.age} yosh` : "yoshi noma'lum"}
               </div>
             </div>
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>📍 {u.address}</div>
+          {u.address && u.address !== 'Tashkent' && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>📍 {u.address}</div>}
           <div className="flex gap-2">
             {u.status === 'PENDING' ? (
               <>

@@ -91,8 +91,8 @@ class User(Base):
     username: Mapped[str | None] = mapped_column(VARCHAR(255))
     full_name: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
     phone: Mapped[str | None] = mapped_column(VARCHAR(32))
-    address: Mapped[str] = mapped_column(TEXT, nullable=False)
-    age: Mapped[int] = mapped_column(nullable=False)
+    address: Mapped[str | None] = mapped_column(TEXT, nullable=True)
+    age: Mapped[int | None] = mapped_column(nullable=True)
     status: Mapped[UserStatus] = mapped_column(
         Enum(UserStatus), nullable=False, default=UserStatus.PENDING
     )
@@ -110,7 +110,7 @@ class User(Base):
     )
 
     __table_args__ = (
-        CheckConstraint("age BETWEEN 13 AND 120"),
+        CheckConstraint("age IS NULL OR (age BETWEEN 13 AND 120)"),
         Index("idx_users_status", "status"),
     )
 

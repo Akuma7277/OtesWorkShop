@@ -139,37 +139,63 @@ async def get_current_telegram_id(
     return int(user_id)
 
 
+async def get_current_tg_user(
+    x_telegram_init_data: str = Header(default=""),
+) -> dict:
+    """Extract and validate the Telegram user dict from initData."""
+    if not x_telegram_init_data:
+        dev_id = os.getenv("DEV_TELEGRAM_ID")
+        if dev_id:
+            return {"id": int(dev_id), "first_name": "Super", "last_name": "Admin", "username": "admin"}
+        raise HTTPException(status_code=401, detail="Telegram initData missing")
+
+    tg_user = _validate_init_data(x_telegram_init_data, settings.bot_token)
+    if tg_user is None:
+        raise HTTPException(status_code=401, detail="Invalid Telegram initData")
+    return tg_user
+
+
 async def get_current_user(
-    telegram_id: int = Depends(get_current_telegram_id),
+    tg_user: dict = Depends(get_current_tg_user),
     db: AsyncSession = Depends(get_db),
 ) -> User:
     from src.shopim.db.models import UserStatus
+    telegram_id = int(tg_user["id"])
     stmt = select(User).where(User.telegram_id == telegram_id)
     user = (await db.execute(stmt)).scalar_one_or_none()
-    
-    # Super admins are automatically registered and approved
+
+    if not user:
+        # Auto-register using Telegram name
+        first_name = tg_user.get("first_name") or ""
+        last_name = tg_user.get("last_name") or ""
+        full_name = f"{first_name} {last_name}".strip() or f"User_{telegram_id}"
+        username = tg_user.get("username") or None
+        language_code = tg_user.get("language_code") or "uz"
+
+        # Super admin auto-approval
+        status = UserStatus.APPROVED if telegram_id in settings.super_admins_list else UserStatus.PENDING
+
+        user = User(
+            telegram_id=telegram_id,
+            full_name=full_name,
+            username=username,
+            address="Tashkent",
+            age=None,  # Age is set to None by default
+            status=status,
+            language_code=language_code,
+            balance=0.0
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+    # Super admins are automatically approved
     if telegram_id in settings.super_admins_list:
-        if not user:
-            user = User(
-                telegram_id=telegram_id,
-                full_name="Super Admin",
-                address="Tashkent",
-                age=30,
-                status=UserStatus.APPROVED,
-                language_code="uz",
-            )
-            db.add(user)
-            await db.commit()
-            await db.refresh(user)
-        elif user.status != UserStatus.APPROVED:
+        if user.status != UserStatus.APPROVED:
             user.status = UserStatus.APPROVED
             await db.commit()
             await db.refresh(user)
-        return user
 
-    if not user:
-        raise HTTPException(status_code=404, detail="User not registered")
-    
     if user.status == UserStatus.PENDING:
         raise HTTPException(status_code=403, detail="User pending approval")
         
@@ -253,26 +279,45 @@ async def get_me(
 
 @app.get("/api/users/status")
 async def check_user_status(
-    telegram_id: int = Depends(get_current_telegram_id),
+    tg_user: dict = Depends(get_current_tg_user),
     db: AsyncSession = Depends(get_db),
 ):
     from src.shopim.db.models import UserStatus
+    telegram_id = int(tg_user["id"])
     stmt = select(User).where(User.telegram_id == telegram_id)
     user = (await db.execute(stmt)).scalar_one_or_none()
     is_admin = await _user_is_admin(telegram_id, db)
     
+    if not user:
+        # Auto-register using Telegram name
+        first_name = tg_user.get("first_name") or ""
+        last_name = tg_user.get("last_name") or ""
+        full_name = f"{first_name} {last_name}".strip() or f"User_{telegram_id}"
+        username = tg_user.get("username") or None
+        language_code = tg_user.get("language_code") or "uz"
+
+        # Super admin auto-approval
+        status = UserStatus.APPROVED if telegram_id in settings.super_admins_list else UserStatus.PENDING
+
+        user = User(
+            telegram_id=telegram_id,
+            full_name=full_name,
+            username=username,
+            address="Tashkent",
+            age=None,  # Age is set to None by default
+            status=status,
+            language_code=language_code,
+            balance=0.0
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+        
     if telegram_id in settings.super_admins_list:
         return {
             "registered": True,
             "status": "APPROVED",
             "is_admin": True,
-        }
-        
-    if not user:
-        return {
-            "registered": False,
-            "status": None,
-            "is_admin": is_admin,
         }
         
     return {
@@ -332,9 +377,19 @@ async def update_me(
     db: AsyncSession = Depends(get_db),
 ):
     data = await request.json()
-    allowed = {"address", "language_code"}
+    allowed = {"address", "language_code", "full_name", "age"}
     for k, v in data.items():
         if k in allowed and hasattr(user, k):
+            if k == "age":
+                if v is None or v == "":
+                    v = None
+                else:
+                    try:
+                        v = int(v)
+                        if v < 13 or v > 120:
+                            raise HTTPException(status_code=400, detail="Age must be between 13 and 120")
+                    except ValueError:
+                        raise HTTPException(status_code=400, detail="Invalid age value")
             setattr(user, k, v)
     await db.commit()
     return {"ok": True}

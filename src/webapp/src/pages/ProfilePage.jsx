@@ -30,6 +30,12 @@ export default function ProfilePage({ initialTab = 'info' }) {
   const [orders, setOrders] = useState([])
   const [loadingOrders, setLoadingOrders] = useState(false)
 
+  // Profile Edit states
+  const [isEditing, setIsEditing] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editAge, setEditAge] = useState('')
+  const [submittingProfile, setSubmittingProfile] = useState(false)
+
   useEffect(() => {
     setTab(initialTab)
   }, [initialTab])
@@ -39,6 +45,13 @@ export default function ProfilePage({ initialTab = 'info' }) {
       loadOrders()
     }
   }, [tab])
+
+  useEffect(() => {
+    if (user) {
+      setEditName(user.full_name || '')
+      setEditAge(user.age !== null && user.age !== undefined ? String(user.age) : '')
+    }
+  }, [user])
 
   const loadOrders = async () => {
     setLoadingOrders(true)
@@ -120,6 +133,44 @@ export default function ProfilePage({ initialTab = 'info' }) {
     }
   }
 
+  const handleSaveProfile = async (e) => {
+    e.preventDefault()
+    if (!editName.trim()) {
+      showToast(lang === 'ru' ? '❌ Имя не может быть пустым' : '❌ Ism bo\'sh bo\'lishi mumkin emas')
+      return
+    }
+
+    if (editAge.trim()) {
+      const ageNum = parseInt(editAge)
+      if (isNaN(ageNum) || ageNum < 13 || ageNum > 120) {
+        showToast(lang === 'ru' ? '❌ Возраст должен быть от 13 до 120' : '❌ Yosh 13 va 120 oralig\'ida bo\'lishi kerak')
+        return
+      }
+    }
+
+    haptic.medium()
+    setSubmittingProfile(true)
+    try {
+      await updateMe({
+        full_name: editName.trim(),
+        age: editAge.trim() ? parseInt(editAge) : null
+      })
+      setUser({
+        ...user,
+        full_name: editName.trim(),
+        age: editAge.trim() ? parseInt(editAge) : null
+      })
+      haptic.success()
+      showToast(lang === 'ru' ? '✅ Профиль обновлен!' : '✅ Profil yangilandi!')
+      setIsEditing(false)
+    } catch (err) {
+      haptic.error()
+      showToast(`❌ ${err.message}`)
+    } finally {
+      setSubmittingProfile(false)
+    }
+  }
+
   const handleLanguageChange = async (newLang) => {
     haptic.light()
     setLanguage(newLang)
@@ -177,15 +228,62 @@ export default function ProfilePage({ initialTab = 'info' }) {
 
       {tab === 'info' && (
         <div className="stagger">
-          <InfoRow label={t('full_name')} value={user.full_name} />
-          <InfoRow label={t('telegram_id')} value={user.telegram_id} />
-          {user.phone && <InfoRow label={t('phone')} value={user.phone} />}
-          <InfoRow label={t('age')} value={user.age} />
-          <InfoRow label={t('status')} value={
-            user.status === 'APPROVED' ? (lang === 'ru' ? '✅ Подтвержден' : '✅ Tasdiqlangan') :
-            user.status === 'PENDING' ? (lang === 'ru' ? '⏳ Ожидает' : '⏳ Kutilmoqda') :
-            (lang === 'ru' ? '🚫 Заблокирован' : '🚫 Bloklangan')
-          } />
+          {isEditing ? (
+            <form onSubmit={handleSaveProfile} className="card stagger" style={{ padding: 16 }}>
+              <div className="input-group">
+                <label className="input-label">{t('full_name')}</label>
+                <input
+                  type="text"
+                  className="input"
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">{t('age')}</label>
+                <input
+                  type="number"
+                  className="input"
+                  placeholder={lang === 'ru' ? 'Неизвестно' : "Noma'lum"}
+                  value={editAge}
+                  onChange={e => setEditAge(e.target.value)}
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={submittingProfile}>
+                  {submittingProfile ? '...' : (lang === 'ru' ? 'Сохранить' : 'Saqlash')}
+                </button>
+                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setIsEditing(false)}>
+                  {lang === 'ru' ? 'Отмена' : 'Bekor qilish'}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <>
+              <InfoRow label={t('full_name')} value={user.full_name} />
+              <InfoRow label={t('telegram_id')} value={user.telegram_id} />
+              {user.phone && <InfoRow label={t('phone')} value={user.phone} />}
+              <InfoRow
+                label={t('age')}
+                value={user.age ? `${user.age} ${lang === 'ru' ? 'лет' : 'yosh'}` : (lang === 'ru' ? 'Неизвестно' : "Noma'lum")}
+              />
+              <InfoRow label={t('status')} value={
+                user.status === 'APPROVED' ? (lang === 'ru' ? '✅ Подтвержден' : '✅ Tasdiqlangan') :
+                user.status === 'PENDING' ? (lang === 'ru' ? '⏳ Ожидает' : '⏳ Kutilmoqda') :
+                (lang === 'ru' ? '🚫 Заблокирован' : '🚫 Bloklangan')
+              } />
+              
+              <button
+                className="btn btn-secondary btn-full mt-4 mb-4"
+                onClick={() => { haptic.light(); setIsEditing(true) }}
+              >
+                ✍️ {lang === 'ru' ? 'Редактировать профиль' : 'Profilni tahrirlash'}
+              </button>
+            </>
+          )}
           
           {/* Language Switcher Row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
