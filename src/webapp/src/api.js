@@ -119,6 +119,7 @@ export const adminCreateExpense = (data) => api.post('/admin/expenses', data)
 
 // ---- Admin Categories ----
 export const adminCreateCategory = (data) => api.post('/admin/categories', data)
+export const adminDeleteCategory = (id) => api.delete(`/admin/categories/${id}`)
 
 export default api
 

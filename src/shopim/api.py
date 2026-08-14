@@ -1295,6 +1295,25 @@ async def admin_create_category(
     return {"id": cat.id, "name": cat.name}
 
 
+@app.delete("/api/admin/categories/{category_id}")
+async def admin_delete_category(
+    category_id: int,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    cat = await db.get(Category, category_id)
+    if not cat:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    # Update products in this category to have category_id = None
+    stmt = sa.update(Product).where(Product.category_id == category_id).values(category_id=None)
+    await db.execute(stmt)
+
+    await db.delete(cat)
+    await db.commit()
+    return {"ok": True}
+
+
 
 @app.patch("/api/admin/products/{product_id}")
 async def admin_update_product(

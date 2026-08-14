@@ -12,7 +12,7 @@ import {
   adminGetAuditLog,
   adminGetJobs, adminCreateJob, adminUpdateJob, adminDeleteJob,
   adminGetJobApplications, adminApproveJobApplication, adminRejectJobApplication,
-  adminGetExpenses, adminCreateExpense, adminCreateCategory
+  adminGetExpenses, adminCreateExpense, adminCreateCategory, adminDeleteCategory
 } from '../api'
 import { useApp } from '../context/AppContext'
 import Spinner from '../components/Spinner'
@@ -764,10 +764,38 @@ function ProductsTab({ products, categories, reload }) {
                 </button>
               </div>
             ) : (
-              <select className="input" value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})}>
-                <option value="">{lang === 'ru' ? 'Выберите...' : 'Tanlang...'}</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <select 
+                  className="input" 
+                  style={{ flex: 1 }}
+                  value={formData.category_id} 
+                  onChange={e => setFormData({...formData, category_id: e.target.value})}
+                >
+                  <option value="">{lang === 'ru' ? 'Выберите...' : 'Tanlang...'}</option>
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                {formData.category_id && (
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    style={{ padding: '0 12px', height: 38, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    onClick={async () => {
+                      if (!confirm(lang === 'ru' ? 'Вы уверены, что хотите удалить эту категорию? Товары в ней останутся без категории.' : 'Haqiqatan ham ushbu kategoriyani o\'chirmoqchimisiz? Undagi tovarlar kategoriyasiz qoladi.')) return
+                      haptic.medium()
+                      try {
+                        await adminDeleteCategory(Number(formData.category_id))
+                        showToast(lang === 'ru' ? '✅ Категория удалена' : '✅ Kategoriya o\'chirildi')
+                        setFormData(prev => ({ ...prev, category_id: '' }))
+                        await reload(true)
+                      } catch (err) {
+                        showToast(`❌ ${err.message}`)
+                      }
+                    }}
+                  >
+                    🗑️
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
