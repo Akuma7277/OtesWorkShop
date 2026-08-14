@@ -1231,8 +1231,16 @@ async def admin_unblock_user(
 
 
 # ──────────────────────────────────────────────
-# Admin Product Management Routes
-# ──────────────────────────────────────────────
+@app.get("/api/admin/products")
+async def admin_list_products(
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = select(Product).order_by(Product.created_at.desc())
+    products = (await db.execute(stmt)).scalars().all()
+    return [_product_dict(p, include_admin_fields=True) for p in products]
+
+
 @app.post("/api/admin/products", status_code=201)
 async def admin_create_product(
     request: Request,

@@ -4,7 +4,7 @@ import {
   adminGetDashboard, adminGetOrders, adminApproveOrder, adminRejectOrder,
   adminSetDeliveryStatus, adminGetPendingTopups, adminApproveTopup, adminRejectTopup,
   adminGetUsers, adminApproveUser, adminRejectUser, adminBlockUser, adminUnblockUser,
-  adminCreateProduct, adminUpdateProduct, adminDeleteProduct, getProducts,
+  adminCreateProduct, adminUpdateProduct, adminDeleteProduct, adminGetProducts, getProducts,
   adminGetPendingReviews, adminApproveReview, adminRejectReview,
   adminGetSettings, adminUpdateSettings, getCategories,
   getNews, adminCreateNews, adminDeleteNews,
@@ -98,9 +98,9 @@ export default function AdminPage() {
       if (tab === 'topups') setTopups(await adminGetPendingTopups() || [])
       if (tab === 'users') setUsers((await adminGetUsers({ per_page: 30 }))?.items || [])
       if (tab === 'products') {
-        const prodData = await getProducts({ is_active: true, limit: 100 })
+        const prodData = await adminGetProducts()
         const catData = await getCategories()
-        setProducts(prodData?.items || prodData || [])
+        setProducts(prodData || [])
         setCategories(catData || [])
       }
       if (tab === 'jobs') {
@@ -161,7 +161,7 @@ export default function AdminPage() {
 
       {loading ? <Spinner /> : (
         <>
-          {tab === 'dashboard' && dashboard && <DashboardTab d={dashboard} />}
+          {tab === 'dashboard' && dashboard && <DashboardTab d={dashboard} setTab={setTab} />}
           {tab === 'orders' && <OrdersTab orders={orders} reload={loadTab} />}
           {tab === 'chat' && <ChatTab rooms={chatRooms} reload={loadTab} />}
           {tab === 'topups' && <TopupsTab topups={topups} reload={loadTab} />}
@@ -180,29 +180,52 @@ export default function AdminPage() {
   )
 }
 
-function DashboardTab({ d }) {
+function DashboardTab({ d, setTab }) {
   const { lang } = useApp()
   return (
     <div className="stagger">
       <div className="stats-grid mb-4">
-        <StatCard icon="📦" value={d.orders_today_count} label={lang === 'ru' ? 'Заказы сегодня' : 'Bugungi buyurtmalar'} />
-        <StatCard icon="💰" value={`${Number(d.revenue_today || 0).toFixed(1)} $`} label={lang === 'ru' ? 'Доход сегодня' : 'Bugungi daromad'} />
-        <StatCard icon="⏳" value={d.pending_orders_count} label={lang === 'ru' ? 'Ожидают' : 'Kutilayotgan'} />
-        <StatCard icon="👥" value={d.active_users_count} label={lang === 'ru' ? 'Активные юзеры' : 'Faol foydalanuvchilar'} />
-        <StatCard icon="📋" value={d.pending_registrations_count} label={lang === 'ru' ? 'Новые заявки' : 'Yangi arizalar'} />
-        <StatCard icon="💳" value={d.pending_topups_count} label={lang === 'ru' ? 'Запросы оплат' : 'To\'ldirish so\'rovlari'} />
-        <StatCard icon="📈" value={d.total_orders_count} label={lang === 'ru' ? 'Всего заказано' : 'Jami buyurtmalar'} />
-        <StatCard icon="⚠️" value={d.low_stock_products_count} label={lang === 'ru' ? 'Мало товара' : 'Kam qolgan mahsulotlar'} />
+        <StatCard icon="📦" value={d.orders_today_count} label={lang === 'ru' ? 'Заказы сегодня' : 'Bugungi buyurtmalar'} onClick={() => { haptic.light(); setTab('orders') }} />
+        <StatCard icon="💰" value={`${Number(d.revenue_today || 0).toFixed(1)} $`} label={lang === 'ru' ? 'Доход сегодня' : 'Bugungi daromad'} onClick={() => { haptic.light(); setTab('orders') }} />
+        <StatCard icon="⏳" value={d.pending_orders_count} label={lang === 'ru' ? 'Ожидают' : 'Kutilayotgan'} onClick={() => { haptic.light(); setTab('orders') }} />
+        <StatCard icon="👥" value={d.active_users_count} label={lang === 'ru' ? 'Активные юзеры' : 'Faol foydalanuvchilar'} onClick={() => { haptic.light(); setTab('users') }} />
+        <StatCard icon="📋" value={d.pending_registrations_count} label={lang === 'ru' ? 'Новые заявки' : 'Yangi arizalar'} onClick={() => { haptic.light(); setTab('users') }} />
+        <StatCard icon="💳" value={d.pending_topups_count} label={lang === 'ru' ? 'Запросы оплат' : 'To\'ldirish so\'rovlari'} onClick={() => { haptic.light(); setTab('topups') }} />
+        <StatCard icon="📈" value={d.total_orders_count} label={lang === 'ru' ? 'Всего заказано' : 'Jami buyurtmalar'} onClick={() => { haptic.light(); setTab('orders') }} />
+        <StatCard icon="⚠️" value={d.low_stock_products_count} label={lang === 'ru' ? 'Мало товара' : 'Kam qolgan mahsulotlar'} onClick={() => { haptic.light(); setTab('products') }} />
       </div>
     </div>
   )
 }
 
-function StatCard({ icon, value, label }) {
+function StatCard({ icon, value, label, onClick }) {
   return (
-    <div className="stat-card">
-      <div className="stat-icon">{icon}</div>
-      <div className="stat-value">{value}</div>
+    <div 
+      className="stat-card" 
+      onClick={onClick}
+      style={{ 
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}
+      onMouseEnter={e => {
+        if (onClick) {
+          e.currentTarget.style.transform = 'translateY(-4px)';
+          e.currentTarget.style.boxShadow = '0 8px 24px rgba(124,92,252,0.15)';
+          e.currentTarget.style.borderColor = 'var(--accent-primary)';
+        }
+      }}
+      onMouseLeave={e => {
+        if (onClick) {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = 'none';
+          e.currentTarget.style.borderColor = 'var(--border)';
+        }
+      }}
+    >
+      <div className="stat-icon" style={{ transition: 'transform 0.3s ease' }}>{icon}</div>
+      <div className="stat-value" style={{ transition: 'color 0.3s ease' }}>{value}</div>
       <div className="stat-label">{label}</div>
     </div>
   )

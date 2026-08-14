@@ -75,6 +75,7 @@ export const adminBlockUser = (id) => api.post(`/admin/users/${id}/block`)
 export const adminUnblockUser = (id) => api.post(`/admin/users/${id}/unblock`)
 
 // ---- Admin Product Management ----
+export const adminGetProducts = () => api.get('/admin/products')
 export const adminCreateProduct = (data) => api.post('/admin/products', data)
 export const adminUpdateProduct = (id, data) => api.patch(`/admin/products/${id}`, data)
 export const adminDeleteProduct = (id) => api.delete(`/admin/products/${id}`)
