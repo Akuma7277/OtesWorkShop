@@ -866,7 +866,7 @@ async def place_order(
     db.add(BalanceTransaction(
         user_id=user.id,
         type=BalanceTxType.PURCHASE,
-        amount=total,
+        amount=-total,
         balance_before=float(balance),
         balance_after=balance_after,
         reference_type="Order",
@@ -1020,7 +1020,7 @@ async def admin_list_orders(
     db: AsyncSession = Depends(get_db),
 ):
     from sqlalchemy.orm import selectinload
-    stmt = select(Order).options(selectinload(Order.items), selectinload(Order.user))
+    stmt = select(Order).options(selectinload(Order.items), selectinload(Order.user), selectinload(Order.delivery_events))
     if status:
         try:
             stmt = stmt.where(Order.status == OrderStatus(status))

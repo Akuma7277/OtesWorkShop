@@ -30,7 +30,10 @@ class OrderHistoryService:
         stmt = (
             select(Order)
             .where(Order.user_id == user_id)
-            .options(selectinload(Order.items))
+            .options(
+                selectinload(Order.items),
+                selectinload(Order.delivery_events),
+            )
             .order_by(Order.created_at.desc())
             .offset(offset)
             .limit(self.orders_per_page)
