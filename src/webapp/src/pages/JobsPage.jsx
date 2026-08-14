@@ -166,7 +166,7 @@ export default function JobsPage() {
                 {app.status === 'APPROVED' && (
                   <div style={{ marginTop: 12 }}>
                     <a
-                      href={app.operator_telegram_link ? (app.operator_telegram_link.startsWith('http') ? app.operator_telegram_link : `https://t.me/${app.operator_telegram_link.replace('@', '')}`) : '#'}
+                      href={app.operator_telegram_link ? (app.operator_telegram_link.startsWith('http') || app.operator_telegram_link.startsWith('tg:') ? app.operator_telegram_link : `https://t.me/${app.operator_telegram_link.replace('@', '')}`) : '#'}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn btn-success btn-sm btn-full"

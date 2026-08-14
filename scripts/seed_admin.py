@@ -15,6 +15,12 @@ async def seed_super_admin(telegram_id: int, full_name: str):
     print("Starting admin seed script...")
     settings = get_settings()
     engine = create_async_engine(settings.db_url)
+    
+    # Create tables if they don't exist (especially for SQLite)
+    from src.shopim.db.models import Base
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+        
     session_pool = create_session_pool(engine)
 
     async with session_pool() as session:

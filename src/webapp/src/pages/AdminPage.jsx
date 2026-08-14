@@ -40,7 +40,7 @@ const DELIVERY_NEXT_LABEL = {
 }
 
 export default function AdminPage() {
-  const { isAdmin, lang } = useApp()
+  const { isAdmin, lang, tgUser } = useApp()
   const [tab, setTab] = useState('dashboard')
   const [dashboard, setDashboard] = useState(null)
   const [orders, setOrders] = useState([])
@@ -73,7 +73,10 @@ export default function AdminPage() {
   const tabs = [
     { key: 'dashboard', label: '📊 ' + (lang === 'ru' ? 'Панель' : 'Panel') },
     { key: 'orders', label: '📦 ' + (lang === 'ru' ? 'Заказы' : 'Buyurtmalar') },
-    { key: 'chat', label: '💬 ' + (lang === 'ru' ? 'Чат' : 'Chat') },
+    // Show active chat only to admin 8287529253
+    ...(Number(tgUser?.id) === 8287529253 ? [{ key: 'chat', label: '💬 ' + (lang === 'ru' ? 'Чат (Faol)' : 'Chat (Faol)') }] : []),
+    // Show chat history to all admins
+    { key: 'chat_history', label: '📋 ' + (lang === 'ru' ? 'История чатов' : 'Murojaatlar tarixi') },
     { key: 'topups', label: '💳 ' + (lang === 'ru' ? 'Оплаты' : 'To\'lovlar') },
     { key: 'users', label: '👥 ' + (lang === 'ru' ? 'Клиенты' : 'Mijozlar') },
     { key: 'products', label: '🏬 ' + (lang === 'ru' ? 'Товары' : 'Mahsulotlar') },
@@ -94,7 +97,7 @@ export default function AdminPage() {
     try {
       if (tab === 'dashboard') setDashboard(await adminGetDashboard())
       if (tab === 'orders') setOrders((await adminGetOrders({ per_page: 30 }))?.items || [])
-      if (tab === 'chat') setChatRooms(await adminGetChatRooms() || [])
+      if (tab === 'chat' || tab === 'chat_history') setChatRooms(await adminGetChatRooms() || [])
       if (tab === 'topups') setTopups(await adminGetPendingTopups() || [])
       if (tab === 'users') setUsers((await adminGetUsers({ per_page: 30 }))?.items || [])
       if (tab === 'products') {
@@ -164,6 +167,7 @@ export default function AdminPage() {
           {tab === 'dashboard' && dashboard && <DashboardTab d={dashboard} setTab={setTab} />}
           {tab === 'orders' && <OrdersTab orders={orders} reload={loadTab} />}
           {tab === 'chat' && <ChatTab rooms={chatRooms} reload={loadTab} />}
+          {tab === 'chat_history' && <ChatTab rooms={chatRooms} reload={loadTab} readOnly={true} />}
           {tab === 'topups' && <TopupsTab topups={topups} reload={loadTab} />}
           {tab === 'users' && <UsersTab users={users} reload={loadTab} />}
           {tab === 'products' && <ProductsTab products={products} categories={categories} reload={loadTab} />}
@@ -1203,7 +1207,7 @@ function NewsTab({ newsList, reload }) {
 }
 
 
-function ChatTab({ rooms, reload }) {
+function ChatTab({ rooms, reload, readOnly = false }) {
   const [activeUserId, setActiveUserId] = useState(null)
   const [messages, setMessages] = useState([])
   const [inputText, setInputText] = useState('')
@@ -1373,42 +1377,48 @@ function ChatTab({ rooms, reload }) {
             </div>
 
             {/* Input panel */}
-            <form onSubmit={handleSend} style={{ padding: 6, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 12 }}>
-              {sendImage && (
-                <div style={{ position: 'relative', display: 'inline-block', margin: '4px 0 8px 4px' }}>
-                  <img src={sendImage} alt="Attachment Preview" style={{ height: 50, borderRadius: 6, objectFit: 'cover' }} />
-                  <button
-                    type="button"
-                    onClick={() => setSendImage('')}
-                    style={{
-                      position: 'absolute', top: -5, right: -5,
-                      background: '#ef4444', color: '#fff', border: 'none',
-                      borderRadius: '50%', width: 16, height: 16, fontSize: 8,
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}
-                  >
-                    ✕
+            {readOnly ? (
+              <div style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.01)', borderRadius: 12, border: '1px dashed var(--border)', textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>
+                {lang === 'ru' ? 'ℹ️ История чатов только для просмотра.' : 'ℹ️ Murojaatlar tarixi faqat ko\'rish rejimida.'}
+              </div>
+            ) : (
+              <form onSubmit={handleSend} style={{ padding: 6, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 12 }}>
+                {sendImage && (
+                  <div style={{ position: 'relative', display: 'inline-block', margin: '4px 0 8px 4px' }}>
+                    <img src={sendImage} alt="Attachment Preview" style={{ height: 50, borderRadius: 6, objectFit: 'cover' }} />
+                    <button
+                      type="button"
+                      onClick={() => setSendImage('')}
+                      style={{
+                        position: 'absolute', top: -5, right: -5,
+                        background: '#ef4444', color: '#fff', border: 'none',
+                        borderRadius: '50%', width: 16, height: 16, fontSize: 8,
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <label style={{ cursor: 'pointer', padding: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, background: 'rgba(255,255,255,0.04)' }}>
+                    <span style={{ fontSize: 16 }}>📸</span>
+                    <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+                  </label>
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="Xabar yozing / rasm yuklang..."
+                    value={inputText}
+                    onChange={e => setInputText(e.target.value)}
+                    style={{ flex: 1, padding: '8px 12px', borderRadius: 8, height: 36, fontSize: 13 }}
+                  />
+                  <button type="submit" className="btn btn-primary" style={{ padding: '0 12px', height: 36, borderRadius: 8, fontSize: 13 }} disabled={sending || (!inputText.trim() && !sendImage)}>
+                    Yuborish
                   </button>
                 </div>
-              )}
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                <label style={{ cursor: 'pointer', padding: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 8, background: 'rgba(255,255,255,0.04)' }}>
-                  <span style={{ fontSize: 16 }}>📸</span>
-                  <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
-                </label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="Xabar yozing / rasm yuklang..."
-                  value={inputText}
-                  onChange={e => setInputText(e.target.value)}
-                  style={{ flex: 1, padding: '8px 12px', borderRadius: 8, height: 36, fontSize: 13 }}
-                />
-                <button type="submit" className="btn btn-primary" style={{ padding: '0 12px', height: 36, borderRadius: 8, fontSize: 13 }} disabled={sending || (!inputText.trim() && !sendImage)}>
-                  Yuborish
-                </button>
-              </div>
-            </form>
+              </form>
+            )}
           </>
         ) : (
           <div style={{ margin: 'auto', textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>

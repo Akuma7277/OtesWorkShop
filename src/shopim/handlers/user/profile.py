@@ -92,7 +92,7 @@ async def show_job_handler(message: types.Message, user: User):
         "💼 <b>Ish! YUQORI MAOSH!</b>\n\n"
         "Kuryerlar, qadoqlovchilar va omborchilar talab qilinadi!\n"
         "Yuqori maosh, moslashuvchan grafik va to'liq maxfiylik.\n\n"
-        "Operator bilan bog'lanish: {operator}"
+        "Operator bilan bog'lanish: <a href=\"{operator}\">Bog'lanish</a>"
     ).format(operator=settings.operator_contact)
 
     await message.answer(

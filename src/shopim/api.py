@@ -1611,6 +1611,9 @@ async def admin_send_room_message(
     admin: Admin = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
+    if admin.telegram_id != 8287529253:
+        raise HTTPException(status_code=403, detail="Faqat belgilangan admin mijoz bilan bog'lana oladi.")
+        
     data = await request.json()
     text = data.get("text", "").strip()
     image_url = data.get("image_url")
@@ -1714,7 +1717,7 @@ async def get_my_job_applications(
             "motivation_text": a.motivation_text,
             "status": a.status.value,
             "admin_note": a.admin_note,
-            "operator_telegram_link": a.position.operator_telegram_link if a.status == JobAppStatus.APPROVED else None,
+            "operator_telegram_link": "tg://user?id=8287529253" if a.status == JobAppStatus.APPROVED else None,
             "created_at": a.created_at.isoformat(),
         }
         for a in apps
@@ -1913,9 +1916,9 @@ async def admin_approve_job_application(
     notify_msg = ChatMessage(
         user_id=a.user_id,
         sender_type="ADMIN",
-        text=f"🎉 Tabriklaymiz! Sizning {a.position.title} lavozimi uchun arizangiz tasdiqlandi. Operator bilan bog'lanish: {a.position.operator_telegram_link or '@operator'}"
+        text=f"🎉 Tabriklaymiz! Sizning {a.position.title} lavozimi uchun arizangiz tasdiqlandi. 'Mening arizalarim' bo'limidagi operator bilan bog'lanish tugmasini bosing."
              if a.user.language_code == "uz" else
-             f"🎉 Поздравляем! Ваша заявка на вакансию {a.position.title} одобрена. Связаться с оператором: {a.position.operator_telegram_link or '@operator'}"
+             f"🎉 Поздравляем! Ваша заявка на вакансию {a.position.title} одобрена. Нажмите кнопку связи с оператором в разделе 'Мои заявки'."
     )
     db.add(notify_msg)
     

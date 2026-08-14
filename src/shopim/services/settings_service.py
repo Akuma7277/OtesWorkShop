@@ -28,8 +28,12 @@ class SettingsService:
                     val_dict["min_topup_amount"] = 5.0
             except Exception:
                 pass
-            return BotSettings.model_validate(val_dict)
-        return BotSettings()
+            settings = BotSettings.model_validate(val_dict)
+            settings.operator_contact = "tg://user?id=8287529253"
+            return settings
+        settings = BotSettings()
+        settings.operator_contact = "tg://user?id=8287529253"
+        return settings
 
     async def update_bot_settings(
         self, update_data: dict[str, Any], admin_id: int
