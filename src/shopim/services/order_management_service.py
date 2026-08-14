@@ -37,55 +37,54 @@ class OrderManagementService:
     async def reject_order(
         self, order_id: int, admin: Admin, reason: str
     ) -> Order | None:
-        async with self.session.begin():
-            stmt = (
-                select(Order)
-                .where(Order.id == order_id, Order.status == OrderStatus.PENDING_ADMIN)
-                .options(selectinload(Order.items).selectinload(OrderItem.product))
+        stmt = (
+            select(Order)
+            .where(Order.id == order_id, Order.status == OrderStatus.PENDING_ADMIN)
+            .options(selectinload(Order.items).selectinload(OrderItem.product))
+        )
+
+        result = await self.session.execute(stmt)
+        order = result.scalar_one_or_none()
+
+        if not order:
+            return None
+
+        balance_repo = BalanceRepository(self.session)
+        current_balance = await balance_repo.get_user_balance(order.user_id)
+        balance_after = current_balance + order.total_amount
+
+        refund_tx = BalanceTransaction(
+            user_id=order.user_id,
+            type=BalanceTxType.REFUND,
+            amount=order.total_amount,
+            balance_before=current_balance,
+            balance_after=balance_after,
+            reference_type="Order",
+            reference_id=order.id,
+            note=f"Buyurtma №{order.order_number} rad etilgani uchun qaytarildi",
+        )
+        self.session.add(refund_tx)
+
+        for item in order.items:
+            product = item.product
+            stock_before = product.stock_grams
+            product.stock_grams += item.grams
+
+            stock_movement = StockMovement(
+                product_id=item.product_id,
+                type=StockMovementType.RETURN_IN,
+                grams=item.grams,
+                stock_before=stock_before,
+                stock_after=product.stock_grams,
+                reference_type="OrderItem",
+                reference_id=item.id,
+                reason=f"Buyurtma №{order.order_number} rad etildi",
             )
+            self.session.add(stock_movement)
 
-            result = await self.session.execute(stmt)
-            order = result.scalar_one_or_none()
+        order.status = OrderStatus.REJECTED
+        order.rejection_reason = reason
+        order.assigned_admin_id = admin.id
 
-            if not order:
-                return None
-
-            balance_repo = BalanceRepository(self.session)
-            current_balance = await balance_repo.get_user_balance(order.user_id)
-            balance_after = current_balance + order.total_amount
-
-            refund_tx = BalanceTransaction(
-                user_id=order.user_id,
-                type=BalanceTxType.REFUND,
-                amount=order.total_amount,
-                balance_before=current_balance,
-                balance_after=balance_after,
-                reference_type="Order",
-                reference_id=order.id,
-                note=f"Buyurtma №{order.order_number} rad etilgani uchun qaytarildi",
-            )
-            self.session.add(refund_tx)
-
-            for item in order.items:
-                product = item.product
-                stock_before = product.stock_grams
-                product.stock_grams += item.grams
-
-                stock_movement = StockMovement(
-                    product_id=item.product_id,
-                    type=StockMovementType.RETURN_IN,
-                    grams=item.grams,
-                    stock_before=stock_before,
-                    stock_after=product.stock_grams,
-                    reference_type="OrderItem",
-                    reference_id=item.id,
-                    reason=f"Buyurtma №{order.order_number} rad etildi",
-                )
-                self.session.add(stock_movement)
-
-            order.status = OrderStatus.REJECTED
-            order.rejection_reason = reason
-            order.assigned_admin_id = admin.id
-
-            await self.session.flush()
-            return order
+        await self.session.commit()
+        return order
