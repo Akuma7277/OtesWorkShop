@@ -92,7 +92,23 @@ export default function ShopPage() {
   )
 }
 
+const TASHKENT_DISTRICTS = [
+  { key: 'Chilonzor', uz: 'Chilonzor', ru: 'Чиланзар' },
+  { key: 'Yunusobod', uz: 'Yunusobod', ru: 'Юнусабад' },
+  { key: 'MirzoUlugbek', uz: 'M. Ulug\'bek', ru: 'М. Улугбек' },
+  { key: 'Mirobod', uz: 'Mirobod', ru: 'Мирабад' },
+  { key: 'Yashnobod', uz: 'Yashnobod', ru: 'Яшнабад' },
+  { key: 'Yakkasaroy', uz: 'Yakkasaroy', ru: 'Яккасарай' },
+  { key: 'Uchtepa', uz: 'Uchtepa', ru: 'Учтепа' },
+  { key: 'Shayxontohur', uz: 'Shayxontohur', ru: 'Шайхантахур' },
+  { key: 'Olmazor', uz: 'Olmazor', ru: 'Алмазар' },
+  { key: 'Sergeli', uz: 'Sergeli', ru: 'Сергели' },
+  { key: 'Yangihayot', uz: 'Yangihayot', ru: 'Янгихаёт' },
+  { key: 'Bektemir', uz: 'Bektemir', ru: 'Бектемир' },
+]
+
 function ProductCard({ product, onPress }) {
+  const { lang } = useApp()
   const hasImage = !!product.image_url
   const stock = Number(product.stock_grams)
   const isOut = stock <= 0
@@ -109,6 +125,11 @@ function ProductCard({ product, onPress }) {
         <div className="product-name">{product.name}</div>
         {product.description && (
           <div className="text-xs text-muted mb-2 truncate">{product.description}</div>
+        )}
+        {product.pickup_address && (
+          <div style={{ fontSize: 10, color: 'var(--accent-primary)', marginBottom: 4, fontWeight: 700 }}>
+            📍 {TASHKENT_DISTRICTS.find(d => d.key === product.pickup_address)?.[lang] || product.pickup_address}
+          </div>
         )}
         <div className="product-price">{Number(product.sale_price_per_gram).toFixed(1)} $/g</div>
         <div className={`product-stock ${isOut ? 'out' : isLow ? 'low' : 'ok'}`}>

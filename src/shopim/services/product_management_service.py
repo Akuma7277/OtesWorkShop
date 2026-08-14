@@ -48,13 +48,27 @@ class ProductManagementService:
             cat_stmt = select(Category).limit(1)
             cat_res = (await self.session.execute(cat_stmt)).scalar()
             if not cat_res:
-                cat_res = Category(name="Бишкек", is_active=True)
-                self.session.add(cat_res)
-                await self.session.flush()
+                exist_stmt = select(Category).where(Category.name == "Asosiy")
+                cat_res = (await self.session.execute(exist_stmt)).scalar()
+                if not cat_res:
+                    cat_res = Category(name="Asosiy", is_active=True)
+                    self.session.add(cat_res)
+                    await self.session.flush()
             category_id = cat_res.id
 
-        initial_stock = Decimal(product_data.get("initial_stock", "0"))
-        cost_price = Decimal(product_data.get("cost_price", product_data.get("sale_price", "0")))
+        # Robust decimal parsing
+        def safe_decimal(val: Any, default: str = "0") -> Decimal:
+            if val is None or str(val).strip() == "":
+                return Decimal(default)
+            try:
+                return Decimal(str(val).strip())
+            except (ValueError, ArithmeticError, Exception):
+                return Decimal(default)
+
+        initial_stock = safe_decimal(product_data.get("initial_stock"))
+        cost_price = safe_decimal(product_data.get("cost_price") or product_data.get("sale_price"))
+        sale_price = safe_decimal(product_data.get("sale_price"))
+        low_stock_threshold = safe_decimal(product_data.get("low_stock_threshold"), "10")
 
         new_product = Product(
             name=product_data["name"],
@@ -69,11 +83,9 @@ class ProductManagementService:
             secret_description=product_data.get("secret_description"),
             secret_image_url=product_data.get("secret_image_url"),
             cost_price_per_gram=cost_price,
-            sale_price_per_gram=Decimal(product_data["sale_price"]),
+            sale_price_per_gram=sale_price,
             stock_grams=initial_stock,
-            low_stock_threshold_grams=Decimal(
-                product_data.get("low_stock_threshold", "10")
-            ),
+            low_stock_threshold_grams=low_stock_threshold,
             created_by=admin_id,
             is_active=True,
         )
@@ -158,7 +170,14 @@ class ProductManagementService:
                     "stock_grams",
                 ]:
                     if value is not None:
-                        value = Decimal(value)
+                        if str(value).strip() == "":
+                            value = Decimal("0")
+                        else:
+                            try:
+                                value = Decimal(str(value).strip())
+                            except Exception:
+                                value = Decimal("0")
+
 
                 setattr(product, key, value)
 

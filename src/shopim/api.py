@@ -1262,6 +1262,31 @@ async def admin_create_product(
     return _product_dict(product, include_admin_fields=True)
 
 
+@app.post("/api/admin/categories", status_code=201)
+async def admin_create_category(
+    request: Request,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    data = await request.json()
+    name = data.get("name", "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Category name is required")
+
+    # Check if category already exists
+    stmt = select(Category).where(Category.name == name)
+    existing = (await db.execute(stmt)).scalar_one_or_none()
+    if existing:
+        return {"id": existing.id, "name": existing.name}
+
+    cat = Category(name=name, is_active=True)
+    db.add(cat)
+    await db.commit()
+    await db.refresh(cat)
+    return {"id": cat.id, "name": cat.name}
+
+
+
 @app.patch("/api/admin/products/{product_id}")
 async def admin_update_product(
     product_id: int,

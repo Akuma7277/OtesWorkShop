@@ -12,7 +12,7 @@ import {
   adminGetAuditLog,
   adminGetJobs, adminCreateJob, adminUpdateJob, adminDeleteJob,
   adminGetJobApplications, adminApproveJobApplication, adminRejectJobApplication,
-  adminGetExpenses, adminCreateExpense
+  adminGetExpenses, adminCreateExpense, adminCreateCategory
 } from '../api'
 import { useApp } from '../context/AppContext'
 import Spinner from '../components/Spinner'
@@ -478,15 +478,35 @@ function UsersTab({ users, reload }) {
   )
 }
 
+const TASHKENT_DISTRICTS = [
+  { key: 'Chilonzor', uz: 'Chilonzor tumani', ru: 'Чиланзарский район' },
+  { key: 'Yunusobod', uz: 'Yunusobod tumani', ru: 'Юнусабадский район' },
+  { key: 'MirzoUlugbek', uz: 'Mirzo Ulug\'bek tumani', ru: 'Мирзо-Улугбекский район' },
+  { key: 'Mirobod', uz: 'Mirobod tumani', ru: 'Мирабадский район' },
+  { key: 'Yashnobod', uz: 'Yashnobod tumani', ru: 'Яшнабадский район' },
+  { key: 'Yakkasaroy', uz: 'Yakkasaroy tumani', ru: 'Яккасарайский район' },
+  { key: 'Uchtepa', uz: 'Uchtepa tumani', ru: 'Учтепинский район' },
+  { key: 'Shayxontohur', uz: 'Shayxontohur tumani', ru: 'Шайхантахурский район' },
+  { key: 'Olmazor', uz: 'Olmazor tumani', ru: 'Алмазарский район' },
+  { key: 'Sergeli', uz: 'Sergeli tumani', ru: 'Сергелийский район' },
+  { key: 'Yangihayot', uz: 'Yangihayot tumani', ru: 'Янгихаётский район' },
+  { key: 'Bektemir', uz: 'Bektemir tumani', ru: 'Бектемирский район' },
+]
+
 function ProductsTab({ products, categories, reload }) {
   const { showToast, lang } = useApp()
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  
+  const [showCatInput, setShowCatInput] = useState(false)
+  const [newCatName, setNewCatName] = useState('')
+  const [addingCat, setAddingCat] = useState(false)
 
   const emptyForm = {
     name: '', sale_price: '', cost_price: '', initial_stock: '', low_stock_threshold: '10',
     category_id: '',
+    pickup_address: '',
     public_description: '', public_image_url: '',
     secret_description: '', secret_image_url: ''
   }
@@ -536,6 +556,7 @@ function ProductsTab({ products, categories, reload }) {
         initial_stock: formData.initial_stock,
         low_stock_threshold: formData.low_stock_threshold,
         category_id: formData.category_id || null,
+        pickup_address: formData.pickup_address || null,
         public_description: formData.public_description,
         public_image_url: formData.public_image_url,
         secret_description: formData.secret_description,
@@ -550,6 +571,7 @@ function ProductsTab({ products, categories, reload }) {
           stock_grams: Number(formData.initial_stock) || undefined,
           low_stock_threshold_grams: Number(formData.low_stock_threshold) || 10,
           category_id: formData.category_id ? Number(formData.category_id) : null,
+          pickup_address: formData.pickup_address || null,
           public_description: formData.public_description,
           public_image_url: formData.public_image_url,
           secret_description: formData.secret_description,
@@ -593,6 +615,7 @@ function ProductsTab({ products, categories, reload }) {
       initial_stock: String(p.stock_grams),
       low_stock_threshold: String(p.low_stock_threshold_grams || '10'),
       category_id: String(p.category_id || ''),
+      pickup_address: p.pickup_address || '',
       public_description: p.public_description || p.description || '',
       public_image_url: p.public_image_url || p.image_url || '',
       secret_description: p.secret_description || '',
@@ -669,10 +692,75 @@ function ProductsTab({ products, categories, reload }) {
           </div>
 
           <div className="input-group">
-            <label className="input-label">{lang === 'ru' ? 'Категория' : 'Kategoriya'}</label>
-            <select className="input" value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})}>
-              <option value="">{lang === 'ru' ? 'Выберите...' : 'Tanlang...'}</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            <label className="input-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>{lang === 'ru' ? 'Категория' : 'Kategoriya'}</span>
+              <button 
+                type="button" 
+                className="btn btn-sm btn-secondary" 
+                style={{ padding: '2px 6px', fontSize: 11, background: 'rgba(255,255,255,0.06)' }}
+                onClick={() => { haptic.light(); setShowCatInput(!showCatInput) }}
+              >
+                {showCatInput ? '✕' : '+'}
+              </button>
+            </label>
+
+            {showCatInput ? (
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                <input 
+                  type="text" 
+                  className="input" 
+                  style={{ flex: 1, height: 36 }}
+                  placeholder={lang === 'ru' ? 'Новая категория...' : 'Yangi kategoriya nomi...'}
+                  value={newCatName}
+                  onChange={e => setNewCatName(e.target.value)}
+                />
+                <button 
+                  type="button" 
+                  className="btn btn-success" 
+                  style={{ padding: '0 12px', height: 36 }}
+                  disabled={addingCat || !newCatName.trim()}
+                  onClick={async () => {
+                    if (!newCatName.trim()) return
+                    haptic.medium()
+                    setAddingCat(true)
+                    try {
+                      const newCat = await adminCreateCategory({ name: newCatName.trim() })
+                      showToast(lang === 'ru' ? '✅ Категория добавлена' : '✅ Kategoriya qo\'shildi')
+                      setNewCatName('')
+                      setShowCatInput(false)
+                      await reload() // refresh categories list
+                      setFormData(prev => ({ ...prev, category_id: String(newCat.id) }))
+                    } catch (err) {
+                      showToast(`❌ ${err.message}`)
+                    } finally {
+                      setAddingCat(false)
+                    }
+                  }}
+                >
+                  {addingCat ? '⏳' : 'OK'}
+                </button>
+              </div>
+            ) : (
+              <select className="input" value={formData.category_id} onChange={e => setFormData({...formData, category_id: e.target.value})}>
+                <option value="">{lang === 'ru' ? 'Выберите...' : 'Tanlang...'}</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            )}
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">{lang === 'ru' ? 'Район (Ташкент)' : 'Tuman (Toshkent)'}</label>
+            <select 
+              className="input" 
+              value={formData.pickup_address} 
+              onChange={e => setFormData({...formData, pickup_address: e.target.value})}
+            >
+              <option value="">{lang === 'ru' ? 'Выберите район...' : 'Tumanni tanlang...'}</option>
+              {TASHKENT_DISTRICTS.map(d => (
+                <option key={d.key} value={d.key}>
+                  {lang === 'ru' ? d.ru : d.uz}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -730,6 +818,11 @@ function ProductsTab({ products, categories, reload }) {
               <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                 {lang === 'ru' ? 'Цена:' : 'Narx:'} {Number(p.sale_price_per_gram).toFixed(0)} $ · {lang === 'ru' ? 'Запас:' : 'Zaxira:'} {Number(p.stock_grams).toFixed(0)} g
               </div>
+              {p.pickup_address && (
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                  📍 {TASHKENT_DISTRICTS.find(d => d.key === p.pickup_address)?.[lang] || p.pickup_address}
+                </div>
+              )}
               <div style={{ fontSize: 11, color: p.secret_description ? 'var(--accent-primary)' : 'var(--accent-red)', marginTop: 2 }}>
                 {p.secret_description ? '🔒 Maxfiy ma\'lumot bor' : '⚠️ Maxfiy ma\'lumot yo\'q'}
               </div>

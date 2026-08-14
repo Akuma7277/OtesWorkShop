@@ -116,6 +116,9 @@ export const adminRejectJobApplication = (id, data = {}) => api.post(`/admin/job
 export const adminGetExpenses = () => api.get('/admin/expenses')
 export const adminCreateExpense = (data) => api.post('/admin/expenses', data)
 
+// ---- Admin Categories ----
+export const adminCreateCategory = (data) => api.post('/admin/categories', data)
+
 export default api
 
 

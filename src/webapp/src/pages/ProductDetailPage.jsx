@@ -8,6 +8,21 @@ import { t } from '../i18n'
 
 const GRAM_PRESETS = [10, 25, 50, 100, 250, 500]
 
+const TASHKENT_DISTRICTS = [
+  { key: 'Chilonzor', uz: 'Chilonzor tumani', ru: 'Чиланзарский район' },
+  { key: 'Yunusobod', uz: 'Yunusobod tumani', ru: 'Юнусабадский район' },
+  { key: 'MirzoUlugbek', uz: 'Mirzo Ulug\'bek tumani', ru: 'Мирзо-Улугбекский район' },
+  { key: 'Mirobod', uz: 'Mirobod tumani', ru: 'Мирабадский район' },
+  { key: 'Yashnobod', uz: 'Yashnobod tumani', ru: 'Яшнабадский район' },
+  { key: 'Yakkasaroy', uz: 'Yakkasaroy tumani', ru: 'Яккасарайский район' },
+  { key: 'Uchtepa', uz: 'Uchtepa tumani', ru: 'Учтепинский район' },
+  { key: 'Shayxontohur', uz: 'Shayxontohur tumani', ru: 'Шайхантахурский район' },
+  { key: 'Olmazor', uz: 'Olmazor tumani', ru: 'Алмазарский район' },
+  { key: 'Sergeli', uz: 'Sergeli tumani', ru: 'Сергелийский район' },
+  { key: 'Yangihayot', uz: 'Yangihayot tumani', ru: 'Янгихаётский район' },
+  { key: 'Bektemir', uz: 'Bektemir tumani', ru: 'Бектемирский район' },
+]
+
 export default function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -82,6 +97,24 @@ export default function ProductDetailPage() {
             {Number(product.sale_price_per_gram).toFixed(1)} $/g
           </div>
         </div>
+
+        {product.pickup_address && (
+          <div style={{ 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: 6, 
+            fontSize: 12, 
+            color: 'var(--accent-primary)', 
+            background: 'rgba(124,92,252,0.08)', 
+            border: '1px solid rgba(124,92,252,0.2)',
+            padding: '4px 10px', 
+            borderRadius: 8, 
+            fontWeight: 700,
+            marginBottom: 12 
+          }}>
+            📍 {TASHKENT_DISTRICTS.find(d => d.key === product.pickup_address)?.[lang === 'ru' ? 'ru' : 'uz'] || product.pickup_address}
+          </div>
+        )}
 
         {/* Stock */}
         <div className={`product-stock ${isOut ? 'out' : stock < 100 ? 'low' : 'ok'} mb-4`} style={{ fontSize: 13 }}>
