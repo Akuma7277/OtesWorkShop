@@ -89,8 +89,8 @@ export default function AdminPage() {
     loadTab()
   }, [tab])
 
-  const loadTab = async () => {
-    setLoading(true)
+  const loadTab = async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       if (tab === 'dashboard') setDashboard(await adminGetDashboard())
       if (tab === 'orders') setOrders((await adminGetOrders({ per_page: 30 }))?.items || [])
@@ -118,7 +118,7 @@ export default function AdminPage() {
         setAuditLog(res?.items || [])
       }
     } catch {}
-    setLoading(false)
+    if (!silent) setLoading(false)
   }
 
   return (
@@ -728,7 +728,7 @@ function ProductsTab({ products, categories, reload }) {
                       showToast(lang === 'ru' ? '✅ Категория добавлена' : '✅ Kategoriya qo\'shildi')
                       setNewCatName('')
                       setShowCatInput(false)
-                      await reload() // refresh categories list
+                      await reload(true) // refresh categories list silently
                       setFormData(prev => ({ ...prev, category_id: String(newCat.id) }))
                     } catch (err) {
                       showToast(`❌ ${err.message}`)

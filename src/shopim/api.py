@@ -84,12 +84,13 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
 
 
-    # Run column migrations for PostgreSQL (idempotent - ignore if already exists)
     new_columns = [
         "ALTER TABLE products ADD COLUMN IF NOT EXISTS public_description TEXT",
         "ALTER TABLE products ADD COLUMN IF NOT EXISTS public_image_url TEXT",
         "ALTER TABLE products ADD COLUMN IF NOT EXISTS secret_description TEXT",
         "ALTER TABLE products ADD COLUMN IF NOT EXISTS secret_image_url TEXT",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS pickup_address TEXT",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS created_by BIGINT",
         "ALTER TABLE orders ADD COLUMN IF NOT EXISTS receipt_confirmed BOOLEAN NOT NULL DEFAULT false",
         "ALTER TABLE orders ADD COLUMN IF NOT EXISTS receipt_issue_reported BOOLEAN NOT NULL DEFAULT false",
     ]
@@ -576,12 +577,12 @@ def _product_dict(p: Product, include_admin_fields: bool = False) -> dict:
         "stock_grams": float(p.stock_grams),
         "is_active": p.is_active,
         "category_id": p.category_id,
+        "pickup_address": p.pickup_address,
     }
     if include_admin_fields:
         data["cost_price_per_gram"] = float(p.cost_price_per_gram)
         data["secret_description"] = p.secret_description
         data["secret_image_url"] = p.secret_image_url
-        data["pickup_address"] = p.pickup_address
     return data
 
 
