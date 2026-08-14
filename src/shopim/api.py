@@ -44,7 +44,9 @@ from src.shopim.db.models import (
     JobPosition,
     JobApplication,
     JobAppStatus,
+    Expense,
 )
+
 
 from src.shopim.db.repositories.balance_repository import BalanceRepository
 from src.shopim.db.repositories.product_repository import ProductRepository
@@ -1912,6 +1914,100 @@ async def admin_reject_job_application(
     ))
     await db.commit()
     return {"ok": True}
+
+
+# ──────────────────────────────────────────────
+# Admin Routes: Expense Management
+# ──────────────────────────────────────────────
+
+EXPENSE_CATEGORIES = {
+    "Tovar", "Kuryer", "Hr", "Support", "Sklad", 
+    "NexVoid", "Operatir", "Operation", "Premium", "Premiya"
+}
+
+
+@app.get("/api/admin/expenses")
+async def admin_list_expenses(
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    from sqlalchemy.orm import selectinload
+    stmt = select(Expense).options(selectinload(Expense.admin)).order_by(Expense.created_at.desc())
+    expenses = (await db.execute(stmt)).scalars().all()
+    return [
+        {
+            "id": e.id,
+            "amount": float(e.amount),
+            "category": e.category,
+            "comment": e.comment,
+            "created_by": {
+                "id": e.admin.id,
+                "full_name": e.admin.full_name,
+            },
+            "created_at": e.created_at.isoformat(),
+        }
+        for e in expenses
+    ]
+
+
+@app.post("/api/admin/expenses", status_code=201)
+async def admin_create_expense(
+    request: Request,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    data = await request.json()
+    amount_raw = data.get("amount")
+    category = data.get("category", "").strip()
+    comment = data.get("comment", "").strip()
+
+    if amount_raw is None:
+        raise HTTPException(status_code=400, detail="amount is required")
+    try:
+        amount = float(amount_raw)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="amount must be a valid number")
+
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="amount must be greater than 0")
+
+    if category not in EXPENSE_CATEGORIES:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid category. Must be one of: {', '.join(sorted(EXPENSE_CATEGORIES))}"
+        )
+
+    if not comment:
+        raise HTTPException(status_code=400, detail="comment is required and cannot be empty")
+
+    e = Expense(
+        amount=amount,
+        category=category,
+        comment=comment,
+        created_by_admin_id=admin.id,
+    )
+    db.add(e)
+    await db.flush()
+
+    db.add(AuditLog(
+        actor_telegram_id=admin.telegram_id,
+        actor_role=admin.role.value,
+        action="CREATE_EXPENSE",
+        entity_type="Expense",
+        entity_id=e.id,
+        new_data={"amount": amount, "category": category, "comment": comment},
+    ))
+    
+    await db.commit()
+    await db.refresh(e)
+    return {
+        "id": e.id,
+        "amount": float(e.amount),
+        "category": e.category,
+        "comment": e.comment,
+        "created_at": e.created_at.isoformat(),
+    }
+
 
 
 # ──────────────────────────────────────────────

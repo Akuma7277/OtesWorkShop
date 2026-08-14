@@ -550,3 +550,20 @@ class JobApplication(Base):
 
     user: Mapped["User"] = relationship("User")
     position: Mapped["JobPosition"] = relationship("JobPosition", back_populates="applications")
+
+
+class Expense(Base):
+    """An expense recorded by admins."""
+    __tablename__ = "expenses"
+
+    id: Mapped[int] = mapped_column(PK_TYPE, primary_key=True, autoincrement=True)
+    amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
+    category: Mapped[str] = mapped_column(VARCHAR(50), nullable=False)  # Tovar, Kuryer, Hr, Support, Sklad, NexVoid, Operatir, Operation, Premium, Premiya
+    comment: Mapped[str] = mapped_column(TEXT, nullable=False)
+    created_by_admin_id: Mapped[int] = mapped_column(BIGINT, ForeignKey("admins.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    admin: Mapped["Admin"] = relationship("Admin")
+

@@ -27,7 +27,9 @@ from .all_models import (
     JobPosition,
     JobApplication,
     JobAppStatus,
+    Expense,
 )
+
 
 __all__ = [
     "Base",
@@ -57,4 +59,6 @@ __all__ = [
     "JobPosition",
     "JobApplication",
     "JobAppStatus",
+    "Expense",
 ]
+

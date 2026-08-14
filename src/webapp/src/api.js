@@ -112,6 +112,10 @@ export const adminGetJobApplications = () => api.get('/admin/jobs/applications')
 export const adminApproveJobApplication = (id, data = {}) => api.post(`/admin/jobs/applications/${id}/approve`, data)
 export const adminRejectJobApplication = (id, data = {}) => api.post(`/admin/jobs/applications/${id}/reject`, data)
 
+// ---- Admin Expenses ----
+export const adminGetExpenses = () => api.get('/admin/expenses')
+export const adminCreateExpense = (data) => api.post('/admin/expenses', data)
+
 export default api
 
 

@@ -11,7 +11,8 @@ import {
   adminGetChatRooms, adminGetRoomMessages, adminSendRoomMessage,
   adminGetAuditLog,
   adminGetJobs, adminCreateJob, adminUpdateJob, adminDeleteJob,
-  adminGetJobApplications, adminApproveJobApplication, adminRejectJobApplication
+  adminGetJobApplications, adminApproveJobApplication, adminRejectJobApplication,
+  adminGetExpenses, adminCreateExpense
 } from '../api'
 import { useApp } from '../context/AppContext'
 import Spinner from '../components/Spinner'
@@ -54,6 +55,7 @@ export default function AdminPage() {
   const [auditLog, setAuditLog] = useState([])
   const [adminJobs, setAdminJobs] = useState([])
   const [adminJobApps, setAdminJobApps] = useState([])
+  const [adminExpenses, setAdminExpenses] = useState([])
   const [loading, setLoading] = useState(false)
 
   if (!isAdmin) {
@@ -76,6 +78,7 @@ export default function AdminPage() {
     { key: 'users', label: '👥 ' + (lang === 'ru' ? 'Клиенты' : 'Mijozlar') },
     { key: 'products', label: '🏬 ' + (lang === 'ru' ? 'Товары' : 'Mahsulotlar') },
     { key: 'jobs', label: '💼 ' + (lang === 'ru' ? 'Вакансии' : 'Ish o\'rinlari') },
+    { key: 'expenses', label: '💸 ' + (lang === 'ru' ? 'Расходы' : 'Rasxodlar') },
     { key: 'reviews', label: '⭐ ' + (lang === 'ru' ? 'Отзывы' : 'Sharhlar') },
     { key: 'news', label: '📰 ' + (lang === 'ru' ? 'Новости' : 'E\'lonlar') },
     { key: 'settings', label: '⚙️ ' + (lang === 'ru' ? 'Настройки' : 'Sozlamalar') },
@@ -103,6 +106,9 @@ export default function AdminPage() {
       if (tab === 'jobs') {
         setAdminJobs(await adminGetJobs() || [])
         setAdminJobApps(await adminGetJobApplications() || [])
+      }
+      if (tab === 'expenses') {
+        setAdminExpenses(await adminGetExpenses() || [])
       }
       if (tab === 'reviews') setReviews(await adminGetPendingReviews() || [])
       if (tab === 'news') setNewsList(await getNews() || [])
@@ -162,6 +168,7 @@ export default function AdminPage() {
           {tab === 'users' && <UsersTab users={users} reload={loadTab} />}
           {tab === 'products' && <ProductsTab products={products} categories={categories} reload={loadTab} />}
           {tab === 'jobs' && <JobsTab jobs={adminJobs} applications={adminJobApps} reload={loadTab} />}
+          {tab === 'expenses' && <ExpensesTab expenses={adminExpenses} reload={loadTab} />}
           {tab === 'reviews' && <ReviewsTab reviews={reviews} reload={loadTab} />}
           {tab === 'news' && <NewsTab newsList={newsList} reload={loadTab} />}
           {tab === 'settings' && settings && <SettingsTab initialSettings={settings} reload={loadTab} />}
@@ -1577,4 +1584,191 @@ function JobsTab({ jobs, applications, reload }) {
     </div>
   )
 }
+
+
+function ExpensesTab({ expenses, reload }) {
+  const { lang, showToast } = useApp()
+  const [showAddForm, setShowAddForm] = useState(false)
+  
+  const defaultForm = {
+    amount: '',
+    category: 'Tovar',
+    comment: ''
+  }
+  const [formData, setFormData] = useState(defaultForm)
+  const [submitting, setSubmitting] = useState(false)
+
+  const categories = [
+    "Tovar", "Kuryer", "Hr", "Support", "Sklad", 
+    "NexVoid", "Operatir", "Operation", "Premium", "Premiya"
+  ]
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    
+    const amt = parseFloat(formData.amount)
+    if (isNaN(amt) || amt <= 0) {
+      showToast(lang === 'ru' ? '❌ Введите корректную сумму' : '❌ To\'g\'ri miqdor kiriting')
+      return
+    }
+
+    if (!formData.comment.trim()) {
+      showToast(lang === 'ru' ? '❌ Комментарий обязателен!' : '❌ Izoh/kommentariya majburiy!')
+      return
+    }
+
+    haptic.medium()
+    setSubmitting(true)
+    try {
+      await adminCreateExpense({
+        amount: amt,
+        category: formData.category,
+        comment: formData.comment.trim()
+      })
+      haptic.success()
+      showToast(lang === 'ru' ? '✅ Расход успешно записан' : '✅ Rasxod muvaffaqiyatli saqlandi')
+      setShowAddForm(false)
+      setFormData(defaultForm)
+      reload()
+    } catch (err) {
+      showToast(`❌ ${err.message}`)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const totalSum = expenses.reduce((sum, e) => sum + e.amount, 0)
+
+  return (
+    <div className="stagger">
+      {/* Top Summary Card */}
+      <div className="card mb-4" style={{ 
+        background: 'linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(244,63,94,0.05) 100%)',
+        border: '1px solid rgba(239,68,68,0.2)',
+        padding: '16px 20px',
+        borderRadius: 16
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>
+              💸 {lang === 'ru' ? 'Общая сумма расходов:' : 'Jami rasxodlar miqdori:'}
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--accent-red)' }}>
+              {totalSum.toFixed(2)} $
+            </div>
+          </div>
+          <div style={{ fontSize: 32 }}>📉</div>
+        </div>
+      </div>
+
+      <button 
+        className="btn btn-primary btn-full mb-4" 
+        onClick={() => { haptic.light(); setShowAddForm(!showAddForm) }}
+      >
+        {showAddForm ? (lang === 'ru' ? '❌ Закрыть' : '❌ Yopish') : (lang === 'ru' ? '➕ Записать расход' : '➕ Yangi rasxod kiritish')}
+      </button>
+
+      {showAddForm && (
+        <form onSubmit={handleSubmit} className="card mb-4 stagger">
+          <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 12 }}>
+            {lang === 'ru' ? '➕ Добавить новый расход' : '➕ Yangi rasxod qo\'shish'}
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">{lang === 'ru' ? 'Сумма ($)' : 'Miqdori ($)'} *</label>
+            <input 
+              type="number"
+              step="any"
+              className="input" 
+              value={formData.amount} 
+              onChange={e => setFormData({ ...formData, amount: e.target.value })} 
+              placeholder="e.g. 150.00"
+              required 
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">{lang === 'ru' ? 'Категория расхода' : 'Rasxod turi'} *</label>
+            <select 
+              className="input"
+              value={formData.category}
+              onChange={e => setFormData({ ...formData, category: e.target.value })}
+              style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+            >
+              {categories.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">{lang === 'ru' ? 'Комментарий (обязательно)' : 'Izoh / Kommentariya (majburiy)'} *</label>
+            <textarea 
+              className="input" 
+              rows={3}
+              value={formData.comment} 
+              onChange={e => setFormData({ ...formData, comment: e.target.value })} 
+              placeholder={lang === 'ru' ? 'Укажите куда и кому пошли деньги...' : 'Kimga va nima maqsadda ishlatilganini yozing...'}
+              required
+            />
+          </div>
+
+          <button type="submit" className="btn btn-danger btn-full" disabled={submitting}>
+            {submitting ? '⏳ ...' : (lang === 'ru' ? 'Записать' : 'Kiritish')}
+          </button>
+        </form>
+      )}
+
+      {/* Expenses List */}
+      {expenses.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>
+          {lang === 'ru' ? 'Нет записей расходов' : 'Rasxodlar tarixi mavjud emas'}
+        </div>
+      ) : (
+        expenses.map(e => {
+          const dateStr = new Date(e.created_at).toLocaleString([], {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+
+          return (
+            <div key={e.id} className="card mb-3" style={{ padding: '14px 18px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div>
+                  <span style={{ 
+                    fontSize: 11, 
+                    fontWeight: 800, 
+                    background: 'rgba(239,68,68,0.1)', 
+                    color: 'var(--accent-red)', 
+                    padding: '3px 8px', 
+                    borderRadius: 6 
+                  }}>
+                    {e.category}
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8 }}>
+                    👤 {e.created_by.full_name}
+                  </span>
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 900, color: 'var(--accent-red)' }}>
+                  -{e.amount.toFixed(2)} $
+                </div>
+              </div>
+
+              <div style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 6, fontStyle: 'italic', background: 'rgba(0,0,0,0.1)', padding: '8px 10px', borderRadius: 8 }}>
+                "{e.comment}"
+              </div>
+
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'right' }}>
+                {dateStr}
+              </div>
+            </div>
+          )
+        })
+      )}
+    </div>
+  )
+}
+
 
